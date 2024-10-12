@@ -81,7 +81,8 @@ export class OutboundScantrackingComponent implements OnInit {
 
     console.log(this.pageactive)
 
-    this.LOAD_USERTABLECHECK()
+    this.LOAD_USERTABLECHECK();
+    this.getserverdate();
   }
 
   ngAfterViewInit(): void {
@@ -154,6 +155,21 @@ export class OutboundScantrackingComponent implements OnInit {
       }
 
     })
+  }
+
+  getserverdate(){
+     
+    this.dataService.getServerDate().subscribe(resp => {
+      console.log(resp)
+      if (resp && resp.date) {
+        const currentDate = new Date(resp.date);//เวลาserver
+        this.input.currentDateString = currentDate.toISOString().split('T')[0];
+      }else{
+        const currentDate = new Date();//เวลาเครื่อง
+        this.input.currentDateString = currentDate.toISOString().split('T')[0];
+
+      }
+    });
   }
 
   model_1(){
@@ -472,9 +488,6 @@ export class OutboundScantrackingComponent implements OnInit {
                     }
             
                   })
-
-                  
-
                 }
               });
                 this.playAudioError();
@@ -622,7 +635,6 @@ export class OutboundScantrackingComponent implements OnInit {
                 this.input.TRACK_CODE = ''
                 this.playAudioError();
               }else if (this.res_datas.status === 'warning_Track' ) { 
-                console.log(this.res_datas.data[0]);
 
                 Swal.fire({
                   icon: 'warning',
@@ -635,28 +647,13 @@ export class OutboundScantrackingComponent implements OnInit {
                 cancelButtonText: 'ยกเลิก'
               }).then((result) => {
                 if (result.value) {
-  
-
-                  this.dataService.getServerDate2().subscribe(res => {
-                    console.log('Server Date:lll',res);
-                    // if (res && res.date) {
-                    //     const serverDate = new Date(res.date);
-                    //     console.log('Server Date:', serverDate);
-                    // } else {
-                    //     console.log('Date field not found in the response');
-                    // }
-                });
 
                   const specifiedDate = new Date(this.res_datas.data[0].scandate);
-                  const currentDate = new Date();
                   const specifiedDateString = specifiedDate.toISOString().split('T')[0];
-                  this.input.currentDateString = currentDate.toISOString().split('T')[0];
-  
-                  console.log(this.input.currentDateString);
 
                   const isSameDate = specifiedDateString ===  this.input.currentDateString;
                   const isSamePallet = this.res_datas.data[0].PALLET_NO == this.input.Pallet_NO;
-  
+
                   if (isSameDate && isSamePallet) {
                     this.dataService.update_Tracking_confirm_outbound(this.input).subscribe(res=>{
                       this.res_datas = res;
