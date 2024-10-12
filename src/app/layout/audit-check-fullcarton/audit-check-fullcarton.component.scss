@@ -1,0 +1,18 @@
+.scroll_X{
+    width: 100%;
+    //overflow-x: scroll;
+   overflow-x: auto;
+}
+.hidden{
+    visibility:hidden;
+}
+
+.text_red {
+    color: rgb(255, 102, 102);
+    font-weight:bold;
+}
+
+.text_blue {
+    color: rgb(24, 63, 161);
+    font-weight:bold;
+}

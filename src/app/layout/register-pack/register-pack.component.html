@@ -1,0 +1,119 @@
+<!-- ส่งค่ายัง Component อื่นๆ  -->
+
+<body class="hold-transition sidebar-mini layout-navbar">
+  <div class="wrapper">
+
+    <app-header id="page" [Pageactive]="pageactive"></app-header>
+    <app-menu id="page" [Pageactive]="pageactive"></app-menu>
+  
+    <div class="content-wrapper" style="min-height: 800px;" >
+      <section class="content-header" >
+        <div class="container-fluid" >
+
+          <div class="row ">
+            <div class="col-sm-6">
+              <a class="m-0">
+                <ol class="breadcrumb">
+                  <li class="breadcrumb-item">ลงทะเบียนแพคสินค้า</li>
+                </ol>
+              </a>
+            </div>
+          </div>
+          </div>
+        </section>
+
+        <section class="content">
+          <div class="container-fluid">
+            <div class="row">
+              <!-- left column -->
+              <div class="col-md-6">
+                <!-- general form elements -->
+                <div class="card card-primary">
+                  <div class="card-header">
+                    <h3 class="card-title">Pin Code</h3>
+                  </div>
+                  <div class="card-body">
+                    <form>
+                      <div class="row">
+                        <input class="form-control form-control-lg" type="text" name="PIN_CODE" [(ngModel)]="input.PIN_CODE" (change)="checkin();" minlength="50" maxlength="50" required
+                        #inputpincode>
+                     </div>
+                    </form>
+                  </div>
+                </div>
+
+                <div class="card card-danger">
+                  <div class="card-header">
+                    <h3 class="card-title">Worker history to day</h3>
+
+                  </div>
+                  <div class="card-body" style="max-height: 25em; overflow-y: auto;">
+                    <table class="table table-sm " >
+                      <thead>
+                        <tr class="table-primary">
+                          <th class="text-center">No</th>
+                          <th >Worker</th>
+                          <th class="text-center">Check-in</th>
+                          <th class="text-center">Check-out</th>
+                          
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr *ngFor="let data of user_listCheckHis; let i = index">
+                          <td class="text-center">{{i+1}}</td>
+                          <td >{{data.WORKER_NAME}} {{data.WORKER_SURNAME}}</td>
+
+                          <td class="text-center">{{data.CHECKIN_DATE}}</td>
+
+                          <td class="text-center">{{data.CHECKOUT_DATE}}</td>
+
+
+                        </tr>
+                      </tbody>
+                    </table>
+                    
+                  </div>
+                </div>
+
+              </div>
+              <!-- right column -->
+              <div class="col-md-6">
+                <!-- general form elements -->
+                <div class="card card-success">
+                  <div class="card-header">
+                    <h3 class="card-title">Worker Packing ({{input.sumusercheck}})</h3>
+                  </div>
+                  <div class="card-body">
+
+                    <table class="table table-sm ">
+                      <tbody>
+                        <tr *ngFor="let data of user_listCheckIn; let i = index">
+                          <td>{{i+1}}</td>
+                          <td>{{data.WORKER_NAME}} {{data.WORKER_SURNAME}}</td>
+
+                          <td>{{data.CHECKIN_DATE}}</td>
+
+                          <td class="text-center"><button type="button" class="btn btn-danger btn-sm" (click)="checkout(i)">
+                            Check Out
+                          </button></td>
+
+                        </tr>
+                      </tbody>
+                    </table>
+                    
+                  </div>
+                </div>
+
+            
+
+              </div>
+            </div>
+          </div>
+        </section>
+
+
+        <!-- /.card-body -->
+  
+    </div>
+   </div>
+</body>

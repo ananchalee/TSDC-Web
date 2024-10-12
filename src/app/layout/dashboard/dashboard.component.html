@@ -1,0 +1,440 @@
+<!-- ส่งค่ายัง Component อื่นๆ  -->
+
+<body class="hold-transition sidebar-mini layout-navbar-fixed">
+  <div class="wrapper">
+
+    <app-header id="page" [Pageactive]="pageactive" [RepageTime]="repageTime"></app-header>
+    <app-menu id="page" [Pageactive]="pageactive"></app-menu>
+    <div class="content-wrapper" style="min-height: 2000px;">
+      <!-- Content Header (Page header) -->
+      <div class="content-header">
+
+        <ol class="breadcrumb ">
+          <li class="breadcrumb-item">Home</li>
+          <li class="breadcrumb-item active">Dashboard <i class="nav-icon fas fa-tachometer-alt"></i></li>
+          <!--     <li class="breadcrumb-item active" align = 'right'>Refresh Page &nbsp; <a id="progressBar"> </a></li>  -->
+
+        </ol>
+
+      </div>
+
+      <!-- /.content-header -->
+
+      <!-- Main content -->
+      <section class="content">
+        <div class="container-fluid">
+          <!-- Small boxes (Stat box) -->
+          <div class="row">
+            <div class="col-lg-3 col-6">
+              <!-- small box -->
+              <div class="small-box bg-success">
+                <div class="inner">
+                  <h4>{{data_percent.P_online}}<sup style="font-size: 15px">%</sup></h4>
+
+                  <h5>ONLINE</h5>
+                </div>
+                <div class="icon">
+                  <i class="ion ion-bag" style="top:10px;"></i>
+                </div>
+                <a   (click)="showdetail_out('ONLINE')" data-toggle="collapse" role="button" aria-expanded="false" aria-controls="ONLINE"
+                 class="small-box-footer">More Order ({{input.order_out_online}})<i class="fas fa-arrow-circle-right"></i></a>
+              </div>
+            </div>
+            <!-- ./col -->
+            <div class="col-lg-3 col-6">
+              <!-- small box -->
+              <div class="small-box bg-info">
+                <div class="inner">
+                  <h4>{{data_percent.P_offline}}<sup style="font-size: 15px">%</sup></h4>
+
+                  <h5>OFFLINE</h5>
+                </div>
+                <div class="icon">
+                  <i class="ion ion-ios-cart" style="top:7px;font-size: 80px;"></i>
+                </div>
+                <a  (click)="showdetail_out('OFFLINE')" data-toggle="collapse" role="button" aria-expanded="false" aria-controls="OFFLINE"
+                 class="small-box-footer">More Order ({{input.order_out_offline}}) <i class="fas fa-arrow-circle-right"></i></a>
+              </div>
+            </div>
+            <!-- ./col -->
+            <div class="col-lg-3 col-6">
+              <!-- small box -->
+              <div class="small-box bg-warning">
+                <div class="inner">
+                  <h4>{{data_percent.P_sorter}}<sup style="font-size: 15px">%</sup></h4>
+
+                  <h5>SORTER</h5>
+                </div>
+                <div class="icon">
+                  <i class="ion ion-stats-bars" style="top:4px; font-size: 90px;"></i>
+                </div>
+                <a (click)="showdetail_out('SORTER')" data-toggle="collapse" role="button" aria-expanded="false" aria-controls="SORTER"
+                 class="small-box-footer">More Order ({{input.order_out_sorter}})  <i class="fas fa-arrow-circle-right"></i></a>
+              </div>
+            </div>
+            <!-- ./col -->
+            <div class="col-lg-3 col-6">
+              <!-- small box -->
+              <div class="small-box bg-danger">
+                <div class="inner">
+                  <h4>{{data_percent.P_CF_ORDER}}<sup style="font-size: 15px">%</sup></h4>
+
+                  <h5>ORDER CONFIRME</h5>
+                </div>
+                <div class="icon">
+                  <i class="fas fa-clipboard-check" style="top: 10px;"></i>
+                </div>
+                <a  (click)="showdetail_out('CFOrder')"  data-toggle="collapse" role="button" aria-expanded="false" aria-controls="CFOrder"
+                class="small-box-footer">More Order ({{input.order_out_CFOrder}}) <i class="fas fa-arrow-circle-right"></i></a>
+              </div>
+            </div>
+            <!-- ./col -->
+          </div>
+
+
+          <!-- /.row -->
+          <!-- Main row -->
+          <div class="row">
+            <!-- Left col -->
+            <section class="col-lg-7 connectedSortable ui-sortable">
+              <!-- Custom tabs (Charts with tabs)-->
+              <div class="card">
+                <div class="card-header">
+                  <h4 class="card-title">งานค้าง</h4>
+                </div>
+                <!-- /.card-header -->
+                <div class="card-body">
+                  <div id="accordion">
+                    <!-- we are adding the .class so bootstrap.js collapse plugin detects it -->
+                    <div class="card card-olive  color-palette">
+                      <div class="card-header border-0 ui-sortable-handle">
+                        <h4 class="card-title">
+                         
+                            งานค้างเช็ค ONLINE
+
+                        </h4>
+                         <div class="card-tools">
+                        <button type="button" class="btn  btn-sm"    data-toggle="collapse" href="#ONLINE" >
+                           <i class="fas fa-info-circle"></i>
+                        </button>
+                      </div>
+                      </div> 
+                 
+                      <div [ngClass]="{'collapse':true,'show':dashboard.ONLINE}" id="ONLINE">
+                        <div class="card-body" >
+                          <table class="table table-sm" datatable [dtOptions]="dtOptions" [dtTrigger]="dtTrigger"
+                            style="font-size:13px;">
+                            <thead>
+                              <tr>
+                                <th style="width: 20px">Date</th>
+                                <th>Order </th>
+                                <th>SELLER</th>
+                                <th>Brand</th>
+                                <th style="width: 30px">QTY</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <tr *ngFor="let datas of data_out_Online">
+                                <td>{{datas.Date}}</td>
+                                <td>{{datas.SHIPMENT_ID}}</td>
+                                <td>{{datas.SELLER_NO}}</td>
+                                <td>{{datas.BRAND}}</td>
+                                <td><span class="badge bg-danger">{{datas.QTY}}</span></td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                  
+                    </div>
+
+                    <div class="card card-info">
+                      <div class="card-header  border-0 ui-sortable-handle">
+                        <h4 class="card-title">
+                         
+                             งานค้างเช็ค OFFLINE
+                          
+                        </h4>
+                        <div class="card-tools">
+                          <button type="button" class="btn  btn-sm" data-toggle="collapse" href="#OFFLINE">
+                            <i class="fas fa-info-circle"></i>
+                          </button>
+                        </div>
+                      </div>
+                      <div [ngClass]="{'collapse':true,'show':dashboard.OFFLINE}" id="OFFLINE">
+                        <div class="card-body ">
+                          <table class="table table-sm" datatable [dtOptions]="dtOptions" [dtTrigger]="dtTrigger2"
+                            style="font-size:13px;">
+                            <thead>
+                              <tr>
+                                <th style="width: 20px">Date</th>
+                                <th>Order </th>
+                                <th>SELLER</th>
+                                <th>Brand</th>
+                                <th style="width: 30px">QTY</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <tr *ngFor="let datas of data_out_Offline">
+                                <td>{{datas.Date}}</td>
+                                <td>{{datas.SHIPMENT_ID}}</td>
+                                <td>{{datas.SELLER_NO}}</td>
+                                <td>{{datas.BRAND}}</td>
+                                <td><span class="badge bg-danger">{{datas.QTY}}</span></td>
+                              </tr>
+
+                            </tbody>
+                          </table>
+                        </div>
+                        </div>
+                     
+                    </div>
+
+                    <div class="card card-warning">
+                      <div class="card-header border-0 ui-sortable-handle">
+                        <h4 class="card-title">
+                           งานค้างเช็ค SORTER
+                        </h4>
+                        <div class="card-tools">
+                          <button type="button" class="btn  btn-sm" data-toggle="collapse" href="#SORTER">
+                            <i class="fas fa-info-circle"></i>
+                          </button>
+
+                        </div>
+                      </div>
+                      <div  [ngClass]="{'collapse':true,'show':dashboard.SORTER}" id="SORTER">
+                        <div class="card-body">
+                          <table class="table table-sm" datatable [dtOptions]="dtOptions" [dtTrigger]="dtTrigger3"
+                            style="font-size:13px;">
+                            <thead>
+                              <tr>
+                                <th style="width: 20px">Date</th>
+                                <th>Order </th>
+                                <th>Container</th>
+                                <th>Brand</th>
+                                <th style="width: 30px">QTY</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <tr *ngFor="let datas of data_out_Sorter">
+                                <td>{{datas.Date}}</td>
+                                <td>{{datas.SHIPMENT_ID}}</td>
+                                <td>{{datas.CONTAINER_ID}}</td>
+                                <td>{{datas.BRAND}}</td>
+                                <td><span class="badge bg-danger">{{datas.QTY}}</span></td>
+                              </tr>
+
+                            </tbody>
+                          </table>
+                        </div>
+                        </div>
+                      
+                    </div>
+
+              
+
+                    <div class="card card-danger">
+                      <div class="card-header border-0 ui-sortable-handle">
+                        <h4 class="card-title">
+                         
+                            งานค้างเช็ค ORDER CONFIRME
+                   
+                        </h4>
+
+                        <div class="card-tools">
+                          <button type="button" class="btn  btn-sm" data-toggle="collapse" href="#CFOrder">
+                            <i class="fas fa-info-circle"></i>
+                          </button>
+                        </div>
+                      </div>
+                      <div  [ngClass]="{'collapse':true,'show':dashboard.CFOrder}" id="CFOrder">
+                      <div class="card-body"  >
+                        
+                          <table class="table table-sm" datatable [dtOptions]="dtOptions" [dtTrigger]="dtTrigger4"
+                            style="font-size:13px;">
+                            <thead>
+                              <tr>
+                                <th style="width: 20px">Date</th>
+                                <th>Order </th>
+                                <th>SELLER</th>
+                                <th>Brand</th>
+                                <th style="width: 30px">QTY</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <tr *ngFor="let datas of data_out_CFOrder">
+                                <td>{{datas.Date}}</td>
+                                <td>{{datas.SHIPMENT_ID}}</td>
+                                <td>{{datas.SELLER_NO}}</td>
+                                <td>{{datas.BRAND}}</td>
+                                <td><span class="badge bg-danger">{{datas.QTY}}</span></td>
+                              </tr>
+
+                            </tbody>
+                          </table>
+
+                          <div #Disappear class="modal fade" id="Disappear_Detail" role="dialog">
+                            <div class="modal-dialog modal-lg"> <br> <br> <br> <br> <br> <br>
+                              <div class="modal-content">
+                                <div class="modal-header">
+                                  &emsp; <h5 class="modal-title">
+                                    &emsp; <a style="color:rgb(8, 83, 110)"><b>{{input.data_shipment_id}}</b></a>&nbsp;
+                                    ขาด &nbsp;<a style="color:rgb(214, 32, 16)">{{input.data_disappear_QTY}}</a> </h5>
+                                  <button type="button" class="close" data-dismiss="modal" aria-label="Close"
+                                    (click)="close_Disappear()">
+                                    <span aria-hidden="true">&times;</span>
+                                  </button>
+                                </div>
+                                <div class="card-body">
+
+                                  <table class="table table-striped">
+                                    <thead>
+                                      <tr>
+                                        <th>ITEM ID</th>
+                                        <th>ITEM desc</th>
+                                        <th style="width: 20px">QTY requested</th>
+                                        <th style="width: 20px">QTY check</th>
+                                        <th style="width: 20px">QTY disappear</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      <tr *ngFor="let datas of data_order_disappear_detail ; let i = index">
+
+                                        <td> {{datas.ITEM_ID}}</td>
+                                        <td>{{datas.ITEM_DESC}}</td>
+                                        <td>{{datas.QTY_REQUESTED}}</td>
+                                        <td>{{datas.QTY_CHECK}}</td>
+                                        <td><span class="badge bg-danger">{{datas.QTY_REQUESTED-datas.QTY_CHECK}}</span>
+                                        </td>
+                                      </tr>
+                                    </tbody>
+                                  </table>
+
+
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                    
+                        <!-- /.card-footer -->
+                      </div>
+                      </div>
+                    </div>
+
+                  </div>
+                </div>
+                <!-- /.card-body -->
+              </div>
+
+            </section>
+            <!-- /.Left col -->
+            <!-- right col (We are only adding the ID to make the widgets sortable)-->
+            <section class="col-lg-5 connectedSortable ui-sortable">
+
+
+              <!-- รายการเช็คขาด today -->
+              <div class="card ">
+                <div class="card-header border-0 ui-sortable-handle">
+                  <h4 class="card-title">
+                    <i class="fas fa-th mr-1"></i>
+                    รายการเช็คขาด Today
+                  </h4>
+
+                  <div class="card-tools">
+                    <button type="button" class="btn  btn-sm" data-card-widget="collapse">
+                      <i class="fas fa-minus"></i>
+                    </button>
+
+                  </div>
+                </div>
+                <div class="card-body">
+
+                  <table class="table table-sm" datatable [dtOptions]="dtOptions2" [dtTrigger]="dtTrigger5"
+                    style="font-size:13px;">
+                    <thead>
+                      <tr>
+                        <th><i class="fas fa-info-circle"></i></th>
+                        <th style="width: 20px">SELLER</th>
+                        <th>Order </th>
+                        <th>Brand</th>
+                        <th>QTY</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let datas of Order_disappear ; let i = index">
+                        <td><span type="button" class="badge badge-pill badge-primary"><i class="fas fa-info-circle"
+                              (click)="Order_disappear_detail(i)"> </i>
+                          </span> </td>
+                        <td> {{datas.SELLER_NO}}</td>
+                        <td>{{datas.SHIPMENT_ID}}</td>
+                        <td>{{datas.BRAND}}</td>
+                        <td><span class="badge bg-danger">{{datas.QTY}}</span></td>
+                      </tr>
+                    </tbody>
+                  </table>
+
+
+
+                  <div #Disappear class="modal fade" id="Disappear_Detail" role="dialog">
+                    <div class="modal-dialog modal-lg"> <br> <br> <br> <br> <br> <br>
+                      <div class="modal-content">
+                        <div class="modal-header">
+                          &emsp; <h5 class="modal-title">
+                            &emsp; <a style="color:rgb(8, 83, 110)"><b>{{input.data_shipment_id}}</b></a>&nbsp; ขาด
+                            &nbsp;<a style="color:rgb(214, 32, 16)">{{input.data_disappear_QTY}}</a> </h5>
+                          <button type="button" class="close" data-dismiss="modal" aria-label="Close"
+                            (click)="close_Disappear()">
+                            <span aria-hidden="true">&times;</span>
+                          </button>
+                        </div>
+                        <div class="card-body">
+
+                          <table class="table table-striped">
+                            <thead>
+                              <tr>
+                                <th>ITEM ID</th>
+                                <th>ITEM desc</th>
+                                <th style="width: 20px">QTY requested</th>
+                                <th style="width: 20px">QTY check</th>
+                                <th style="width: 20px">QTY disappear</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <tr *ngFor="let datas of data_order_disappear_detail ; let i = index">
+
+                                <td> {{datas.ITEM_ID}}</td>
+                                <td>{{datas.ITEM_DESC}}</td>
+                                <td>{{datas.QTY_REQUESTED}}</td>
+                                <td>{{datas.QTY_CHECK}}</td>
+                                <td><span class="badge bg-danger">{{datas.QTY_REQUESTED-datas.QTY_CHECK}}</span></td>
+                              </tr>
+                            </tbody>
+                          </table>
+
+
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+                <!-- /.card-footer -->
+              </div>
+              <!-- -->
+
+
+
+            </section>
+
+            <!-- right col -->
+          </div>
+          <!-- /.row (main row) -->
+        </div><!-- /.container-fluid -->
+      </section>
+      <!-- /.content -->
+    </div>
+
+
+  </div>
+</body>

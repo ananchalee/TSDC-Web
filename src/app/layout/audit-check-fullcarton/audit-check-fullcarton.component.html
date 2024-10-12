@@ -1,0 +1,677 @@
+
+<body class="hold-transition sidebar-mini layout-navbar">
+  <div class="wrapper " >
+
+<app-header id="page" [Pageactive]="pageactive"></app-header>
+<app-menu id="page" [Pageactive]="pageactive"></app-menu>
+<div>
+  <div class="content-wrapper" style="min-height: 900px;">
+    <div class="content-header" >
+      <div class="container-fluid">
+        <div class="row ">
+          <!--  <div class="col-sm-6" >
+                  <a > <h1 class="m-0" >Check online</h1></a> 
+              </div>  -->
+          <div class="col-sm-6">
+            <a class="m-0">
+              <ol class="breadcrumb">
+                <li class="breadcrumb-item">Audit&Check</li>
+                <li class="breadcrumb-item active" type="button" (click)="scanCon();">Check fullcarton  <i class="fas fa-archive nav-icon"></i></li>
+              </ol>
+            </a>
+          </div>
+
+          <div class="col-sm-6" [hidden]="pagePrint">
+            <div class="row">
+              <div class="col-sm-5"></div>
+              <div class="col-sm-3"></div>
+              <div class="col-sm-4">
+                <button  #Btn_printTrack type="button" class="btn btn-success btn-sm " (click)="printTracking();">พิมพ์ &nbsp;<i
+                    class="fas fa-print"></i></button>
+                <button type="button" class="btn btn-outline-warning btn-sm float-right" (click)="backScanitem();">กลับ
+                  &nbsp;<i class="fas fa-backward"></i></button>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /.row -->
+      </div><!-- /.container-fluid -->
+    </div>
+
+
+    <div class="container-fluid" [hidden]="!pagePrint">
+      <div class="container-fluid barbar">
+       <div class="alert bg-olive color-palette align-items-center" role="alert">
+          <strong>{{input.USER_NAME}} : </strong> {{input.WORKER_NAME}}
+          {{input.WORKER_SURNAME}}
+        </div> 
+    
+        <form [hidden]="scanConPage">
+          <div class="row">
+
+            <div class="col-4">
+              <div class="card card-success">
+                <div class="card-header">
+                  <h3 class="card-title">Worker Packing ({{input.sumusercheck}})</h3>
+                </div>
+                <div class="card-body">
+
+                  <table class="table table-sm ">
+                    <tbody>
+                      <tr *ngFor="let data of user_listCheckIn; let i = index">
+                        <td>{{i+1}}</td>
+                        <td>{{data.WORKER_NAME}} {{data.WORKER_SURNAME}}</td>
+
+                        <td>{{data.CHECKIN_DATE}}</td>
+
+                        <td class="text-center"><button type="button" class="btn btn-danger btn-xs" (click)="checkout(i)">
+                          Check Out
+                        </button></td>
+
+                      </tr>
+                    </tbody>
+                  </table>
+                  
+                </div>
+              </div>
+            </div>
+            <div class="col-5">
+              <div class="form-group row">
+                <label for="PIN" class="col-2 col-form-label">PIN CODE</label>
+                <div class="col-10">
+                  <input type="text" class="form-control" name="PIN_CODE" placeholder="PIN CODE"
+                    [(ngModel)]="input.PIN_CODE" minlength="50" maxlength="50" required>
+                </div>
+              </div>
+
+              <div class="form-group row">
+                <label for="CONTAINER" class="col-2 col-form-label">CONTAINER </label>
+                <div class="col-10">
+                  <input type="text" class="form-control" name="CONTAINER_ID" placeholder="SCAN CONTAINER_ID"
+                    [(ngModel)]="input.CONTAINER_ID" (change)="WorkType();" minlength="50" maxlength="50" required
+                    #inputcontainer>
+                </div>
+              </div>
+            </div>
+            <div class="col-3">
+              
+            </div>
+          </div>
+        </form>
+
+        <form [hidden]='scanItemPage'>
+          <div class="row">
+            <div class="col-md-12">
+              <div class="card">
+                <!-- /.card-header -->
+                <div class="card-body">
+
+                  <div class="row justify-content-between ">
+                    <div class="col-4">
+                      
+                      <a class="btn btn-app bg-danger" (click)="scanCon();"  >
+                        <i class="fas fa-shopping-cart"></i> Scan Order ใหม่
+                      </a>
+                      <a class="btn btn-app bg-warning color-palette" (click)="Rescan();"  [hidden]="input.ORDER_TYPE == 'SORTER'  || input.SUMCHECK == 0  "  [hidden]="btn.Re">
+                        <i class="fas fa-retweet"></i>Rescan Item
+                      </a>
+                      <a class="btn btn-app bg-warning color-palette" (click)="RescanAll();" [hidden]="input.ORDER_TYPE != 'SORTER' || input.SUMCHECK == 0 ">
+                        <i class="fas fa-retweet"></i>RescanAll Item 
+                      </a>
+                   
+                   
+                  </div>
+
+                    <div class="col-4">
+                      <div class="input-group">
+                        <div class="input-group-text">BARCODE</div>
+                        <input type="text" class="form-control" placeholder="SCAN ITEM_BARCODE" #inputItem
+                          (change)="CheckItemInCon();" name="ITEM_ID_BARCODE" minlength="10" maxlength="50"
+                          [(ngModel)]="input.ITEM_ID_BARCODE" required autofocus>
+                      </div>
+                    </div>
+                    <div class="col-1"></div>
+                     <div class="col-3 ">
+                      <div class="row justify-content-center">
+                        <a class="btn btn-app bg-success" (click)="closeBox();" [hidden]="btn.Box">
+                          <i class="fas fa-box"></i> ปิดกล่อง
+                        </a>
+
+                        <a class="btn btn-app bg-orange color-palette " (click)="CFOrder();" [hidden]="btn.CFOrder">
+                          <i class="fas fa-check-square"></i> ยืนยันเพื่อตัดบิล
+                        </a>
+                        <a class="btn btn-app bg-teal color-palette" (click)="coverSheet();" [hidden]="btn.CoverSheet">
+                          <i class="fas fa-print"></i> ใบปะกล่อง
+                        </a>
+                        <a class="btn btn-app bg-info" (click)="print_Transfer_Slip();" [hidden]="btn.Printbill">
+                          <i class="far fa-file-alt"></i> พิมพ์บิล
+                        </a>
+
+
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="row justify-content-center " [hidden]="!input.ITEM_ID_Show">
+                  {{input.ITEM_ID_Show}}({{input.ITEM_DESC}})
+                  </div>
+
+                  <div class="row justify-content-center ">
+                    <div class="col-4">
+                      <div class="input-group">
+                        <div class="input-group-text">จำนวนกล่อง</div>
+                        <input type="text" class="form-control" placeholder="SCAN QTY" #inputQTY
+                          (change)="updateQTY();" name="QTY" minlength="10" maxlength="50"
+                          [(ngModel)]="input.QTY" required [disabled]="!input.ITEM_ID_Show">
+                      </div>
+                    </div>
+                  </div>
+<br>
+                  <div class="row">
+                    <div class="col-md-3">
+                      <div class="card">
+                        <div class="card-header">
+                          <strong>รายระเอียด Order</strong>
+                        </div>
+                        <div class="card-body">
+                          <div class="row">
+                            <p style="color:rgb(18, 132, 193)"><b>SHIPMENT : </b> </p>
+                            <div class="col-md-7"> {{input.shipment_id}} </div>
+                          </div>
+
+                          <div class="row">
+                            <p style="color:rgb(18, 132, 193)"><b>SELLER_NO : </b> </p>
+                            <div class="col-md-7"> {{input.SELLER_NO}}</div>
+                          </div>
+
+                          <div class="row">
+                            <p style="color:rgb(18, 132, 193)"><b>CHANNEL : </b> </p>
+                            <div class="col-md-7"> {{input.TCHANNEL}}</div>
+                          </div>
+
+                          <div class="row">
+                            <p style="color:rgb(18, 132, 193)"><b>BRAND : </b> </p>
+                            <div class="col-md-7"> {{input.BRAND}}</div>
+                          </div>
+
+                          <div class="row">
+                            <p style="color:rgb(18, 132, 193)"><b> SHIPPING NAME :</b> </p>
+                            <div class="col-md-6">{{input.SHIPPING_NAME}}</div>
+                          </div>
+
+                          <div class="row">
+                            <p style="color:rgb(18, 132, 193)"><b> จำนวนกล่อง : </b> </p>
+                            <div class="col-md-7">{{input.MaxBox_NO}}</div>
+                          </div>
+
+                          <div class="row" *ngFor="let data of trackall; let i = index">
+                            <p style="color:rgb(18, 132, 193)"><b> TRACKING NO: </b> </p>
+                            <div class="col-md-7">
+                              {{data.REF_INDEX}} ({{data.QTY}} ชิ้น)
+                              <span type="button" class="badge badge-pill badge-primary" (click)="ReprintTracking(i)">
+                                Print</span>
+                            </div>
+                          </div>
+
+                        </div>
+                        <div class="card-footer">
+                          <div class="row" *ngFor="let data of sumqty; ">
+                            จำนวนชิ้น :
+                            <div [ngClass]="{'text_red': data.SUMCHECK !=
+                          data.SUMCON}">
+                              {{data.SUMCHECK}}
+                            </div>
+                            /{{data.SUMCON}}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <!-- /.col -->
+                    <div class="col-md-7">
+
+                      <div class="card">
+                        <div class="card-body ">
+                          <table class="table table-sm ">
+                            <thead>
+                              <tr>
+                                <th style="width: 10px">BARCODE</th>
+                                <th>ITEM</th>
+                                <th>รายละเอียดสินค้า</th>
+                                <th>หน่วย</th>
+                                <th style="width: 10px">TOTAL </th>
+                                <th style="width: 10px">CHECK</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <tr *ngFor="let data of res_list; let i = index">
+                                <td>{{data.ITEM_ID_BARCODE}}</td>
+
+                                <td>{{data.ITEM_ID}}</td>
+
+                                <td>{{data.ITEM_DESC}}</td>
+                                <td>{{data.UOM_PICK}}</td>
+
+                                <td class="text-center">{{data.QTY_PICK}}</td>
+                                <td class="text-center" [ngClass]="{'text_red':data.QTY_CHECK !=data.QTY_PICK}">
+                                  {{data.QTY_CHECK}}
+                                </td>
+
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                        <!-- /.card-body -->
+                      </div>
+                    </div>
+                  </div>
+                  <!-- /.row -->
+                </div>
+                <!-- ./card-body -->
+
+                <!-- /.card-footer -->
+              </div>
+              <!-- /.card -->
+            </div>
+            <!-- /.col -->
+          </div>
+
+          <div #myModalBOX class="modal fade" id="myModalBox" role="dialog">
+            <div class="modal-dialog modal-md"> <br> <br> <br> <br> <br> <br>
+              <div class="modal-content">
+                <div class="modal-header">
+                  &emsp; <h5 class="modal-title" style="color:rgb(8, 83, 110)"><i class="fa fa-box"></i>
+                    &emsp; <b> จำนวนที่ปิดกล่อง : </b><i style="color:rgb(214, 32, 16)"> {{input.tracksum_qty}}</i> <b>
+                      ชิ้น</b> </h5>
+                </div>
+                <div class="card-body">
+
+                  <form>
+                    <div class="row">
+                      <ul>
+                        <div class="form-group">
+                          <div class="custom-control custom-checkbox" *ngFor="let data of VAS">
+                            <input class="custom-control-input" (change)="checkBoxVas(data.VAS_NAME,$event)"
+                              name="{{data.VAS_NAME}}" type="checkbox" id="{{data.VAS_NAME}}">
+                            <label class="custom-control-label" for="{{data.VAS_NAME}}"> {{data.VAS_NAME}}</label>
+                          </div>
+                        </div>
+                      </ul>
+                    </div>
+                    <br>
+                    <div class="row justify-content-md-center">
+                      <h5>ขนาดกล่อง</h5>
+                      <div class="col-md-auto">
+                        <div class="form-group">
+                          <input #inputbox type="text" maxlength="20" minlength="1" name="box" class="form-control"
+                            placeholder="ขนาดกล่อง" [(ngModel)]="input.BOX_SIZE" required (change)="check_size();">
+                        </div>
+
+                        <div class="row justify-content-center">
+                          <i [hidden]="box.Errorhide" style="color:rgb(216, 120, 10)"> {{box.des}}</i>
+                          <i [hidden]="box.Suchide"> Size: <b style="color:rgb(214, 32, 16)">{{input.BOX_SIZE}}</b>
+                            กว้าง : <b style="color:rgb(214, 32, 16)">{{box.CARTON_BOX_W}}</b> (CM)
+                            ลึก : <b style="color:rgb(214, 32, 16)">{{box.CARTON_BOX_L}}</b>(CM)
+                            สูง : <b style="color:rgb(214, 32, 16)">{{box.CARTON_BOX_H}}</b>(CM) </i>
+                        </div>
+
+                      </div>
+
+                    </div>
+                    <br>
+                    <div class="row justify-content-md-center">
+
+                      <button type="button" (click)="tracking_box();" [hidden]="box.Suchide "
+                        class="btn btn-block bg-gradient-success">บันทึก</button>
+
+                    </div>
+                  </form>
+
+                </div>
+              </div>
+            </div>
+          </div>
+          <br> <br> <br>
+        </form>
+
+        <br> <br> <br>
+      </div>
+
+      <!-- /.card-body -->
+
+    </div>
+    <div class="container-fluid" [hidden]="pagePrintTrack">
+      <div style="page-break-after: always" class="page" *ngFor="let list of dataprint ;let i = index;">
+        <br>
+        <div class="row ">
+          <div class="col-4">
+            <font size="4">
+              Tracking No :
+            </font>
+          </div>
+          <div class="col-8">
+            <ngx-barcode6 [bc-element-type]="'svg'" [bc-format]="'CODE128'" [bc-text-position]="'button'" [bc-width]="2"
+              [bc-height]="50" [bc-font-size]="15" [bc-value]="list.REF_INDEX" [bc-display-value]="true">
+            </ngx-barcode6>
+          </div>
+        </div>
+
+
+        <div class="row ">
+          <div class="col-4">
+            <font size="4">
+              Shipment :
+            </font>
+          </div>
+          <div class="col-8">
+            <font size="4"><b>
+                {{list.SHIPMENT_ID}}</b>
+            </font>
+          </div>
+        </div>
+
+        <div class="row ">
+
+          <div class="col-4">
+            <font size="4">
+              Channel :
+            </font>
+          </div>
+          <div class="col-8">
+            <font size="4"><b>
+                {{list.TCHANNEL}}</b>
+            </font>
+          </div>
+        </div>
+
+        <div class="row ">
+          <div class="col-4">
+            <font size="4">
+              Seller :
+            </font>
+          </div>
+          <div class="col-8">
+            <font size="4"><b>
+              {{list.SELLER_NO}}</b>
+            </font>
+          </div>
+        </div>
+
+        <div class="row ">
+          <div class="col-4">
+            <font size="4">
+              Shipping Name :
+            </font>
+          </div>
+          <div class="col-8">
+            <font size="4"><b>
+                {{list.SHIPPING_NAME}}</b>
+            </font>
+          </div>
+        </div>
+
+        <div class="row ">
+          <div class="col-4">
+            <font size="4">
+              Box No :
+            </font>
+          </div>
+          <div class="col-8">
+            <font size="4"><b>
+                {{list.BOX_NO_ORDER}}</b>
+            </font>
+          </div>
+        </div>
+
+        <div class="row ">
+          <div class="col-4">
+            <font size="4">
+              Table Check :
+            </font>
+          </div>
+          <div class="col-8">
+            <font size="4"><b>
+                {{list.TABLE_CHECK}}</b>
+            </font>
+          </div>
+        </div>
+
+        <div class="row ">
+          <div class="col-4">
+            <font size="4">
+              Box Size :
+            </font>
+          </div>
+          <div class="col-8">
+            <ngx-barcode6 [bc-element-type]="'svg'" [bc-format]="'CODE128'" [bc-text-position]="'button'" [bc-width]="2"
+              [bc-height]="40" [bc-font-size]="15" [bc-value]="list.BOX_SIZE" [bc-display-value]="true">
+            </ngx-barcode6>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="container-fluid" [hidden]="pagePrintCoverSheet">
+      <div style="page-break-after: always" class="page" *ngFor="let list of dataprintCoverSheet;let i = index;">
+        <div class="row ">
+          <div class="col" align="center">
+            <font size="4"><b>
+                {{list.SHIPPING_NAME}}</b>
+            </font>
+          </div>
+        </div>
+        <div class="row ">
+          <div class="col" align="center">
+            <font size="4"><b>
+                {{list.STORE_ADDRESS}}
+              </b>
+            </font>
+          </div>
+        </div>
+
+
+
+        <div class="row ">
+          <div class="col" align="justify">
+            <font size="4"><b>
+                {{list.MESSAGE_1}}</b>
+            </font>
+            <br>
+            <font size="4"><b>
+                {{list.MESSAGE_2}}</b>
+            </font>
+            <br>
+            <font size="4"><b>
+                {{list.MESSAGE_3}}</b>
+            </font>
+          </div>
+
+          <div class="col" align="center"> 
+            <ngx-barcode6 [bc-element-type]="'svg'" [bc-format]="'CODE128'" [bc-text-position]="'button'" [bc-width]="1"
+              [bc-height]="43" [bc-font-size]="15" [bc-value]="list.BILL_NO" [bc-display-value]="true">
+            </ngx-barcode6>
+
+          </div>
+        </div>
+
+        <div class="row row-cols-3">
+          <div class="col-7">
+            <font size="4"><b>
+                ร้านค้า : {{list.SELLER_NO}} &nbsp; {{list.CORNER_ID_BLH}}</b>
+            </font>
+          </div>
+
+          <div class="col">
+            <font size="4"><b>
+                TABLE_NO : {{input.TABLE_CHECK}}</b>
+            </font>
+          </div>
+        </div>
+
+        <div class="row ">
+          <div class="col">
+            <font size="4"><b>
+                เลขที่บิล :</b>
+            </font>
+            <font size="5"><b>
+                {{list.BILL_N8_BLH}}</b>
+            </font>
+          </div>
+        </div>
+
+        <div class="row ">
+          <div class="col-7">
+
+
+            <font size="3"><b>
+                บิลวันที่ : {{list.BILL_DATE}}</b>
+            </font>
+          </div>
+
+          <div class="col">
+
+            <font size="3"><b>
+                SITE : {{list.SITE_ID_BLH}}</b>
+            </font>
+          </div>
+        </div>
+
+        <div class="row ">
+          <div class="col-8">
+
+            <font size="3"><b>
+                BATCH : {{list.BATCH_CODE}}</b>
+            </font>
+
+
+          </div>
+
+          <div class="col" align="center">
+            <font size="7"><b>
+                {{i+1}} / {{input.MaxBox_NO}}</b>
+            </font>
+
+          </div>
+        </div>
+
+        <div class="row" style="margin-top: -50px;">
+          <div class="col-4" style=" font-size:350%;" align="center">
+            <div class="e-icons">
+              <b>
+                {{list.TRANSPORT_ID}}
+              </b>
+            </div>
+          </div>
+        </div>
+
+        <!-- <div class="row " style="margin-top: -80px;" >
+          <div class="col-4"></div>
+          <div class="col-4">
+          <font size="4"><b>
+              {{list.BRAND_NAME}}</b>
+          </font>
+        </div>
+        </div>  -->
+
+        <div class="row " style="margin-top: -40px;">
+          <div class="col-4"></div>
+          <div class="col">
+            <font size="4"><b>
+              {{list.BRAND_NAME}}<br>
+                ขนส่งโดย : {{list.TRANSPORT_NAME}}</b>
+                
+            </font>
+          </div>
+
+        </div>
+      </div>
+   
+
+    <!-- //////////////////////////////// shot /////////-->
+    <div class="container-fluid" [hidden]="pagePrintShear">
+      <div style="page-break-after: always" class="page"  *ngFor="let list of dataLACK_H ;let i = index;">
+       
+        <div class="row ">
+          <div class="col-8"></div>
+          <div class="col" align="center">
+            <font size="2">Date : {{list.TO_DAY_SHOW}}</font>
+          </div>
+        </div>
+
+        <div class="row ">
+          <div class="col" align="center">
+            <font size="4"><b>รายการสินค้าส่งขาด</b></font>
+          </div>
+        </div>
+        <div class="row ">
+          <div class="col">
+            <font size="3"><b>BILL : {{list.BILL_N8_BLH}}</b></font>
+          </div>
+        </div>
+        <div class="row ">
+          <div class="col">
+          <font size="3">BILL DATE : {{list.BILL_DATE}}</font>
+          </div>
+        </div>
+        <div class="row ">
+          <div class="col-4 ">
+          <font size="3">SHIP NO : {{list.SELLER_NO}}</font>
+          </div>
+          <div class="col">
+            <font size="3">CORNER : {{list.CORNER_ID_BLH}} </font>
+          </div>
+        </div>
+        <div class="row ">
+          <div class="col">
+          <font size="3">SHIP NAME : {{list.SHIPPING_NAME}} </font>
+          
+          </div>
+        </div>
+        <hr class="style19">
+        <table class="table table-sm" style="font-size:4px;line-height:12px">
+          <thead class="thead-light" >
+            <tr >
+              <th class="text-center"  >
+                <font size="3">ITEM ID</font>
+              </th>
+              <th class="text-center" >
+                <font size="3">จำนวนสินค้าทั้งหมด</font>
+              </th>
+              <th class="text-center" >
+                <font size="3">จำนวนสินค้าที่ขาด</font>
+              </th>
+
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let datas of dataprint_LIST_ITEM;let i = index;">
+              <td class="text-center" style=" padding-left: 0px; padding-right: 0px;">
+                <font size="3"><b> {{datas.ITEM_ID}} </b></font>
+              </td>
+              <td class="text-center" style=" padding-left: 0px; padding-right: 0px;">
+                <font size="3"><b> {{datas.QTY_PICK}} </b></font>
+              </td>
+              <td class="text-center" style=" padding-left: 0px; padding-right: 0px;">
+                <font size="3"><b> {{datas.QTY_LACK}} </b></font>
+              </td>
+
+            </tr>
+
+          </tbody>
+
+
+
+        </table>
+
+
+
+      </div>
+    </div>
+  </div>
+  </div>
+</div>
+
+
+</div>
+</body>
+ 

@@ -1,0 +1,287 @@
+<!-- ส่งค่ายัง Component อื่นๆ  -->
+
+<body class="hold-transition sidebar-mini layout-navbar">
+  <div class="wrapper">
+
+    <app-header id="page" [Pageactive]="pageactive"></app-header>
+    <app-menu id="page" [Pageactive]="pageactive"></app-menu>
+    
+    <div class="content-wrapper" >
+      <div class="content-header">
+        <div class="container-fluid">
+          <div class="row ">
+            <div class="col-sm-6">
+              <a class="m-0">
+                <ol class="breadcrumb">
+                  <li class="breadcrumb-item active" type="button" (click)="scanTrack();">แก้ไขขนาดกล่อง <i
+                      class="nav-icon fas fa-edit nav-icon"></i></li>
+                </ol>
+              </a>
+            </div>
+
+            <div class="col-sm-6" [hidden]="pagePrint">
+              <div class="row">
+                <div class="col-sm-5"></div>
+                <div class="col-sm-3"></div>
+                <div class="col-sm-4">
+                  <button #Btn_printTrack type="button" class="btn btn-success btn-sm " (click)="printTracking();">พิมพ์
+                    &nbsp;<i class="fas fa-print"></i></button>
+                  <button type="button" class="btn btn-outline-warning btn-sm float-right"
+                    (click)="backScanitem();">กลับ
+                    &nbsp;<i class="fas fa-backward"></i></button>
+                </div>
+              </div>
+            </div>
+
+          </div><!-- /.row -->
+        </div><!-- /.container-fluid -->
+      </div>
+
+
+      <div class="container-fluid" [hidden]="!pagePrint">
+        <div class="container-fluid barbar">
+          <div class="alert bg-danger color-palette align-items-center" role="alert">
+            <strong>{{input.USER_NAME}} : </strong> {{input.WORKER_NAME}}
+            {{input.WORKER_SURNAME}}
+          </div>
+
+          <form [hidden]="scanTrackPage">
+            <div class="row">
+
+              <div class="col-3"> </div>
+              <div class="col-6">
+                <div class="form-group row">
+                  <label for="PIN" class="col-2 col-form-label">PIN CODE</label>
+                  <div class="col-10">
+                    <input type="text" class="form-control" name="PIN_CODE" placeholder="PIN CODE"
+                      [(ngModel)]="input.PIN_CODE" minlength="50" maxlength="50" required>
+                  </div>
+                </div>
+
+                <div class="form-group row">
+                  <label for="TRACKING" class="col-2 col-form-label">TRACKING </label>
+                  <div class="col-10">
+                    <input type="text" class="form-control" name="REF_INDEX" placeholder="SCAN TRACKING"
+                      [(ngModel)]="input.REF_INDEX" (change)="CheckTracking();" minlength="50" maxlength="50" required
+                      #inputTrack>
+                  </div>
+                </div>
+              </div>
+              <div class="col-3"></div>
+            </div>
+          </form>
+
+          <form [hidden]='scanBoxPage'>
+            <div class="row">
+              <div class="col-md-12">
+                <div class="card">
+                  <!-- /.card-header -->
+                  <div class="card-body">
+
+                    <div class="row justify-content-center">
+                      <div class="col-md-2">
+                      </div>
+                      <div class="col-md-6">
+                        <div class="row">
+                          <p style="color:rgb(18, 132, 193)"><b>SHIPMENT : </b> </p>
+                          <div class="col-md-7"> {{input.PO_NO}} </div>
+                        </div>
+
+                        <div class="row">
+                          <p style="color:rgb(18, 132, 193)"><b> SHIPPING NAME :</b> </p>
+                          <div class="col-md-6">{{input.CUST_NAME}}</div>
+                        </div>
+
+
+                        <div class="row">
+                          <p style="color:rgb(18, 132, 193)"><b>SELLER_NO : </b> </p>
+                          <div class="col-md-7"> {{input.SELLER_NO}}</div>
+                        </div>
+
+                        <div class="row">
+                          <p style="color:rgb(18, 132, 193)"><b> BOX NO : </b> </p>
+                          <div class="col-md-7">{{input.BOX_NO_ORDER}}</div>
+                        </div>
+
+                      </div>
+
+                      <div class="col-md-4">
+
+                        <div class="row">
+                          <p style="color:rgb(18, 132, 193)"><b>TRACKING : </b> </p>
+                          <div class="col-md-7"> {{input.REF_INDEX}}</div>
+                        </div>
+
+                        <div class="row">
+                          <p style="color:rgb(18, 132, 193)"><b>CHANNEL : </b> </p>
+                          <div class="col-md-7"> {{input.TCHANNEL}}</div>
+                        </div>
+
+
+                        <div class="row">
+                          <p style="color:rgb(18, 132, 193)"><b>TABLE CHECK : </b> </p>
+                          <div class="col-md-7"> {{input.TABLE_CHECK}}</div>
+                        </div>
+
+                        <div class="row">
+                          <p style="color:rgb(18, 132, 193)"><b> BOX SIZE : </b> </p>
+                          <div class="col-md-7">{{input.BEFORE_BOX_SIZE}}</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="row justify-content-md-center">
+                      <h5>ขนาดกล่อง</h5>
+                      <div class="col-md-auto">
+                        <div class="form-group">
+                          <input #inputbox type="text" maxlength="20" minlength="1" name="box" class="form-control"
+                            placeholder="ขนาดกล่อง" [(ngModel)]="input.BOX_SIZE" required (change)="check_size();">
+                        </div>
+
+                        <div class="row justify-content-center">
+                          <i [hidden]="box.Errorhide" style="color:rgb(216, 120, 10)"> {{box.des}}</i>
+                          <i [hidden]="box.Suchide"> Size: <b style="color:rgb(214, 32, 16)">{{input.BOX_SIZE}}</b>
+                            กว้าง : <b style="color:rgb(214, 32, 16)">{{box.CARTON_BOX_W}}</b> (CM)
+                            ลึก : <b style="color:rgb(214, 32, 16)">{{box.CARTON_BOX_L}}</b>(CM)
+                            สูง : <b style="color:rgb(214, 32, 16)">{{box.CARTON_BOX_H}}</b>(CM) </i>
+                        </div>
+
+                      </div>
+
+                    </div>
+                    <br>
+                    <div class="row justify-content-md-center">
+                      <div class="col-md-5">
+                        <button type="button" (click)="submit();" [hidden]="box.Suchide "
+                          class="btn btn-block bg-gradient-success">บันทึก</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </form>
+        </div>
+      </div>
+
+      <div class="container-fluid" [hidden]="pagePrintTrack">
+        <div style="page-break-after: always" class="page" *ngFor="let list of dataprint ;let i = index;">
+          <div class="row ">
+            <div class="col-4">
+              <font size="4">
+                Tracking No :
+              </font>
+            </div>
+            <div class="col-8">
+              <ngx-barcode6 [bc-element-type]="'svg'" [bc-format]="'CODE128'" [bc-text-position]="'button'"
+                [bc-width]="2" [bc-height]="50" [bc-font-size]="15" [bc-value]="list.REF_INDEX"
+                [bc-display-value]="true">
+              </ngx-barcode6>
+            </div>
+          </div>
+
+
+          <div class="row ">
+            <div class="col-4">
+              <font size="4">
+                Box Size :
+              </font>
+            </div>
+            <div class="col-8">
+              <font size="4"><b>
+                  {{list.BOX_SIZE}}</b>
+              </font>
+            </div>
+          </div>
+
+          <div class="row ">
+
+            <div class="col-4">
+              <font size="4">
+                Channel :
+              </font>
+            </div>
+            <div class="col-8">
+              <font size="4"><b>
+                  {{list.TCHANNEL}}</b>
+              </font>
+            </div>
+
+          </div>
+
+          <div class="row ">
+            <div class="col-4">
+              <font size="4">
+                Seller :
+              </font>
+            </div>
+            <div class="col-8">
+              <font size="4"><b>
+                  {{list.SELLER_NO}}</b>
+              </font>
+            </div>
+          </div>
+
+
+          <div class="row ">
+            <div class="col-4">
+              <font size="4">
+                Shipping Name :
+              </font>
+            </div>
+            <div class="col-8">
+              <font size="4"><b>
+                  {{list.SHIPPING_NAME}}</b>
+              </font>
+            </div>
+          </div>
+
+          <div class="row ">
+            <div class="col-4">
+              <font size="4">
+                Box No :
+              </font>
+            </div>
+            <div class="col-8">
+              <font size="4"><b>
+                  {{list.BOX_NO_ORDER}}</b>
+              </font>
+            </div>
+          </div>
+
+          <div class="row ">
+            <div class="col-4">
+              <font size="4">
+                Table Check :
+              </font>
+            </div>
+            <div class="col-8">
+              <font size="4"><b>
+                  {{list.TABLE_CHECK}}</b>
+              </font>
+            </div>
+          </div>
+
+          <div class="row ">
+            <div class="col-4">
+              <font size="4">
+                Shipment :
+              </font>
+            </div>
+            <div class="col-8">
+              <ngx-barcode6 [bc-element-type]="'svg'" [bc-format]="'CODE128'" [bc-text-position]="'button'"
+                [bc-width]="2" [bc-height]="40" [bc-font-size]="15" [bc-value]="list.SHIPMENT_ID"
+                [bc-display-value]="true">
+              </ngx-barcode6>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+
+
+  </div>
+</body>

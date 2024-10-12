@@ -1,0 +1,250 @@
+<!-- ส่งค่ายัง Component อื่นๆ  -->
+
+<body class="hold-transition sidebar-mini layout-navbar">
+  <div class="wrapper">
+
+    <app-header id="page" [Pageactive]="pageactive"></app-header>
+    <app-menu id="page" [Pageactive]="pageactive"></app-menu>
+
+    <div class="content-wrapper " style="min-height: 1300px;">
+      <div class="content-header">
+        <div class="container-fluid">
+          <div class="row ">
+            <div class="col-sm-6">
+              <a class="m-0">
+                <ol class="breadcrumb">
+                  <li class="breadcrumb-item">Outbound</li>
+                  <li class="breadcrumb-item active" type="button" >Scan Tracking <i
+                      class="fas fa-shopping-cart nav-icon"></i></li>
+                </ol>
+              </a>
+            </div>
+
+            <div class="container-fluid" >
+              <div class="container-fluid barbar">
+
+                <div class="card card-secondary">
+                  <div class="card-header">
+                    <h5 class="card-title"><strong>{{input.USER_NAME}} : </strong> {{input.WORKER_NAME}}
+                      {{input.WORKER_SURNAME}} </h5>
+                  </div>
+                  <div class="card-body">
+                    <form >
+                  <div class="row">
+      
+                    <div class="col-1"> 
+                    </div>
+                    <div class="col-10">
+                      <div class="form-group row">
+                        <label for="PIN" class="col-2 col-form-label">PIN CODE</label>
+                        <div class="col-10">
+                          <input  #inputPin type="text" class="form-control" name="PIN_CODE" placeholder="PIN CODE"
+                            [(ngModel)]="input.PIN_CODE" (change)="tablecheck_user();" minlength="1" maxlength="50" required>
+                        </div>
+                      </div>
+      
+                      <div class="form-group row">
+                        <label for="Pallet NO" class="col-2 col-form-label">Pallet NO </label>
+                        <div class="col-10">
+                          <input type="text" class="form-control" name="Pallet_NO" placeholder="เลขพาเลทไม่สามารถใช้ซ้ำได้ภายในวัน"
+                            [(ngModel)]="input.Pallet_NO" (change)="check_Pallet();" minlength="1" maxlength="4" required
+                            #inputPallet>
+                        </div>
+                      </div>
+
+                      <div class="form-group row" [hidden]="tracking_page">
+                        <label for="Tracking" class="col-2 col-form-label">Tracking </label>
+                        <div class="col-10">
+                          <input type="text" class="form-control" name="Tracking" placeholder="SCAN เลข Tracking Order"
+                            [(ngModel)]="input.TRACK_CODE" (change)="check_Tracking();" minlength="10" maxlength="20" required
+                            #inputTrack>
+                        </div>
+                      </div>
+
+                      <div class="form-group row" [hidden]="!tracking_page">
+                        <label for="Tracking" class="col-2 col-form-label">Tracking++ </label>
+                        <div class="col-10">
+                          <input type="text" class="form-control is-invalid" name="Tracking2" placeholder="เลข Tracking Order(ยิงซ้ำบวกเพิ่ม)"
+                            [(ngModel)]="input.TRACK_CODE" (change)="check_Tracking2();" minlength="10" maxlength="20" required
+                            #inputTrack>
+                        </div>
+                      </div>
+
+                    </div>
+                    <div class="col-1" [hidden]="tracking_page">
+                      
+                      <button type="button" class="btn btn-danger btn-sm float-right" (click)="model_2()" >โหมด Track++ 
+                        </button>
+                    </div>
+                    <div class="col-1" [hidden]="!tracking_page">
+                      
+                      <button type="button" class="btn btn-primary btn-sm float-right" (click)="model_1()" >โหมด Track 1-1
+                        </button>
+                    </div>
+                    
+                  </div>
+                </form>
+                  </div>
+                </div>
+
+                <!-- <div class="alert bg-danger color-palette align-items-center" role="alert">
+                  <strong>{{input.USER_NAME}} : </strong> {{input.WORKER_NAME}}
+                  {{input.WORKER_SURNAME}}
+                </div>
+                <h6>*เลขพาเลทไม่สามารถใช้ซ้ำได้ภายในวัน</h6> 
+                <br>
+
+                <form >
+                  <div class="row">
+      
+                    <div class="col-1"> </div>
+                    <div class="col-10">
+                      <div class="form-group row">
+                        <label for="PIN" class="col-2 col-form-label">PIN CODE</label>
+                        <div class="col-10">
+                          <input  #inputPin type="text" class="form-control" name="PIN_CODE" placeholder="PIN CODE"
+                            [(ngModel)]="input.PIN_CODE" (change)="tablecheck_user();" minlength="1" maxlength="50" required>
+                        </div>
+                      </div>
+      
+                      <div class="form-group row">
+                        <label for="Pallet NO" class="col-2 col-form-label">Pallet NO </label>
+                        <div class="col-10">
+                          <input type="text" class="form-control" name="Pallet_NO" placeholder="SCAN เลขที่ พาเลท"
+                            [(ngModel)]="input.Pallet_NO" (change)="check_Pallet();" minlength="1" maxlength="4" required
+                            #inputPallet>
+                        </div>
+                      </div>
+
+                      <div class="form-group row">
+                        <label for="Tracking" class="col-2 col-form-label">Tracking </label>
+                        <div class="col-10">
+                          <input type="text" class="form-control" name="Tracking" placeholder="SCAN เลข Tracking Order"
+                            [(ngModel)]="input.TRACK_CODE" (change)="check_Tracking();" minlength="10" maxlength="20" required
+                            #inputTrack>
+                        </div>
+                      </div>
+
+                    </div>
+                    <div class="col-1"></div>
+                  </div>
+                </form>
+       -->
+
+                
+                <div [hidden]="!showdataPage">
+                  <div class="card ">
+                      <div class="card-body">
+                        <div class="row">
+                          <div class="col-12" >
+                            <b> <font size="7" >
+                              Track ล่าสุด : <font style="color:	rgb(221, 17, 17)">{{this.input.LastTrack}}</font>
+                            </font></b>
+                          </div>
+                        </div>
+                  
+                        <div class="row">
+                 
+                          <!-- <div class="col-2" >
+                            <button type="button" class="btn btn-primary" (click)="printdetail()">
+                              พิมพ์
+                            </button>
+                          </div> -->
+                  
+                      
+                  
+                        </div>
+                  
+                        <div class="card-header border-0 ui-sortable-handle">
+                          <h5 class="card-title">
+                            <i class="fas fa-th mr-1"></i>
+                            
+                            <b> 
+                              <font size="5">
+                                Pallet_NO :  
+                                <font style="color: rgb(221, 17, 17); margin-right: 30px;">
+                                  {{this.input.Pallet_NO}}
+                                </font>
+                              </font>
+                            </b>
+                            
+                            <b> 
+                              <font size="5" style="margin-left: 30px;">
+                                รวม : 
+                                <font style="color: rgb(221, 17, 17);">
+                                  {{this.input.count_qty}}
+                                </font>
+                              </font>
+                            </b>
+                          </h5>
+                        
+                          <div style="text-align: right;">
+                            <button type="button" class="btn btn-warning" (click)="interface()">
+                              โอนย้ายข้อมูล <i class="fas fa-upload"></i>
+                            </button>
+                          </div>
+                        
+                        </div>
+                        
+                        
+        
+                        <div class="card-body" style="font-size:15px;">
+        
+                          <table class="table  table-bordered" datatable [dtOptions]="dtOptions_outbound" [dtTrigger]="dtTrigger_outbound">
+                            <thead>
+                              <tr class="table-primary text-center">
+                                <th >No</th>
+                                <th >ORDER</th>
+                                <th >ขนส่ง</th>
+                                <th >Track</th>
+                                <th >ช่องทาง</th> 
+                                <th >วัน/เวลา ที่ Scan</th>
+                                <th >Qty</th>
+                                <th style="width: 80px">Even</th>
+                              </tr>
+                            </thead>
+                            <tbody style="font-size:14px">
+                              <tr *ngFor="let datas of data;let i = index;">
+                                <td class="text-center">{{i+1}}</td>
+                                <td class="text-center">{{datas.ORDER_NO}}</td>
+                                <td class="text-center">{{datas.SHIP_PROVIDER_OOD}}</td> 
+                                <td class="text-center">{{datas.BILL_NO}}</td> 
+                                <td class="text-center">{{datas.TCHANNEL}}</td>
+                                <td class="text-center">{{datas.scandate}}</td>
+                                <td class="text-center">{{datas.QTY_BOX}}</td>
+                                <td class="text-center">
+                                  <!-- <button type="button" class="btn-sm btn-danger" (click)="delete(i)">
+                                  ลบ
+                                </button> -->
+                                <span style="font-size:13px" type="button" class="badge badge-pill badge-danger" (click)="delete(i)">
+                                  &emsp; ลบ &emsp;</span> 
+                              </td> 
+                              
+              
+                              </tr>
+                            </tbody>
+                          </table>
+      
+        
+                        </div>
+                  
+                      </div>
+                  </div>
+                </div>
+
+
+              </div>
+            </div>
+
+
+          
+
+
+          </div><!-- /.row -->
+        </div><!-- /.container-fluid -->
+      </div>
+    </div>
+
+
+  </div>
+</body>

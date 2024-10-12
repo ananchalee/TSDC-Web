@@ -1,0 +1,218 @@
+<!-- ส่งค่ายัง Component อื่นๆ  -->
+
+<body class="hold-transition sidebar-mini layout-navbar-fixed">
+  <div class="wrapper">
+
+    <app-header id="page" [Pageactive]="pageactive" [RepageTime]="repageTime"></app-header>
+    <app-menu id="page" [Pageactive]="pageactive"></app-menu>
+    <div class="content-wrapper" style="min-height: 2000px;">
+      <!-- Content Header (Page header) -->
+      <div class="content-header">
+
+        <ol class="breadcrumb ">
+          <li class="breadcrumb-item">Report</li>
+          <li class="breadcrumb-item active">Report Sorter  <i class="nav-icon fas fa-tachometer-alt"></i></li>
+          <!--     <li class="breadcrumb-item active" align = 'right'>Refresh Page &nbsp; <a id="progressBar"> </a></li>  -->
+
+        </ol>
+
+      </div>
+
+      <!-- /.content-header -->
+
+      <!-- Main content -->
+     
+      
+      <section class="content">
+        <div class="container-fluid">
+          <div class="row">
+            <!-- left column -->
+            <div class="col-md-4">
+              <!-- general form elements -->
+              <div class="card card-secondary">
+                <div class="card-header">
+                  <h5 class="card-title">ค้นหา Bacht Sorter</h5>
+                </div>
+                <div class="card-body">
+                  <form ngNativeValidate (ngSubmit)="view()">
+
+                    <div class="input-group input-group-sm">
+                      <input type="text" class="form-control" name="shipment_ID" placeholder="พิมพ์เลข BATCH CODE"
+                      [(ngModel)]="input.shipment_ID"  maxlength="50" required
+                      #inputpincode >
+                      <span class="input-group-append">
+                        <button type="submit" class="btn btn-info btn-flat">ค้นหา!</button>
+                      </span>
+                    </div>
+
+                  </form>
+                </div>
+              </div>
+            </div>
+            <!-- right column -->
+            <div class="col-md-8">
+              <div class="card ">
+          
+                <div class="card-header">
+                 
+                  <div class="progress" style="height: 20px;">
+                    <div class="progress-bar progress-bar-success progress-bar-striped" role="progressbar"
+                      [style.width.%]="data.percentage" aria-valuemin="0" aria-valuemax="100">
+                      {{ data.percentage }}%
+                    </div>
+                  </div>
+                  
+                </div>
+
+                <div class="card-body">
+                    <b>
+                  <div class="row" style="color:	rgb(45, 52, 153);">
+                    
+                  &emsp;ยอดรวม BATCH: <font style="color:	rgb(221, 17, 17)">{{data.SUM_TOTAL_QTY}}</font>
+                  </div>
+                  <div class="row" style="color:	rgb(45, 52, 153)">
+                      &emsp;ยอดรวมที่ผ่านการตรวจสอบ : <font style="color:	rgb(221, 17, 17)">{{data.SUM_QTY_CHECK}}</font>
+                
+                </div>     </b>
+
+                  
+                </div>
+              </div>
+            </div>
+
+          </div>
+          <div class="row">
+
+            <section class="col-lg-12 connectedSortable ui-sortable">
+
+              <!-- รายการเช็ค -->
+              <div class="card ">
+                <div class="card-header border-0 ui-sortable-handle">
+                  <h5 class="card-title">
+                    <i class="fas fa-th mr-1"></i>
+                    รายการเช็ค
+                  </h5>
+
+                  <div class="card-tools">
+                    <button type="button" class="btn  btn-sm" data-card-widget="collapse">
+                      <i class="fas fa-minus"></i>
+                    </button>
+
+                  </div>
+                </div>
+
+                <div class="row justify-content-md-center">
+                  <div *ngIf="isLoading" class="loading-spinner">
+                    <!-- You can style this div or add a spinner image/icon here -->
+                    Loading... <i class="fas fa-3x fa-sync-alt fa-spin"></i>
+                  </div>
+                  </div>
+
+                <div class="card-body" style="font-size:15px;">
+
+                  <table class="table  " datatable [dtOptions]="dtOptions_reportsorter" [dtTrigger]="dtTrigger_reportsorter">
+                    <thead>
+                      <tr class="text-center">
+                        
+                        <th style="width: 100px">ITEM</th>
+                        <th>QTY </th>
+                        <th>QTY CHECK</th>
+                        <th>BATCH CODE</th>
+                        <th>COMPANY </th>
+                        <th>PRODUCT</th>
+                        <th>ORDER DATE</th>
+                        <th style="width: 150px">STATUS</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr  class="text-center" *ngFor="let datas of dataview ; let i = index">
+                        
+                        <td><font size="3"><b> {{datas.ITEM}}</b></font></td>
+                        <td><font size="3"><b>{{datas.TOTAL_QTY}}</b></font></td>
+                        <td  [ngClass]="{ 'text_red': datas.TOTAL_QTY != datas.QTY_CHECK}">
+                          <font size="3"><b>{{datas.QTY_CHECK}} </b> </font>
+                        </td>
+                        <td>
+                          <font size="2"><b>{{datas.SHIPMENT_ID}}</b></font>
+                        </td>
+                        <td >
+                          <font size="2"><b>{{datas.USER_DEF1}}</b></font>
+                        </td>
+                        <td >
+                          <font size="2"><b>{{datas.USER_DEF5}}</b></font>
+                        </td>
+                        <td >
+                          <font size="2"><b>{{datas.DATE_TIME_STAMP}}</b></font>
+                        </td>
+                        <td  [ngClass]="{
+                          'text_red': datas.STATUS_VIEW == 'ยังไม่มีการออกใบงาน',
+                          'text_green': datas.STATUS_VIEW =='CHECK ครบ',
+                          'text_yello': datas.STATUS_VIEW =='CHECK ไม่ครบ'}">
+                          <font size="2"><b>{{datas.STATUS_VIEW}}</b></font>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+
+
+
+                  <div #Disappear class="modal fade" id="Disappear_Detail" role="dialog">
+                    <div class="modal-dialog modal-lg"> <br> <br> <br> <br> <br> <br>
+                      <div class="modal-content">
+                        <div class="modal-header">
+                          &emsp; <h5 class="modal-title">
+                            &emsp; <a style="color:rgb(8, 83, 110)"><b>{{input.data_shipment_id}}</b></a>&nbsp; ขาด
+                            &nbsp;<a style="color:rgb(214, 32, 16)">{{input.data_disappear_QTY}}</a> </h5>
+                          <button type="button" class="close" data-dismiss="modal" aria-label="Close"
+                            (click)="close_Disappear()">
+                            <span aria-hidden="true">&times;</span>
+                          </button>
+                        </div>
+                        <div class="card-body">
+
+                          <table class="table table-striped">
+                            <thead>
+                              <tr>
+                                <th>ITEM ID</th>
+                                <th>ITEM desc</th>
+                                <th style="width: 20px">QTY requested</th>
+                                <th style="width: 20px">QTY check</th>
+                                <th style="width: 20px">QTY disappear</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <tr *ngFor="let datas of dataview ; let i = index">
+
+                                <td> {{datas.ITEM_ID}}</td>
+                                <td>{{datas.ITEM_DESC}}</td>
+                                <td>{{datas.QTY_REQUESTED}}</td>
+                                <td>{{datas.QTY_CHECK}}</td>
+                                <td><span class="badge bg-danger">{{datas.QTY_REQUESTED-datas.QTY_CHECK}}</span></td>
+                              </tr>
+                            </tbody>
+                          </table>
+
+
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+                <!-- /.card-footer -->
+              </div>
+              <!-- -->
+            </section>
+
+          
+          </div>
+        </div>
+      </section>
+
+
+      <!-- /.content -->
+    </div>
+
+
+  </div>
+</body>
