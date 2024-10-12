@@ -569,6 +569,102 @@
     </div>
 
 
+    <!-- <div class="container-fluid" [hidden]="pagePrintTrackAll">
+      <div style="page-break-after: always" class="page" *ngFor="let list of dataprint; let i = index;">
+        
+        <div class="row justify-content-center">
+          <div class="col-4 text-center">
+            <font size="4">Tracking No :</font>
+          </div>
+          <div class="col-8">
+            <ngx-barcode6 
+              [bc-element-type]="'svg'" 
+              [bc-format]="'CODE128'" 
+              [bc-text-position]="'button'" 
+              [bc-width]="2"
+              [bc-height]="50" 
+              [bc-font-size]="15" 
+              [bc-value]="list.REF_INDEX" 
+              [bc-display-value]="true">
+            </ngx-barcode6>
+          </div>
+        </div>
+    
+        <div class="row justify-content-center">
+          <div class="col-4 text-center">
+            <font size="4">Box Size :</font>
+          </div>
+          <div class="col-8">
+            <font size="4"><b>{{list.BOX_SIZE}}</b></font>
+          </div>
+        </div>
+    
+        <div class="row justify-content-center">
+          <div class="col-4 text-center">
+            <font size="4">Channel :</font>
+          </div>
+          <div class="col-8">
+            <font size="4"><b>{{list.TCHANNEL}}</b></font>
+          </div>
+        </div>
+    
+        <div class="row justify-content-center">
+          <div class="col-4 text-center">
+            <font size="4">Seller :</font>
+          </div>
+          <div class="col-8">
+            <font size="4"><b>{{list.SELLER_NO}}</b></font>
+          </div>
+        </div>
+    
+        <div class="row justify-content-center">
+          <div class="col-4 text-center">
+            <font size="4">Shipping Name :</font>
+          </div>
+          <div class="col-8">
+            <font size="4"><b>{{list.SHIPPING_NAME}}</b></font>
+          </div>
+        </div>
+    
+        <div class="row justify-content-center">
+          <div class="col-4 text-center">
+            <font size="4">Box No :</font>
+          </div>
+          <div class="col-8">
+            <font size="4"><b>{{list.BOX_NO_ORDER}} / {{input.MaxBox_NO}}</b></font>
+          </div>
+        </div>
+    
+        <div class="row justify-content-center">
+          <div class="col-4 text-center">
+            <font size="4">Table Check :</font>
+          </div>
+          <div class="col-8">
+            <font size="4"><b>{{list.TABLE_CHECK}}</b></font>
+          </div>
+        </div>
+    
+        <div class="row justify-content-center">
+          <div class="col-4 text-center">
+            <font size="4">Shipment :</font>
+          </div>
+          <div class="col-8">
+            <ngx-barcode6 
+              [bc-element-type]="'svg'" 
+              [bc-format]="'CODE128'" 
+              [bc-text-position]="'button'" 
+              [bc-width]="2"
+              [bc-height]="40" 
+              [bc-font-size]="15" 
+              [bc-value]="list.SHIPMENT_ID" 
+              [bc-display-value]="true">
+            </ngx-barcode6>
+          </div>
+        </div>
+    
+      </div>
+    </div> -->
+ 
     <div class="container-fluid" [hidden]="pagePrintCoverSheet">
       <div style="page-break-after: always" class="page" *ngFor="let list of dataprintCoverSheet;let i = index;">
         <div class="row ">
