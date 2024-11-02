@@ -532,8 +532,10 @@ export class AuditCheckComponent implements OnInit {
         });
         this.input.CONTAINER_ID = ''
       } else if (this.CheckWork.status === 'success') {
-        this.input.ORDER_TYPE = this.CheckWork.data[0].ORDER_TYPE
-        this.input.shipment_id = this.CheckWork.data[0].SHIPMENT_ID
+        this.input.ORDER_TYPE = this.CheckWork.data[0].ORDER_TYPE;
+        this.input.shipment_id = this.CheckWork.data[0].SHIPMENT_ID;
+        this.input.COMPANY = this.CheckWork.data[0].COMPANY;
+        this.input.ORDER_DATE = this.CheckWork.data[0].ORDER_DATE;
 
         this.tablecheck_user();
 
@@ -1500,6 +1502,8 @@ console.log(this.input.check_QTY_PICK,this.res_QTY_equal,this.Status_Print_Track
           TABLE_CHECK: this.input.TABLE_CHECK,
           BOX_SIZE: this.input.BOX_SIZE,
           TCHANNEL: this.input.TCHANNEL,
+          COMPANY : this.input.COMPANY,
+          ORDER_DATE : this.input.ORDER_DATE
 
         }
         a.push(array)
@@ -1562,7 +1566,9 @@ console.log(this.input.check_QTY_PICK,this.res_QTY_equal,this.Status_Print_Track
           TABLE_CHECK: data.data[0].TABLE_CHECK,
           BOX_SIZE: data.data[0].BOX_SIZE,
           TCHANNEL: this.input.TCHANNEL,
-          MaxBox_NO : this.input.MaxBox_NO
+          MaxBox_NO : this.input.MaxBox_NO,
+          COMPANY : this.input.COMPANY,
+          ORDER_DATE : this.input.ORDER_DATE
         }
         a.push(array)
         this.dataprint = a
@@ -1609,7 +1615,9 @@ console.log(this.input.check_QTY_PICK,this.res_QTY_equal,this.Status_Print_Track
             TABLE_CHECK: data.data[i].TABLE_CHECK,
             BOX_SIZE: data.data[i].BOX_SIZE,
             TCHANNEL: this.input.TCHANNEL,
-            MaxBox_NO : this.input.MaxBox_NO
+            MaxBox_NO : this.input.MaxBox_NO,
+            COMPANY : this.input.COMPANY,
+            ORDER_DATE : this.input.ORDER_DATE
 
           }
           a.push(array)
