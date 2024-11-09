@@ -155,6 +155,8 @@ export class EditBoxComponent implements OnInit {
         this.input.TABLE_CHECK = this.CheckTrack.data[0].TABLE_CHECK;
         this.input.CUST_NAME = this.CheckTrack.data[0].CUST_NAME;
         this.input.TCHANNEL = this.CheckTrack.data[0].TCHANNEL;
+        this.input.COMPANY = this.CheckTrack.data[0].COMPANY;
+        this.input.ORDER_DATE = this.CheckTrack.data[0].ORDER_DATE;
         this.scanBoxPage = false;
         this.scanTrackPage = true;
 
@@ -235,7 +237,9 @@ export class EditBoxComponent implements OnInit {
           SHIPMENT_ID: this.input.PO_NO,
           TABLE_CHECK: this.input.TABLE_CHECK,
           TCHANNEL: this.input.TCHANNEL,
-          BOX_SIZE: data.data[0].BOX_SIZE
+          BOX_SIZE: data.data[0].BOX_SIZE,
+          COMPANY : this.input.COMPANY,
+          ORDER_DATE : this.input.ORDER_DATE
         }
         a.push(array)
         this.dataprint = a;
