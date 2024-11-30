@@ -358,6 +358,10 @@ Check_TRANSPORTATION_NAME(data:any){
   return this.http.post('http://10.26.1.13:1665/api99/Check_TRANSPORTATION_NAME',data)
 }
 
+Get_TRANSPORTATION_NAME(){
+  return this.http.get('http://10.26.1.13:1665/api99/Get_TRANSPORTATION_NAME')
+}
+
 check_Tracking_confirm_outbound(data:any){
   return this.http.post('http://10.26.1.21:1661/api/check_Tracking_confirm_outbound2',data)
 }
