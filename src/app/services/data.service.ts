@@ -15,9 +15,6 @@ export class DataService {
 
   constructor(private http: HttpClient) { }
 
-  getServerDate2() {
-   return this.http.get('http://10.26.1.21:1661/api/serverdate')
-  }
 
   getServerDate(): Observable<{ date: string }> {
     return this.http.get<{ date: string }>('http://10.26.1.21:1661/api/serverdate');
@@ -76,6 +73,12 @@ CheckConOnline(data:any){
    
 }
 
+
+CheckConOnline_ug(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/CheckConOnline_ug',data)
+   
+}
+
 CheckConSorter(data:any){
   return this.http.post('http://10.26.1.21:1661/api/CheckConSorter',data)
 }
@@ -94,12 +97,21 @@ matchItemInCon(data:any){
   return this.http.post('http://10.26.1.21:1661/api/matchItemInCon',data)
 }
 
+matchItemInCon_ug(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/matchItemInCon_ug',data)
+}
+
 matchItemInConSorter(data:any){
   return this.http.post('http://10.26.1.21:1661/api/matchItemInConSorter',data)
 }
 
 checkEqualCon(data:any){
   return this.http.post('http://10.26.1.21:1661/api/checkEqualCon',data)
+    
+}
+
+checkEqualCon_ug(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/checkEqualCon_ug',data)
     
 }
 
@@ -119,6 +131,10 @@ updateConQtyCheck_SORTER(data:any){
 
 BOX_CONTROL_DETAIL(data:any){
   return this.http.post('http://10.26.1.21:1661/api/BOX_CONTROL_DETAIL',data)
+}
+
+BOX_CONTROL_DETAIL_ug(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/BOX_CONTROL_DETAIL_ug)',data)
 }
 
 check_master_box(data:any){
@@ -151,6 +167,11 @@ CheckConOffline(data:any){
 
 CheckWork(data:any){
   return this.http.post('http://10.26.1.21:1661/api/CheckWork',data)
+   
+}
+
+CheckWork_ug(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/CheckWork_ug',data)
    
 }
 
@@ -386,6 +407,31 @@ check_ordercancel_online(data:any){
 interface_Tracking_confirm_outbound(data:any){
   return this.http.post('http://10.26.1.21:1661/api/interface_Tracking_confirm_outbound',data)
 }
+
+///////// outbount routeing
+get_transport(){
+  return this.http.get('http://10.26.1.21:1661/api/get_transport')
+}
+
+get_ordership_delivery(data:any){
+  return this.http.post('http://10.26.1.13:1665/api99/get_ordership_delivery', data);
+}
+
+get_ordership_delivery_daily(data:any){
+  return this.http.post('http://10.26.1.13:1665/api99/get_ordership_delivery_daily', data);
+}
+get_ordership_delivery_partial(data:any){
+  return this.http.post('http://10.26.1.13:1665/api99/get_ordership_delivery_partial', data);
+}
+
+update_ordership_delivery(data:any){
+  return this.http.post('http://10.26.1.13:1665/api99/update_ordership_delivery', data);
+}
+
+cancel_ordership_delivery(data:any){
+  return this.http.post('http://10.26.1.13:1665/api99/cancel_ordership_delivery', data);
+}
+
 
 ////// report
 

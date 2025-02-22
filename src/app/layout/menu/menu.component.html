@@ -158,9 +158,15 @@
           </a>
           <ul class="nav nav-treeview">
             <li class="nav-item"  (click)="Onclick_menu('scantracking') ">
-              <a class="nav-link"  [ngClass]='{active:page.outbound_Checktracking}'>
+              <a class="nav-link"  [ngClass]='{active:page.outbound_Scantracking}'>
                 <i class="fa fa-tags nav-icon"></i>
                 <p>Tracking Order</p>
+              </a>
+            </li>
+            <li class="nav-item"  (click)="Onclick_menu('routing') ">
+              <a class="nav-link"  [ngClass]='{active:page.outbound_Routing}'>
+                <i class="fas fa-truck-moving nav-icon"></i>
+                <p>Outbount Routing</p>
               </a>
             </li>
             

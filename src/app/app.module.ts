@@ -25,6 +25,7 @@ import { NgxBarcode6Module } from 'ngx-barcode6';
 
 import {DataTablesModule} from 'angular-datatables';
 import { OutboundScantrackingComponent } from './layout/outbound-scantracking/outbound-scantracking.component';
+import { OutboundRoutingComponent } from './layout/outbound-routing/outbound-routing.component';
 import { RegisterPackComponent } from './layout/register-pack/register-pack.component';
 import { ReportSorterComponent } from './layout/reports/report-sorter/report-sorter.component';
 
@@ -46,6 +47,7 @@ import { ReportSorterComponent } from './layout/reports/report-sorter/report-sor
     AuditCheckPrintOldComponent,
     AuditCheckPrintOldFullComponent,
     OutboundScantrackingComponent,
+    OutboundRoutingComponent,
     RegisterPackComponent,
     ReportSorterComponent
 

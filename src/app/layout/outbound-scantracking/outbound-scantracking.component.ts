@@ -82,6 +82,7 @@ export class OutboundScantrackingComponent implements OnInit {
     this.data.percentage = 0;
 
     this.LOAD_USERTABLECHECK();
+    this.Get_TRANSPORTATION_NAME();
     this.getserverdate();
   }
 
@@ -118,7 +119,7 @@ export class OutboundScantrackingComponent implements OnInit {
         this.input.TABLE_CHECK = this.user.data[0].TABLE_CHECK
         this.input.PIN_CODE = this.user.data[0].PIN_CODE
 
-        this.Get_TRANSPORTATION_NAME();
+        //this.Get_TRANSPORTATION_NAME();
         //console.log(this.input);
         setTimeout(() => { this.inputPallet.nativeElement.focus(); }, 1000);
       }else{
@@ -151,19 +152,44 @@ export class OutboundScantrackingComponent implements OnInit {
         this.transport = res;
       }
     })
+
+    return true;
   }
 
   // Function to get the transport name based on the input string
  getTransportName(input : string) {
-  // Loop through the data to find a match
-  for (let i = 0; i < this.transport.data.length; i++) {
-    // Extract the first `TRANSPORT_LEN` characters from the input
-    const transportCodePrefix = input.substring(0, this.transport.data[i].TRANSPORT_LEN);
-    // Check if the transport code prefix matches
-    if (transportCodePrefix.toUpperCase() == this.transport.data[i].TRANSPORT_CODE.toUpperCase()) {
-      return this.transport.data[i].TRANSPORT_NAME;
-      
+  if(this.transport == null){
+    console.log(this.transport);
+
+    var status_ =  this.Get_TRANSPORTATION_NAME()
+
+    if(status_){
+
+      // Loop through the data to find a match
+      for (let i = 0; i < this.transport.data.length; i++) {
+        // Extract the first `TRANSPORT_LEN` characters from the input
+        const transportCodePrefix = input.substring(0, this.transport.data[i].TRANSPORT_LEN);
+        // Check if the transport code prefix matches
+        if (transportCodePrefix.toUpperCase() == this.transport.data[i].TRANSPORT_CODE.toUpperCase()) {
+          return this.transport.data[i].TRANSPORT_NAME;
+          
+        }
+      }
+
     }
+   
+  }else{
+
+      // Loop through the data to find a match
+      for (let i = 0; i < this.transport.data.length; i++) {
+        // Extract the first `TRANSPORT_LEN` characters from the input
+        const transportCodePrefix = input.substring(0, this.transport.data[i].TRANSPORT_LEN);
+        // Check if the transport code prefix matches
+        if (transportCodePrefix.toUpperCase() == this.transport.data[i].TRANSPORT_CODE.toUpperCase()) {
+          return this.transport.data[i].TRANSPORT_NAME;
+          
+        }
+      }
   }
   return null;  // Return null if no match is found
 }

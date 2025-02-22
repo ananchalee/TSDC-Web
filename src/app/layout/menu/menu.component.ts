@@ -66,6 +66,8 @@ export class MenuComponent implements OnInit {
           switch (this.Pageactive[0].pagename){
             case 'Outbound-Sacn-Tracking' : this.page.outbound_Scantracking = true;
               break;
+            case 'Outbound-Routing' : this.page.outbound_Routing = true;
+              break;
           }
           break;  
         case 'RegistPack':
@@ -145,6 +147,9 @@ export class MenuComponent implements OnInit {
         break;
       case 'scantracking':
         this.router.navigate(["/Outbound-Sacn-Tracking"]);
+        break;
+      case 'routing':
+        this.router.navigate(["/Outbound-Routing"]);
         break;
       case 'report_sorter':
         this.router.navigate(["/report-sorter"]);
