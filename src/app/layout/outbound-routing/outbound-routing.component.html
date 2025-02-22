@@ -65,8 +65,8 @@
                     <h1 class="card-title">รายการยังไม่ครบ <i class="fas fa-box"></i> </h1>
                     <table class="table">
                       <tbody>
-                        <tr *ngFor="let data of partial_list; let i = index" >
-                          <td>{{ data.BILL_NO }} <br><span class="brand-text">{{data.BILLDATE}}</span></td>
+                        <tr class="row-danger"  *ngFor="let data of partial_list ; let i = index" >
+                          <td>{{ data.BILL_NO }} <br><span class="brand-text">{{data.BILLDATE}} | {{data.BRAND}}</span></td>
                           <td >{{ data.CONFIRM_CARTON_NO}}/{{data.CARTON_NO }}</td>
                           <td >{{ data.CONFIRM_TIME }}</td>
                         </tr>
@@ -104,7 +104,7 @@
                       <tr *ngFor="let data of detail_list; let i = index" [ngClass]="{ 'row-danger': (data.CONFIRM_CARTON_NO - data.CARTON_NO) !== 0 }">
                         <td>{{ i + 1 }}</td>
                         <td > <button type="button" class="btn btn-block btn-danger btn-xs"
-                          [ngClass]="{ 'disabled': data.PCPERIOD_NO != null }" (click)="cancel_check(data.BILL_NO)">ลบ</button>
+                          [ngClass]="{ 'disabled': data.PCPERIOD_NO != null }" [disabled]="data.PCPERIOD_NO != null" (click)="cancel_check(data.BILL_NO)">ลบ</button>
                         </td>
                         <td>{{ data.BILL_NO }}<br> <span class="brand-text">{{data.BILLDATE}}</span></td>
                         <td>{{ data.BILL_N8_BLH }} <br> <span class="brand-text">{{data.BRAND}}</span></td>

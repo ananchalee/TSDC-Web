@@ -158,9 +158,10 @@ export class OutboundRoutingComponent implements OnInit {
         if(this.resdata[0].CONFIRM_CARTON_NO != null && this.resdata[0].CARTON_NO < (this.resdata[0].CONFIRM_CARTON_NO+1)){
           Swal.fire({
             icon: 'warning',
-            title: 'เกินจำนวน ' + this.input.barcode,
+            title:this.input.barcode,
+            html : 'จำนวนกล่องเกิน ' + this.resdata[0].CONFIRM_CARTON_NO +' > '+ this.resdata[0].CARTON_NO,
             showConfirmButton: false,
-            timer: 2000
+            timer: 4000
           });
           this.playAudioError();
           this.input.barcode = '';
