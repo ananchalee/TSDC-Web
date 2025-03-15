@@ -11,7 +11,9 @@ export class MenuComponent implements OnInit {
 
 
   page:any = {}
-  USER: any = {};
+  USER: any = {}
+  menu_Moniter:boolean = false;
+  menu_User:boolean = true;
 
   constructor(private router: Router,) { }
 
@@ -26,10 +28,28 @@ export class MenuComponent implements OnInit {
 
     }else{
       const user = JSON.parse(localStorage.getItem('currentUser') || '');
-        //console.log(user)
+        console.log(user)
        this.USER.user_firstname = user.FIRSTNAME,
        this.USER.user_lastname = user.LASTNAME,
-       this.USER.worker_id = user.WORKER_ID
+       this.USER.worker_id = user.WORKER_ID,
+       this.USER.CATEGORY = user.CATEGORY
+
+       switch(this.USER.CATEGORY){
+        case 'SuperAdmin' :
+          this.menu_Moniter = true;
+        break;
+        case 'Admin' :
+          this.menu_Moniter = true;
+          this.menu_User = false;
+        break;
+        default:
+          throw Error('Invalid Menu');
+       }
+
+       if(this.USER.CATEGORY == 'SuperAdmin' || this.USER.CATEGORY == 'Admin'){
+        this.menu_Moniter = true;
+       }
+      
 
       switch (this.Pageactive[0].active ){
         
@@ -80,6 +100,13 @@ export class MenuComponent implements OnInit {
               break;
           }
         break;
+        case 'Moniter':
+          this.page.moniter = true;
+          switch (this.Pageactive[0].pagename){
+            case 'Moniter-Status-RTS' : this.page.Moniter_StatusRTS = true;
+              break;
+          }
+          break; 
 
         default:
           throw Error('Invalid Menu');
@@ -87,37 +114,6 @@ export class MenuComponent implements OnInit {
     
   }
   }
-
-  // dashboard(){
-  //   this.router.navigate(["/dashboard"]);
-  // }
-  
-  // CheckOrder(){
-  //   this.router.navigate(["/audit-check"]);
-  // }
-
-  // Checkfullcarton(){
-  //   this.router.navigate(["/audit-check-fullcarton"]);
-  // }
-
-  // EditBox(){
-  //   this.router.navigate(["/edit-box"]);
-  // }
-
-  // OldCheckOrder_Print(){
-  //   this.router.navigate(["/audit-check-Print-Old"])
-  //   // .then(() => {
-  //   //   window.location.reload();
-  //   // });
-  // }
-
-  // RegistPack(){
-  //   this.router.navigate(["/register-pack"]);
-  // }
-
-  // Scantracking(){
-  //   this.router.navigate(["/Outbound-Sacn-Tracking"]);
-  // }
 
   Onclick_menu(page:string){
     switch(page){
@@ -153,6 +149,9 @@ export class MenuComponent implements OnInit {
         break;
       case 'report_sorter':
         this.router.navigate(["/report-sorter"]);
+        break;
+      case 'monit_statusRTS':
+        this.router.navigate(["/monit-statusRTS"]);
         break;
     }
   }

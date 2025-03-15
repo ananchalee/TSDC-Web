@@ -1,5 +1,6 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
+import { DataService } from '../../services/index';
 
 @Component({
   selector: 'app-header',
@@ -18,10 +19,12 @@ export class HeaderComponent implements OnInit {
   pushRightClass: string = 'push-right';
 
   today = new Date();
-  Datenow = this.today.toISOString().slice(0, 10);
-  Timenow = this.today.toISOString().slice(11, 16);
+  //Datenow = this.today.toISOString().slice(0, 10);
+  //Timenow = this.today.toISOString().slice(11, 16);
 
-  constructor(public router: Router) {
+  constructor(
+    private dataService: DataService, 
+    public router: Router) {
 
   }
 
@@ -66,18 +69,23 @@ export class HeaderComponent implements OnInit {
 
 
   startTime() {
-    var today = new Date();
+    this.dataService.getServerDate().subscribe(resp => {
+      if (resp && resp.date) {
+        this.today = new Date(resp.date);//เวลาserver
+      }else{
+        this.today = new Date();
+      }
+      
+      var Datenow = this.today.toISOString().slice(0, 10);
+      var h = this.today.getHours();
+      var m = this.today.getMinutes();
+      var s = this.today.getSeconds();
+      m = this.checkTime(m);
+      s = this.checkTime(s);
+      this.input.time = h + ":" + m + ":" + s
+      this.input.datetimetoday = Datenow + " " + h + ":" + m + ":" + s
 
-
-    var Datenow = today.toISOString().slice(0, 10);
-    var h = today.getHours();
-    var m = today.getMinutes();
-    var s = today.getSeconds();
-    m = this.checkTime(m);
-    s = this.checkTime(s);
-    this.input.time = h + ":" + m + ":" + s
-    this.input.datetimetoday = Datenow + " " + h + ":" + m + ":" + s
-
+    });
   }
 
   checkTime(i: any) {

@@ -443,6 +443,19 @@ VIEW_BACKLOG_SORTER(data:any) {
   return this.http.post('http://10.26.1.21:1665/api2/VIEW_BACKLOG_SORTER', data)
 }
 /////
+
+//////// moniter 
+Moniter_SumstatusRTS(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/Moniter_SumstatusRTS',data)
+}
+Moniter_statusRTS(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/Moniter_statusRTS',data)
+}
+update_statusRTS(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/update_statusRTS',data)
+}
+
+
 }
 
 

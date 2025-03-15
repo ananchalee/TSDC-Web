@@ -28,6 +28,7 @@ import { OutboundScantrackingComponent } from './layout/outbound-scantracking/ou
 import { OutboundRoutingComponent } from './layout/outbound-routing/outbound-routing.component';
 import { RegisterPackComponent } from './layout/register-pack/register-pack.component';
 import { ReportSorterComponent } from './layout/reports/report-sorter/report-sorter.component';
+import { MoniterStatusRTSComponent } from './layout/moniter-statusRTS/moniter-statusRTS.component';
 
 
 
@@ -49,7 +50,8 @@ import { ReportSorterComponent } from './layout/reports/report-sorter/report-sor
     OutboundScantrackingComponent,
     OutboundRoutingComponent,
     RegisterPackComponent,
-    ReportSorterComponent
+    ReportSorterComponent,
+    MoniterStatusRTSComponent,
 
 
   
