@@ -12,7 +12,8 @@ import { AuditCheckPrintOldFullComponent } from './layout/audit-check-Print-Old-
 import { OutboundScantrackingComponent } from './layout/outbound-scantracking/outbound-scantracking.component';
 import { RegisterPackComponent } from './layout/register-pack/register-pack.component';
 import { ReportSorterComponent } from './layout/reports/report-sorter/report-sorter.component';
-
+import { OutboundRoutingComponent } from './layout/outbound-routing/outbound-routing.component';
+import { MoniterStatusRTSComponent } from './layout/moniter-statusRTS/moniter-statusRTS.component';
 const routes: Routes = [
 
  
@@ -27,6 +28,8 @@ const routes: Routes = [
   { path:'Outbound-Sacn-Tracking',component:OutboundScantrackingComponent},
   { path:'register-pack',component:RegisterPackComponent},
   { path:'report-sorter',component:ReportSorterComponent},
+  { path:'Outbound-Routing',component:OutboundRoutingComponent},
+  { path:'monit-statusRTS',component:MoniterStatusRTSComponent},
 
   { path: '**', redirectTo: 'login' } ,
 

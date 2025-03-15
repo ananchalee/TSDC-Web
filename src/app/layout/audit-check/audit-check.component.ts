@@ -536,6 +536,7 @@ export class AuditCheckComponent implements OnInit {
         this.input.shipment_id = this.CheckWork.data[0].SHIPMENT_ID;
         this.input.COMPANY = this.CheckWork.data[0].COMPANY;
         this.input.ORDER_DATE = this.CheckWork.data[0].ORDER_DATE;
+        this.input.SELLER_NO = this.CheckWork.data[0].SELLER_NO;
 
         this.tablecheck_user();
 

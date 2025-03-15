@@ -1,0 +1,136 @@
+<!-- ส่งค่ายัง Component อื่นๆ  -->
+
+<body class="hold-transition sidebar-mini layout-navbar">
+  <div class="wrapper">
+
+    <app-header id="page" [Pageactive]="pageactive"></app-header>
+    <app-menu id="page" [Pageactive]="pageactive"></app-menu>
+
+    <div class="content-wrapper " >
+      <div [hidden]="routeno_page" class="content-header">
+        <div  class="container-fluid d-flex justify-content-center " style="min-height: 80vh;">
+          <div class="row text-center">
+            <!-- แถวของปุ่ม -->
+
+            <div class="col-12 d-flex flex-wrap justify-content-center">
+              <button *ngFor="let data of route;let i = index;" class="btn btn-primary btn-lg m-2" style="width: 30%; font-size: 25px;" (click)="pagesacn(data)">Route {{data}} </button>
+            </div>
+
+
+          </div>
+        </div>
+      </div>
+
+      <section [hidden]="!routeno_page" class="content-header" >
+        <div class="container-fluid" >
+
+          <div class="row ">
+            <div class="col-sm-6">
+              <a class="m-0">
+                <ol class="breadcrumb">
+                  <li class="breadcrumb-item" type="button" (click)="ngOnInit()">Outbound Routing </li>
+                </ol>
+              </a>
+            </div>
+          </div>
+          </div>
+        </section>
+
+      <section [hidden]="!routeno_page" class="content">
+
+        <div class="container-fluid">
+          <div class="row">
+            <!-- left column -->
+            <div class="col-md-4">
+              <!-- general form elements -->
+              <div class="card card-primary">
+                <div class="card-header" >
+                  <h5 class="card-title">{{this.input.route}} : Scan Barcode </h5>
+                </div>
+                <div class="card-body" >
+                  <form>
+                    <div class="row">
+                      <input class="form-control" type="text" name="Barcode" [(ngModel)]="input.barcode" 
+                      (change)="scan_barcode();"  placeholder="SCAN BARCODE HERE" required 
+                      #inputbarcode>
+                   </div>
+                  </form>
+                </div>
+              </div>
+
+              <div class="card card-danger">
+                
+                <div class="card-body">
+                  <div class="table">
+                    <h1 class="card-title">รายการยังไม่ครบ <i class="fas fa-box"></i> </h1>
+                    <table class="table">
+                      <tbody>
+                        <tr class="row-danger"  *ngFor="let data of partial_list ; let i = index" >
+                          <td>{{ data.BILL_NO }} <br><span class="brand-text">{{data.BILLDATE}} | {{data.BRAND}}</span></td>
+                          <td >{{ data.CONFIRM_CARTON_NO}}/{{data.CARTON_NO }}</td>
+                          <td >{{ data.CONFIRM_TIME }}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+            <!-- right column -->
+            <div class="col-md-8">
+              <!-- general form elements -->
+              <div class="card card-danger">
+                <div class="card-header">
+                  <h5 class="card-title">Checking List : {{this.input.route}}</h5>
+                </div>
+                <div class="table-responsive">
+                  <table class="table table-bordered table-striped fixed-header-table">
+                    <thead>
+                      <tr class="center-text">
+                        <th></th>
+                        <th>##</th>
+                        <th>Bill No.</th>
+                        <th>Bill N8</th>
+                        <th>Transport</th>
+                        <th>Carton</th>
+                        <th>Confirm</th>
+                        <th>Diff</th>
+                        <th>Batch</th>
+                        <th>ConfirmTime</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let data of detail_list; let i = index" [ngClass]="{ 'row-danger': (data.CONFIRM_CARTON_NO - data.CARTON_NO) !== 0 }">
+                        <td>{{ i + 1 }}</td>
+                        <td > <button type="button" class="btn btn-block btn-danger btn-xs"
+                          [ngClass]="{ 'disabled': data.PCPERIOD_NO != null }" [disabled]="data.PCPERIOD_NO != null" (click)="cancel_check(data.BILL_NO)">ลบ</button>
+                        </td>
+                        <td>{{ data.BILL_NO }}<br> <span class="brand-text">{{data.BILLDATE}}</span></td>
+                        <td>{{ data.BILL_N8_BLH }} <br> <span class="brand-text">{{data.BRAND}}</span></td>
+                        <td class="center-text">{{ data.TRANSPORT_ID }}</td>
+                        <td class="center-text">{{ data.CARTON_NO }}</td>
+                        <td class="center-text">{{ data.CONFIRM_CARTON_NO }}</td>
+                        <td class="center-text">{{ data.CONFIRM_CARTON_NO - data.CARTON_NO }}</td>
+                        <td>{{ data.BATCH_CODE }}</td>
+                        <td class="center-text">{{ data.CONFIRM_TIME }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+          
+
+            </div>
+          </div>
+        </div>
+      </section>
+
+
+    </div>
+    
+
+
+  </div>
+</body>

@@ -44,6 +44,8 @@ export class OutboundScantrackingComponent implements OnInit {
   sumPRICE: any;
   item_id: any = {};
 
+  transport: any = {};
+  
   checkscan: any = [];
   
   public pagePrint = true;
@@ -79,9 +81,8 @@ export class OutboundScantrackingComponent implements OnInit {
     };
     this.data.percentage = 0;
 
-    console.log(this.pageactive)
-
     this.LOAD_USERTABLECHECK();
+    this.Get_TRANSPORTATION_NAME();
     this.getserverdate();
   }
 
@@ -99,7 +100,6 @@ export class OutboundScantrackingComponent implements OnInit {
     this.input.USER_CHECK = user.WORKER_ID;
     this.input.TABLE_CHECK = this.input.USER_CHECK
     this.busy = this.dataService.LOAD_USERTABLECHECK(this.input).subscribe(res => {
-      console.log( res);
       this.user = res
 
       if (this.user.status === 'error') {
@@ -118,6 +118,8 @@ export class OutboundScantrackingComponent implements OnInit {
         this.input.WORKER_COMPANY = this.user.data[0].WORKER_COMPANY
         this.input.TABLE_CHECK = this.user.data[0].TABLE_CHECK
         this.input.PIN_CODE = this.user.data[0].PIN_CODE
+
+        //this.Get_TRANSPORTATION_NAME();
         //console.log(this.input);
         setTimeout(() => { this.inputPallet.nativeElement.focus(); }, 1000);
       }else{
@@ -126,6 +128,72 @@ export class OutboundScantrackingComponent implements OnInit {
 
     })
   }
+
+  Get_TRANSPORTATION_NAME(){
+    this.dataService.Get_TRANSPORTATION_NAME().subscribe(res => {
+      if (this.user.status === 'error') {
+        console.log(res)
+        Swal.fire({
+          icon: 'error',
+          title: 'เกิดข้อผิดพลาด ในการ Get_TRANSPORTATION_NAME !',
+          text: 'Get_TRANSPORTATION_NAME',
+          showConfirmButton: false,
+          timer: 2500
+        });
+      }else if (this.user.status === 'NULL') {
+        Swal.fire({
+          icon: 'warning',
+          title: 'ไม่พบข้อมูล TRANSPORTATION_NAME  !',
+          text: 'Get_TRANSPORTATION_NAME',
+          showConfirmButton: false,
+          timer: 2500
+        });
+      }else{
+        this.transport = res;
+      }
+    })
+
+    return true;
+  }
+
+  // Function to get the transport name based on the input string
+ getTransportName(input : string) {
+  if(this.transport == null){
+    console.log(this.transport);
+
+    var status_ =  this.Get_TRANSPORTATION_NAME()
+
+    if(status_){
+
+      // Loop through the data to find a match
+      for (let i = 0; i < this.transport.data.length; i++) {
+        // Extract the first `TRANSPORT_LEN` characters from the input
+        const transportCodePrefix = input.substring(0, this.transport.data[i].TRANSPORT_LEN);
+        // Check if the transport code prefix matches
+        if (transportCodePrefix.toUpperCase() == this.transport.data[i].TRANSPORT_CODE.toUpperCase()) {
+          return this.transport.data[i].TRANSPORT_NAME;
+          
+        }
+      }
+
+    }
+   
+  }else{
+
+      // Loop through the data to find a match
+      for (let i = 0; i < this.transport.data.length; i++) {
+        // Extract the first `TRANSPORT_LEN` characters from the input
+        const transportCodePrefix = input.substring(0, this.transport.data[i].TRANSPORT_LEN);
+        // Check if the transport code prefix matches
+        if (transportCodePrefix.toUpperCase() == this.transport.data[i].TRANSPORT_CODE.toUpperCase()) {
+          return this.transport.data[i].TRANSPORT_NAME;
+          
+        }
+      }
+  }
+  return null;  // Return null if no match is found
+}
+
 
   tablecheck_user() {
     /*  const user = JSON.parse(localStorage.getItem('currentUser') || '');
@@ -160,7 +228,6 @@ export class OutboundScantrackingComponent implements OnInit {
   getserverdate(){
      
     this.dataService.getServerDate().subscribe(resp => {
-      console.log(resp)
       if (resp && resp.date) {
         const currentDate = new Date(resp.date);//เวลาserver
         this.input.currentDateString = currentDate.toISOString().split('T')[0];
@@ -185,7 +252,6 @@ export class OutboundScantrackingComponent implements OnInit {
 
   interface(){
     this.dataService.interface_Tracking_confirm_outbound(this.input).subscribe(res => {
-      console.log(res);
       this.res_datas = res;
       if (this.res_datas.status === 'error') {
         Swal.fire({
@@ -216,8 +282,8 @@ export class OutboundScantrackingComponent implements OnInit {
       this.input.Pallet_NO = '';
       setTimeout(() => { this.inputPallet.nativeElement.focus(); }, 1000);
     }else{
-    this.busy =  this.dataService.check_Pallet_confirm_outbound(this.input).subscribe(res => {
-      console.log(res);
+      
+      this.busy =  this.dataService.check_Pallet_confirm_outbound(this.input).subscribe(res => {
       this.res_datas = res;
       if (this.res_datas.status === 'error'||this.res_datas.status === 'error2') {
         Swal.fire({
@@ -256,14 +322,10 @@ export class OutboundScantrackingComponent implements OnInit {
         } else {
           this.dtTrigger_outbound.next();
         }
-
-  
-        console.log(res,this.data[0].count_qty)
   
       }
-  
-    })
-   
+      })
+
     } 
   }
 
@@ -279,10 +341,12 @@ export class OutboundScantrackingComponent implements OnInit {
       setTimeout(() => { this.inputPallet.nativeElement.focus(); }, 1000);
   }else{
 
+    if(this.data.length == 0){
+
       this.dataService.check_Pallet_confirm_outbound(this.input).subscribe(res => {
-      console.log(res);
       this.res_datas = res;
       if (this.res_datas.status === 'error'||this.res_datas.status === 'error2') {
+        console.log(res);
         Swal.fire({
           icon: 'error',
           title: 'เกิดข้อผิดพลาด กรุณาติดต่อ ADMIN!,TSDC_CONFIRM_OUTBOUND',
@@ -291,31 +355,339 @@ export class OutboundScantrackingComponent implements OnInit {
         });
         this.playAudioError();
       } 
-      
-      // else if (res.status === 'success') {
-      //   Swal.fire({
-      //     icon: 'warning',
-      //     title: 'เลขที่ Pallet'+this.input.Pallet_NO + 'ถูกรับสินค้าแล้ว',
-      //     showConfirmButton: false,
-      //     timer: 2500
-      //   });
-      //   this.playAudioError();
-        
-      // }
-      
       else{
-        this.dataService.Check_TRANSPORTATION_NAME(this.input).subscribe(res=>{
-          this.res_datas = res;
-          console.log(res)
-          if(this.res_datas.status === 'success'){
-            this.input.SHIP_PROVIDER_OOD = this.res_datas.data[0].TRANSPORT_NAME
-            this.input.PIN_ID = this.input.USER_NAME
-            this.input.INTERNAL_ID = this.input.PIN_CODE
-            
-            this.dataService.check_Tracking_confirm_outbound(this.input).subscribe(res=>{
+
+        var transport_name =  this.getTransportName(this.input.TRACK_CODE)
+
+        if(transport_name != null){
+          this.input.SHIP_PROVIDER_OOD = transport_name
+          this.input.PIN_ID = this.input.USER_NAME
+          this.input.INTERNAL_ID = this.input.PIN_CODE
+          
+          this.dataService.check_Tracking_confirm_outbound(this.input).subscribe(res=>{
+            this.res_datas = res;
+            if (this.res_datas.status === 'error'||this.res_datas.status === 'error2') {
               console.log(res);
+              Swal.fire({
+                icon: 'error',
+                title: 'เกิดข้อผิดพลาด กรุณาติดต่อ ADMIN!,TSDC_CONFIRM_OUTBOUND',
+                showConfirmButton: false,
+                timer: 2500
+              });
+              this.playAudioError();
+              this.input.TRACK_CODE = ''
+            }else if (this.res_datas.status === 'warning_PO') {
+              Swal.fire({
+                icon: 'warning',
+                title: 'Tracking'+ this.input.TRACK_CODE + ' ตรงกับเลข PO',
+                showConfirmButton: false,
+                timer: 3000
+              });
+              this.playAudioError();
+              this.input.TRACK_CODE = '';
+              
+            }else if (this.res_datas.status === 'null') {
+              // this.dataService.check_ordercancel_online(this.input).subscribe(res=>{
+              //   this.res_datas = res;
+              //   if (this.res_datas.status === 'error'){
+              //     Swal.fire({
+              //       icon: 'error',
+              //       title: 'เกิดข้อผิดพลาด กรุณาติดต่อ ADMIN!,TSDC_CONFIRM_OUTBOUND',
+              //       showConfirmButton: false,
+              //       timer: 2500
+              //     });
+              //     this.playAudioError();
+              //     this.input.TRACK_CODE = ''
+              //   }else if (this.res_datas.status === 'success'){
+              //     Swal.fire({
+              //       icon: 'error',
+              //       title: 'เกิดข้อผิดพลาด กรุณาติดต่อ ADMIN!,TSDC_CONFIRM_OUTBOUND',
+              //       showConfirmButton: false,
+              //       timer: 2500
+              //     });
+              //     this.playAudioError();
+              //     this.input.TRACK_CODE = ''
+              //   }else{
+  
+              //   }
+              // })
+              
+              this.dataService.insertTracking_confirmOutbound(this.input).subscribe(res=>{
+                this.res_datas = res;
+                if (this.res_datas.status === 'error1'||this.res_datas.status === 'error') {
+                  Swal.fire({
+                    icon: 'error',
+                    title: 'เกิดข้อผิดพลาด กรุณาติดต่อ ADMIN!,TSDC_CONFIRM_OUTBOUND',
+                    showConfirmButton: false,
+                    timer: 2500
+                  });
+                  this.playAudioError();
+                  this.input.TRACK_CODE = ''
+                } else if (this.res_datas.status === 'null') {
+                  Swal.fire({
+                    icon: 'warning',
+                    title: 'insert Tracking ไม่เข้า'+ this.input.TRACK_CODE,
+                    showConfirmButton: false,
+                    timer: 2500
+                  });
+                  this.playAudioError();
+                  this.input.TRACK_CODE = ''
+                  
+                }else if (this.res_datas.status === 'success') {
+                  this.input.TRACK_CODE = ''
+                  this.data = this.res_datas.data
+                  this.showdataPage = true;
+
+                  if (this.dtElement.dtInstance) {
+                    this.dtElement.dtInstance.then((dtInstance: DataTables.Api) => {
+                      dtInstance.destroy();
+                      this.dtTrigger_outbound.next();
+                    });
+                  } else {
+                    this.dtTrigger_outbound.next();
+                  }
+
+                  this.input.LastTrack = this.data[0].BILL_NO
+                  this.input.count_qty = this.data[0].count_qty
+                  
+                  this.playAudioOK();
+                  setTimeout(() => { this.inputTrack.nativeElement.focus(); }, 1000);
+                }
+        
+              })
+        
+            }else if (this.res_datas.data[0].STATUS_DELIVERY === 'S' ) {
+              Swal.fire({
+                icon: 'warning',
+                title: 'เลขที่ Tracking '+ this.input.TRACK_CODE ,
+                html: 'ขนส่งรับสินค้าแล้ว' +  this.res_datas.data[0].delivery_no ,
+                showConfirmButton: true,
+                timer: 5000
+              });
+              this.input.TRACK_CODE = ''
+              this.playAudioError();
+            }else if (this.res_datas.status === 'warning_Track' ) { 
+              Swal.fire({
+                icon: 'warning',
+                title:'ต้องการส่งสินค้าอีกครั้ง ? ' ,
+                html: 'Tracking '+ this.input.TRACK_CODE  +'แสกนรับสินค้าพาเลท' +this.res_datas.data[0].PALLET_NO + ' '+ 'วันที่'  +  this.res_datas.data[0].scandate,
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+              confirmButtonText: 'ยืนยัน',
+              cancelButtonText: 'ยกเลิก'
+            }).then((result) => {
+              if (result.value) {
+                this.dataService.DeleteAndBackup_Track_Outbound(this.input).subscribe(res=>{
+                  this.res_datas = res;
+                  if (this.res_datas.status === 'error') {
+                    console.log(res)
+                    Swal.fire({
+                      icon: 'error',
+                      title: 'เกิดข้อผิดพลาด กรุณาติดต่อ ADMIN!,TSDC_CONFIRM_OUTBOUND',
+                      showConfirmButton: false,
+                      timer: 2500
+                    });
+                    this.playAudioError();
+                    this.input.TRACK_CODE = ''
+                  } else if (this.res_datas.status === 'success') {
+
+                    this.dataService.insertTracking_confirmOutbound(this.input).subscribe(res=>{
+                      this.res_datas = res;
+                      if (this.res_datas.status === 'error1'||this.res_datas.status === 'error') {
+                        console.log(res)
+                        Swal.fire({
+                          icon: 'error',
+                          title: 'เกิดข้อผิดพลาด กรุณาติดต่อ ADMIN!,TSDC_CONFIRM_OUTBOUND',
+                          showConfirmButton: false,
+                          timer: 2500
+                        });
+                        this.playAudioError();
+                        this.input.TRACK_CODE = ''
+                      } else if (this.res_datas.status === 'null') {
+                        Swal.fire({
+                          icon: 'warning',
+                          title: 'insert Tracking ไม่เข้า'+ this.input.TRACK_CODE,
+                          showConfirmButton: false,
+                          timer: 2500
+                        });
+                        this.playAudioError();
+                        this.input.TRACK_CODE = ''
+                        
+                      }else if (this.res_datas.status === 'success') {
+                        this.input.TRACK_CODE = ''
+                        this.data = this.res_datas.data
+                        this.showdataPage = true;
+                        this.input.LastTrack = this.data[0].BILL_NO
+                        this.input.count_qty = this.data[0].count_qty
+                        
+                        if (this.dtElement.dtInstance) {
+                          this.dtElement.dtInstance.then((dtInstance: DataTables.Api) => {
+                            dtInstance.destroy();
+                            this.dtTrigger_outbound.next();
+                          });
+                        } else {
+                          this.dtTrigger_outbound.next();
+                        }
+                        
+                        this.playAudioOK();
+                        setTimeout(() => { this.inputTrack.nativeElement.focus(); }, 1000);
+                      }
+              
+                    })
+                  }
+          
+                })
+              }
+            });
+              this.playAudioError();
+            
+            }
+          })
+
+
+        }else if (transport_name == null){
+          Swal.fire({
+            icon: 'warning',
+            title: 'ไม่พบรายชื่อขนส่ง' ,
+            html: 'เลขที่ Tracking '+ this.input.TRACK_CODE ,
+            showConfirmButton: true,
+            timer: 5000
+          });
+          this.input.TRACK_CODE = ''
+          this.playAudioError();
+        }
+       
+      }
+    }) 
+
+  }else{
+
+    var transport_name =  this.getTransportName(this.input.TRACK_CODE)
+
+    if(transport_name != null){
+      this.input.SHIP_PROVIDER_OOD = transport_name
+      this.input.PIN_ID = this.input.USER_NAME
+      this.input.INTERNAL_ID = this.input.PIN_CODE
+      
+      this.dataService.check_Tracking_confirm_outbound(this.input).subscribe(res=>{
+        this.res_datas = res;
+        if (this.res_datas.status === 'error'||this.res_datas.status === 'error2') {
+          console.log(res);
+          Swal.fire({
+            icon: 'error',
+            title: 'เกิดข้อผิดพลาด กรุณาติดต่อ ADMIN!,TSDC_CONFIRM_OUTBOUND',
+            showConfirmButton: false,
+            timer: 2500
+          });
+          this.playAudioError();
+          this.input.TRACK_CODE = ''
+        }else if (this.res_datas.status === 'warning_PO') {
+          Swal.fire({
+            icon: 'warning',
+            title: 'Tracking'+ this.input.TRACK_CODE + ' ตรงกับเลข PO',
+            showConfirmButton: false,
+            timer: 3000
+          });
+          this.playAudioError();
+          this.input.TRACK_CODE = '';
+          
+        }else if (this.res_datas.status === 'null') {
+          // this.dataService.check_ordercancel_online(this.input).subscribe(res=>{
+          //   this.res_datas = res;
+          //   if (this.res_datas.status === 'error'){
+          //     Swal.fire({
+          //       icon: 'error',
+          //       title: 'เกิดข้อผิดพลาด กรุณาติดต่อ ADMIN!,TSDC_CONFIRM_OUTBOUND',
+          //       showConfirmButton: false,
+          //       timer: 2500
+          //     });
+          //     this.playAudioError();
+          //     this.input.TRACK_CODE = ''
+          //   }else if (this.res_datas.status === 'success'){
+          //     Swal.fire({
+          //       icon: 'error',
+          //       title: 'เกิดข้อผิดพลาด กรุณาติดต่อ ADMIN!,TSDC_CONFIRM_OUTBOUND',
+          //       showConfirmButton: false,
+          //       timer: 2500
+          //     });
+          //     this.playAudioError();
+          //     this.input.TRACK_CODE = ''
+          //   }else{
+
+          //   }
+          // })
+          
+          this.dataService.insertTracking_confirmOutbound(this.input).subscribe(res=>{
+            this.res_datas = res;
+            if (this.res_datas.status === 'error1'||this.res_datas.status === 'error') {
+              Swal.fire({
+                icon: 'error',
+                title: 'เกิดข้อผิดพลาด กรุณาติดต่อ ADMIN!,TSDC_CONFIRM_OUTBOUND',
+                showConfirmButton: false,
+                timer: 2500
+              });
+              this.playAudioError();
+              this.input.TRACK_CODE = ''
+            } else if (this.res_datas.status === 'null') {
+              Swal.fire({
+                icon: 'warning',
+                title: 'insert Tracking ไม่เข้า'+ this.input.TRACK_CODE,
+                showConfirmButton: false,
+                timer: 2500
+              });
+              this.playAudioError();
+              this.input.TRACK_CODE = ''
+              
+            }else if (this.res_datas.status === 'success') {
+              this.input.TRACK_CODE = ''
+              this.data = this.res_datas.data
+              this.showdataPage = true;
+
+              if (this.dtElement.dtInstance) {
+                this.dtElement.dtInstance.then((dtInstance: DataTables.Api) => {
+                  dtInstance.destroy();
+                  this.dtTrigger_outbound.next();
+                });
+              } else {
+                this.dtTrigger_outbound.next();
+              }
+
+              this.input.LastTrack = this.data[0].BILL_NO
+              this.input.count_qty = this.data[0].count_qty
+              
+              this.playAudioOK();
+              setTimeout(() => { this.inputTrack.nativeElement.focus(); }, 1000);
+            }
+    
+          })
+    
+        }else if (this.res_datas.data[0].STATUS_DELIVERY === 'S' ) {
+          Swal.fire({
+            icon: 'warning',
+            title: 'เลขที่ Tracking '+ this.input.TRACK_CODE ,
+            html: 'ขนส่งรับสินค้าแล้ว' +  this.res_datas.data[0].delivery_no ,
+            showConfirmButton: true,
+            timer: 5000
+          });
+          this.input.TRACK_CODE = ''
+          this.playAudioError();
+        }else if (this.res_datas.status === 'warning_Track' ) { 
+          Swal.fire({
+            icon: 'warning',
+            title:'ต้องการส่งสินค้าอีกครั้ง ? ' ,
+            html: 'Tracking '+ this.input.TRACK_CODE  +'แสกนรับสินค้าพาเลท' +this.res_datas.data[0].PALLET_NO + ' '+ 'วันที่'  +  this.res_datas.data[0].scandate,
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+          confirmButtonText: 'ยืนยัน',
+          cancelButtonText: 'ยกเลิก'
+        }).then((result) => {
+          if (result.value) {
+            this.dataService.DeleteAndBackup_Track_Outbound(this.input).subscribe(res=>{
               this.res_datas = res;
-              if (this.res_datas.status === 'error'||this.res_datas.status === 'error2') {
+              if (this.res_datas.status === 'error') {
+                console.log(res)
                 Swal.fire({
                   icon: 'error',
                   title: 'เกิดข้อผิดพลาด กรุณาติดต่อ ADMIN!,TSDC_CONFIRM_OUTBOUND',
@@ -324,45 +696,12 @@ export class OutboundScantrackingComponent implements OnInit {
                 });
                 this.playAudioError();
                 this.input.TRACK_CODE = ''
-              }else if (this.res_datas.status === 'warning_PO') {
-                Swal.fire({
-                  icon: 'warning',
-                  title: 'Tracking'+ this.input.TRACK_CODE + ' ตรงกับเลข PO',
-                  showConfirmButton: false,
-                  timer: 3000
-                });
-                this.playAudioError();
-                this.input.TRACK_CODE = '';
-                
-              }else if (this.res_datas.status === 'null') {
-                // this.dataService.check_ordercancel_online(this.input).subscribe(res=>{
-                //   this.res_datas = res;
-                //   if (this.res_datas.status === 'error'){
-                //     Swal.fire({
-                //       icon: 'error',
-                //       title: 'เกิดข้อผิดพลาด กรุณาติดต่อ ADMIN!,TSDC_CONFIRM_OUTBOUND',
-                //       showConfirmButton: false,
-                //       timer: 2500
-                //     });
-                //     this.playAudioError();
-                //     this.input.TRACK_CODE = ''
-                //   }else if (this.res_datas.status === 'success'){
-                //     Swal.fire({
-                //       icon: 'error',
-                //       title: 'เกิดข้อผิดพลาด กรุณาติดต่อ ADMIN!,TSDC_CONFIRM_OUTBOUND',
-                //       showConfirmButton: false,
-                //       timer: 2500
-                //     });
-                //     this.playAudioError();
-                //     this.input.TRACK_CODE = ''
-                //   }else{
-    
-                //   }
-                // })
-                
+              } else if (this.res_datas.status === 'success') {
+
                 this.dataService.insertTracking_confirmOutbound(this.input).subscribe(res=>{
                   this.res_datas = res;
                   if (this.res_datas.status === 'error1'||this.res_datas.status === 'error') {
+                    console.log(res)
                     Swal.fire({
                       icon: 'error',
                       title: 'เกิดข้อผิดพลาด กรุณาติดต่อ ADMIN!,TSDC_CONFIRM_OUTBOUND',
@@ -385,7 +724,9 @@ export class OutboundScantrackingComponent implements OnInit {
                     this.input.TRACK_CODE = ''
                     this.data = this.res_datas.data
                     this.showdataPage = true;
-
+                    this.input.LastTrack = this.data[0].BILL_NO
+                    this.input.count_qty = this.data[0].count_qty
+                    
                     if (this.dtElement.dtInstance) {
                       this.dtElement.dtInstance.then((dtInstance: DataTables.Api) => {
                         dtInstance.destroy();
@@ -394,132 +735,39 @@ export class OutboundScantrackingComponent implements OnInit {
                     } else {
                       this.dtTrigger_outbound.next();
                     }
-
-                    console.log(this.data)
-                    this.input.LastTrack = this.data[0].BILL_NO
-                    this.input.count_qty = this.data[0].count_qty
                     
                     this.playAudioOK();
                     setTimeout(() => { this.inputTrack.nativeElement.focus(); }, 1000);
                   }
           
                 })
-          
-              }else if (this.res_datas.data[0].STATUS_DELIVERY === 'S' ) {
-                Swal.fire({
-                  icon: 'warning',
-                  title: 'เลขที่ Tracking '+ this.input.TRACK_CODE ,
-                  html: 'ขนส่งรับสินค้าแล้ว' +  this.res_datas.data[0].delivery_no ,
-                  showConfirmButton: true,
-                  timer: 5000
-                });
-                this.input.TRACK_CODE = ''
-                this.playAudioError();
-              }else if (this.res_datas.status === 'warning_Track' ) { 
-                Swal.fire({
-                  icon: 'warning',
-                  title:'ต้องการส่งสินค้าอีกครั้ง ? ' ,
-                  html: 'Tracking '+ this.input.TRACK_CODE  +'แสกนรับสินค้าพาเลท' +this.res_datas.data[0].PALLET_NO + ' '+ 'วันที่'  +  this.res_datas.data[0].scandate,
-                  showCancelButton: true,
-                  confirmButtonColor: '#3085d6',
-                  cancelButtonColor: '#d33',
-                confirmButtonText: 'ยืนยัน',
-                cancelButtonText: 'ยกเลิก'
-              }).then((result) => {
-                if (result.value) {
-                  console.log(this.input)
-                  this.dataService.DeleteAndBackup_Track_Outbound(this.input).subscribe(res=>{
-                    console.log(res)
-                    this.res_datas = res;
-                    if (this.res_datas.status === 'error') {
-                      Swal.fire({
-                        icon: 'error',
-                        title: 'เกิดข้อผิดพลาด กรุณาติดต่อ ADMIN!,TSDC_CONFIRM_OUTBOUND',
-                        showConfirmButton: false,
-                        timer: 2500
-                      });
-                      this.playAudioError();
-                      this.input.TRACK_CODE = ''
-                    } else if (this.res_datas.status === 'success') {
-
-                      this.dataService.insertTracking_confirmOutbound(this.input).subscribe(res=>{
-                        console.log(this.res_datas)
-                        this.res_datas = res;
-                        if (this.res_datas.status === 'error1'||this.res_datas.status === 'error') {
-                          Swal.fire({
-                            icon: 'error',
-                            title: 'เกิดข้อผิดพลาด กรุณาติดต่อ ADMIN!,TSDC_CONFIRM_OUTBOUND',
-                            showConfirmButton: false,
-                            timer: 2500
-                          });
-                          this.playAudioError();
-                          this.input.TRACK_CODE = ''
-                        } else if (this.res_datas.status === 'null') {
-                          Swal.fire({
-                            icon: 'warning',
-                            title: 'insert Tracking ไม่เข้า'+ this.input.TRACK_CODE,
-                            showConfirmButton: false,
-                            timer: 2500
-                          });
-                          this.playAudioError();
-                          this.input.TRACK_CODE = ''
-                          
-                        }else if (this.res_datas.status === 'success') {
-                          this.input.TRACK_CODE = ''
-                          this.data = this.res_datas.data
-                          this.showdataPage = true;
-                          this.input.LastTrack = this.data[0].BILL_NO
-                          this.input.count_qty = this.data[0].count_qty
-                          
-                          if (this.dtElement.dtInstance) {
-                            this.dtElement.dtInstance.then((dtInstance: DataTables.Api) => {
-                              dtInstance.destroy();
-                              this.dtTrigger_outbound.next();
-                            });
-                          } else {
-                            this.dtTrigger_outbound.next();
-                          }
-                          
-                          this.playAudioOK();
-                          setTimeout(() => { this.inputTrack.nativeElement.focus(); }, 1000);
-                        }
-                
-                      })
-                    }
-            
-                  })
-                }
-              });
-                this.playAudioError();
-              
               }
+      
             })
-
-
-          }else if (this.res_datas.status === 'warning_Transport'){
-            Swal.fire({
-              icon: 'warning',
-              title: 'ไม่พบรายชื่อขนส่ง' ,
-              html: 'เลขที่ Tracking '+ this.input.TRACK_CODE ,
-              showConfirmButton: true,
-              timer: 5000
-            });
-            this.input.TRACK_CODE = ''
-            this.playAudioError();
-          }else {
-            Swal.fire({
-              icon: 'error',
-              title: 'เกิดข้อผิดพลาด กรุณาติดต่อ ADMIN!,TSDC_TRANSPORTATION_NAME',
-              showConfirmButton: false,
-              timer: 2500
-            });
-            this.playAudioError();
-            this.input.TRACK_CODE = ''
           }
         });
-      
-      }
-    }) 
+          this.playAudioError();
+        
+        }
+      })
+    }else if (transport_name == null){
+      Swal.fire({
+        icon: 'warning',
+        title: 'ไม่พบรายชื่อขนส่ง' ,
+        html: 'เลขที่ Tracking '+ this.input.TRACK_CODE ,
+        showConfirmButton: true,
+        timer: 5000
+      });
+      this.input.TRACK_CODE = ''
+      this.playAudioError();
+    }
+
+
+    }
+
+
+
+
   }
   }
 
@@ -533,26 +781,27 @@ export class OutboundScantrackingComponent implements OnInit {
       });
       this.input.Pallet_NO = '';
       this.inputPallet.nativeElement.focus();
-  }else{
+    }else{
   
-      this.dataService.check_Pallet_confirm_outbound(this.input).subscribe(res => {
-        this.res_datas = res;
-      console.log(res);
-      if (this.res_datas.status === 'error'||this.res_datas.status === 'error2') {
-        Swal.fire({
-          icon: 'error',
-          title: 'เกิดข้อผิดพลาด กรุณาติดต่อ ADMIN!,TSDC_CONFIRM_OUTBOUND',
-          showConfirmButton: false,
-          timer: 2500
-        });
-        this.playAudioError();
-      } 
-      else{
-        this.dataService.Check_TRANSPORTATION_NAME(this.input).subscribe(res=>{
+      if(this.data.length == 0){
+        this.dataService.check_Pallet_confirm_outbound(this.input).subscribe(res => {
           this.res_datas = res;
+        if (this.res_datas.status === 'error'||this.res_datas.status === 'error2') {
+          console.log(res);
+          Swal.fire({
+            icon: 'error',
+            title: 'เกิดข้อผิดพลาด กรุณาติดต่อ ADMIN!,TSDC_CONFIRM_OUTBOUND',
+            showConfirmButton: false,
+            timer: 2500
+          });
+          this.playAudioError();
+        } 
+        else{
+          
+          var transport_name =  this.getTransportName(this.input.TRACK_CODE)
 
-          if(this.res_datas.status === 'success'){
-            this.input.SHIP_PROVIDER_OOD = this.res_datas.data[0].TRANSPORT_NAME
+          if(transport_name != null){
+            this.input.SHIP_PROVIDER_OOD = transport_name
             this.input.PIN_ID = this.input.USER_NAME
             this.input.INTERNAL_ID = this.input.PIN_CODE
 
@@ -690,7 +939,6 @@ export class OutboundScantrackingComponent implements OnInit {
                       }
                     })
                   } else {
-                    console.log("insert");
                     this.dataService.insertTracking_confirmOutbound(this.input).subscribe(res=>{
                       this.res_datas = res;
                       if (this.res_datas.status === 'error1'||this.res_datas.status === 'error') {
@@ -734,7 +982,7 @@ export class OutboundScantrackingComponent implements OnInit {
                       }
               
                     })
-  
+
                   }
                 }
               });
@@ -742,7 +990,7 @@ export class OutboundScantrackingComponent implements OnInit {
               
               }
             })
-          }else if (this.res_datas.status === 'warning_Transport'){
+          }else if (transport_name == null){
             Swal.fire({
               icon: 'warning',
               title: 'ไม่พบรายชื่อขนส่ง' ,
@@ -752,21 +1000,216 @@ export class OutboundScantrackingComponent implements OnInit {
             });
             this.input.TRACK_CODE = ''
             this.playAudioError();
-          }else {
-            Swal.fire({
-              icon: 'error',
-              title: 'เกิดข้อผิดพลาด กรุณาติดต่อ ADMIN!,TSDC_TRANSPORTATION_NAME',
-              showConfirmButton: false,
-              timer: 2500
-            });
-            this.playAudioError();
-            this.input.TRACK_CODE = ''
           }
-        });
-       
+            
+        }
+      }) 
+      }else{
+        var transport_name =  this.getTransportName(this.input.TRACK_CODE)
+
+        if(transport_name != null){
+          this.input.SHIP_PROVIDER_OOD = transport_name
+          this.input.PIN_ID = this.input.USER_NAME
+          this.input.INTERNAL_ID = this.input.PIN_CODE
+
+          this.dataService.check_Tracking_confirm_outbound(this.input).subscribe(res=>{
+            this.res_datas = res;
+            if (this.res_datas.status === 'error'||this.res_datas.status === 'error2') {
+              Swal.fire({
+                icon: 'error',
+                title: 'เกิดข้อผิดพลาด กรุณาติดต่อ ADMIN!,TSDC_CONFIRM_OUTBOUND',
+                showConfirmButton: false,
+                timer: 2500
+              });
+              this.playAudioError();
+              this.input.TRACK_CODE = ''
+            }else if (this.res_datas.status === 'warning_PO') {
+              
+              Swal.fire({
+                icon: 'warning',
+                title: 'Tracking'+ this.input.TRACK_CODE + ' ตรงกับเลข PO',
+                showConfirmButton: false,
+                timer: 3000
+              });
+              this.playAudioError();
+              this.input.TRACK_CODE = '';
+              
+            }else if (this.res_datas.status === 'null') {
+              
+              
+              this.dataService.insertTracking_confirmOutbound(this.input).subscribe(res=>{
+                this.res_datas = res;
+                if (this.res_datas.status === 'error1'||this.res_datas.status === 'error') {
+                  Swal.fire({
+                    icon: 'error',
+                    title: 'เกิดข้อผิดพลาด กรุณาติดต่อ ADMIN!,TSDC_CONFIRM_OUTBOUND',
+                    showConfirmButton: false,
+                    timer: 2500
+                  });
+                  this.playAudioError();
+                  this.input.TRACK_CODE = ''
+                } else if (this.res_datas.status === 'null') {
+                  Swal.fire({
+                    icon: 'warning',
+                    title: 'insert Tracking ไม่เข้า'+ this.input.TRACK_CODE,
+                    showConfirmButton: false,
+                    timer: 2500
+                  });
+                  this.playAudioError();
+                  this.input.TRACK_CODE = ''
+                  
+                }else if (this.res_datas.status === 'success') {
+                  this.input.TRACK_CODE = ''
+                  this.data = this.res_datas.data
+                  this.showdataPage = true;
+                  this.input.LastTrack = this.res_datas.data[0].BILL_NO
+                  this.input.count_qty = this.res_datas.data[0].count_qty
+                  
+                  if (this.dtElement.dtInstance) {
+                    this.dtElement.dtInstance.then((dtInstance: DataTables.Api) => {
+                      dtInstance.destroy();
+                      this.dtTrigger_outbound.next();
+                    });
+                  } else {
+                    this.dtTrigger_outbound.next();
+                  }
+
+                  this.playAudioOK();
+                    this.inputTrack.nativeElement.focus();
+                }
+        
+              })
+        
+            }else if (this.res_datas.data[0].STATUS_DELIVERY === 'S' ) {
+              Swal.fire({
+                icon: 'warning',
+                title: 'เลขที่ Tracking '+ this.input.TRACK_CODE ,
+                html: 'ขนส่งรับสินค้าแล้ว' +  this.res_datas.data[0].delivery_no ,
+                showConfirmButton: true,
+                timer: 5000
+              });
+              this.input.TRACK_CODE = ''
+              this.playAudioError();
+            }else if (this.res_datas.status === 'warning_Track' ) { 
+
+              Swal.fire({
+                icon: 'warning',
+                title:'ต้องการส่งสินค้าเพิ่ม ? ' ,
+                html: 'Tracking '+ this.input.TRACK_CODE  +'แสกนรับสินค้าพาเลท' +this.res_datas.data[0].PALLET_NO + ' '+ 'วันที่'  +  this.res_datas.data[0].scandate,
+                showCancelButton: true,
+                confirmButtonColor: 'btn btn-success',
+                cancelButtonColor: 'btn btn-danger',
+              confirmButtonText: 'ยืนยัน',
+              cancelButtonText: 'ยกเลิก'
+            }).then((result) => {
+              if (result.value) {
+
+                const specifiedDate = new Date(this.res_datas.data[0].scandate);
+                const specifiedDateString = specifiedDate.toISOString().split('T')[0];
+
+                const isSameDate = specifiedDateString ===  this.input.currentDateString;
+                const isSamePallet = this.res_datas.data[0].PALLET_NO == this.input.Pallet_NO;
+
+                if (isSameDate && isSamePallet) {
+                  this.dataService.update_Tracking_confirm_outbound(this.input).subscribe(res=>{
+                    this.res_datas = res;
+                    if (this.res_datas.status === 'error') {
+                      Swal.fire({
+                        icon: 'error',
+                        title: 'เกิดข้อผิดพลาด กรุณาติดต่อ ADMIN!,TSDC_CONFIRM_OUTBOUND',
+                        showConfirmButton: false,
+                        timer: 2500
+                      });
+                      this.playAudioError();
+                      this.input.TRACK_CODE = ''
+                    } else if (this.res_datas.status === 'success') {
+  
+                      this.input.TRACK_CODE = ''
+                      this.data = this.res_datas.data
+                      this.showdataPage = true;
+
+                      if (this.dtElement.dtInstance) {
+                        this.dtElement.dtInstance.then((dtInstance: DataTables.Api) => {
+                          dtInstance.destroy();
+                          this.dtTrigger_outbound.next();
+                        });
+                      } else {
+                        this.dtTrigger_outbound.next();
+                      }
+
+
+                      this.input.LastTrack = this.res_datas.data[0].BILL_NO
+                      this.input.count_qty = this.res_datas.data[0].count_qty
+                      
+                      this.playAudioOK();
+                      this.inputTrack.nativeElement.focus();
+                    }
+                  })
+                } else {
+                  this.dataService.insertTracking_confirmOutbound(this.input).subscribe(res=>{
+                    this.res_datas = res;
+                    if (this.res_datas.status === 'error1'||this.res_datas.status === 'error') {
+                      Swal.fire({
+                        icon: 'error',
+                        title: 'เกิดข้อผิดพลาด กรุณาติดต่อ ADMIN!,TSDC_CONFIRM_OUTBOUND',
+                        showConfirmButton: false,
+                        timer: 2500
+                      });
+                      this.playAudioError();
+                      this.input.TRACK_CODE = ''
+                    } else if (this.res_datas.status === 'null') {
+                      Swal.fire({
+                        icon: 'warning',
+                        title: 'insert Tracking ไม่เข้า'+ this.input.TRACK_CODE,
+                        showConfirmButton: false,
+                        timer: 2500
+                      });
+                      this.playAudioError();
+                      this.input.TRACK_CODE = ''
+                      
+                    }else if (this.res_datas.status === 'success') {
+                      this.input.TRACK_CODE = ''
+                      this.data = this.res_datas.data
+                  
+                      this.showdataPage = true;
+                      this.input.LastTrack = this.res_datas.data[0].BILL_NO
+                      this.input.count_qty = this.res_datas.data[0].count_qty
+                      
+                      if (this.dtElement.dtInstance) {
+                        this.dtElement.dtInstance.then((dtInstance: DataTables.Api) => {
+                          dtInstance.destroy();
+                          this.dtTrigger_outbound.next();
+                        });
+                      } else {
+                        this.dtTrigger_outbound.next();
+                      }
+
+                      this.playAudioOK();
+                        this.inputTrack.nativeElement.focus();
+                    }
+            
+                  })
+
+                }
+              }
+            });
+              this.playAudioError();
+            
+            }
+          })
+        }else if (transport_name == null){
+          Swal.fire({
+            icon: 'warning',
+            title: 'ไม่พบรายชื่อขนส่ง' ,
+            html: 'เลขที่ Tracking '+ this.input.TRACK_CODE ,
+            showConfirmButton: true,
+            timer: 5000
+          });
+          this.input.TRACK_CODE = ''
+          this.playAudioError();
+        }
       }
-    }) 
-  }
+    }
   }
   
 

@@ -50,124 +50,157 @@
             </p>
           </a>
         </li> -->
-        <li class="nav-header" >Register</li>
-        <li class="nav-item">
-          <a (click)="Onclick_menu('registpack')" class="nav-link"  [ngClass]='{active:page.RegistPack}'  >
 
-            <i class="nav-icon fas fa-edit nav-icon"></i>
-            <p>
-              ลงทะเบียนแพคสินค้า
-            </p>
-          </a>
-        </li>
+        <section [hidden]="!menu_Moniter">
+          <li class="nav-header" >Moniter</li>
+          <li class="nav-item ">
+            <a class="nav-link" [ngClass]='{active:page.moniter}'  >
 
-        <li class="nav-header" >Audit&Check</li>
-        <li class="nav-item ">
-          <a class="nav-link" [ngClass]='{active:page.audit}'  >
-
-            <i class="far fa-check-circle nav-icon"></i>
-            <p>
-              Audit&Check(Online)
-              <i class="fas fa-angle-left right"></i>
-            </p>
-          </a>
-          <ul class="nav nav-treeview">
-            <li class="nav-item"  (click)="Onclick_menu('checkorder')" >
-              <a class="nav-link" [ngClass]='{active:page.audit_CheckOrder}'>
-                <i class="fas fa-shopping-cart nav-icon"></i>
-                <p>Check Order</p>
-              </a>
-            </li>
-            <li class="nav-item" (click)="Onclick_menu('checkfullcarton')" >
-              <a class="nav-link" [ngClass]='{active:page.audit_fullcarton}' >
-                <i class="fas fa-archive nav-icon"></i>
-                <p>Check fullcarton</p>
-              </a>
-            </li>
-          </ul>
-        </li>
-
-        <li class="nav-item">
-          <a (click)="Onclick_menu('editbox')" class="nav-link"  [ngClass]='{active:page.EditBox}'  >
-
-            <i class="nav-icon fas fa-edit nav-icon"></i>
-            <p>
-              แก้ไขขนาดกล่อง
-
-            </p>
-          </a>
-        </li>
-
-        <li class="nav-item">
-          <a  class="nav-link"  [ngClass]='{active:page.audit_Offline}'  >
-
-            <i class="nav-icon fas fa-check nav-icon"></i>
-            <p>
-              Audit&Check(Offline)
-            <i class="fas fa-angle-left right"></i>
-            </p>
-          </a>
-          <ul class="nav nav-treeview">
-            <li class="nav-item"  (click)="Onclick_menu('oldcheckorder_print') ">
-              <a class="nav-link" [ngClass]='{active:page.audit_Old}'>
-                <i class="fas fa-shopping-cart nav-icon"></i>
-                <p>เช็คสินค้า&ปริ้น(แบบเก่า)</p>
-              </a>
-            </li>
-            <li class="nav-item" (click)="Onclick_menu('oldcheckfullcarton')" >
-              <a class="nav-link" [ngClass]='{active:page.audit_Old_fullcarton}' >
-                <i class="fas fa-archive nav-icon"></i>
-                <p>เช็คสินค้ายกลัง</p>
-              </a>
-            </li>
+              <!-- <i class="far fa-check-circle nav-icon"></i> -->
           
-          </ul>
-        </li>
+              <i class="fas fa-tv nav-icon"></i>
+              <p>
+                Moniter
+                <i class="fas fa-angle-left right"></i>
+              </p>
+            </a>
+            <ul class="nav nav-treeview">
+              <li class="nav-item"  (click)="Onclick_menu('monit_statusRTS') ">
+                <a class="nav-link"  [ngClass]='{active:page.Moniter_StatusRTS}'>
+                  <i class="fas fa-paper-plane nav-icon"></i>
+                  <p>RTS</p>
+                </a>
+              </li>
+            </ul>
+          </li>
+        </section>
 
-        <li class="nav-item ">
-          <a class="nav-link" [ngClass]='{active:page.report}'  >
+        <section [hidden]="!menu_User">
+          <li class="nav-header" >Register</li>
+          <li class="nav-item">
+            <a (click)="Onclick_menu('registpack')" class="nav-link"  [ngClass]='{active:page.RegistPack}'  >
 
-            <i class="nav-icon fas fa-book"></i>
-            <p>
-              Report Audit&Check
+              <i class="nav-icon fas fa-edit nav-icon"></i>
+              <p>
+                ลงทะเบียนแพคสินค้า
+              </p>
+            </a>
+          </li>
+
+          <li class="nav-header" >Audit&Check</li>
+          <li class="nav-item ">
+            <a class="nav-link" [ngClass]='{active:page.audit}'  >
+
+              <i class="far fa-check-circle nav-icon"></i>
+              <p>
+                Audit&Check(Online)
+                <i class="fas fa-angle-left right"></i>
+              </p>
+            </a>
+            <ul class="nav nav-treeview">
+              <li class="nav-item"  (click)="Onclick_menu('checkorder')" >
+                <a class="nav-link" [ngClass]='{active:page.audit_CheckOrder}'>
+                  <i class="fas fa-shopping-cart nav-icon"></i>
+                  <p>Check Order</p>
+                </a>
+              </li>
+              <li class="nav-item" (click)="Onclick_menu('checkfullcarton')" >
+                <a class="nav-link" [ngClass]='{active:page.audit_fullcarton}' >
+                  <i class="fas fa-archive nav-icon"></i>
+                  <p>Check fullcarton</p>
+                </a>
+              </li>
+            </ul>
+          </li>
+
+          <li class="nav-item">
+            <a (click)="Onclick_menu('editbox')" class="nav-link"  [ngClass]='{active:page.EditBox}'  >
+
+              <i class="nav-icon fas fa-edit nav-icon"></i>
+              <p>
+                แก้ไขขนาดกล่อง
+
+              </p>
+            </a>
+          </li>
+
+          <li class="nav-item">
+            <a  class="nav-link"  [ngClass]='{active:page.audit_Offline}'  >
+
+              <i class="nav-icon fas fa-check nav-icon"></i>
+              <p>
+                Audit&Check(Offline)
               <i class="fas fa-angle-left right"></i>
-            </p>
-          </a>
-          <ul class="nav nav-treeview">
-            <li class="nav-item"  (click)="Onclick_menu('report_sorter') ">
-              <a class="nav-link"  [ngClass]='{active:page.report_sorter}'>
-                <i class="nav-icon fas fa-file-contract"></i>
-                <p>Report Sorter</p>
-              </a>
-            </li>
+              </p>
+            </a>
+            <ul class="nav nav-treeview">
+              <li class="nav-item"  (click)="Onclick_menu('oldcheckorder_print') ">
+                <a class="nav-link" [ngClass]='{active:page.audit_Old}'>
+                  <i class="fas fa-shopping-cart nav-icon"></i>
+                  <p>เช็คสินค้า&ปริ้น(แบบเก่า)</p>
+                </a>
+              </li>
+              <li class="nav-item" (click)="Onclick_menu('oldcheckfullcarton')" >
+                <a class="nav-link" [ngClass]='{active:page.audit_Old_fullcarton}' >
+                  <i class="fas fa-archive nav-icon"></i>
+                  <p>เช็คสินค้ายกลัง</p>
+                </a>
+              </li>
             
-          </ul>
-        </li>
+            </ul>
+          </li>
 
-        <li class="nav-header" >Outbound</li>
-        <li class="nav-item ">
-          <a class="nav-link" [ngClass]='{active:page.outbound}'  >
+          <li class="nav-item ">
+            <a class="nav-link" [ngClass]='{active:page.report}'  >
 
-            <!-- <i class="far fa-check-circle nav-icon"></i> -->
+              <i class="nav-icon fas fa-book"></i>
+              <p>
+                Report Audit&Check
+                <i class="fas fa-angle-left right"></i>
+              </p>
+            </a>
+            <ul class="nav nav-treeview">
+              <li class="nav-item"  (click)="Onclick_menu('report_sorter') ">
+                <a class="nav-link"  [ngClass]='{active:page.report_sorter}'>
+                  <i class="nav-icon fas fa-file-contract"></i>
+                  <p>Report Sorter</p>
+                </a>
+              </li>
+              
+            </ul>
+          </li>
+
+          <li class="nav-header" >Outbound</li>
+          <li class="nav-item ">
+            <a class="nav-link" [ngClass]='{active:page.outbound}'  >
+
+              <!-- <i class="far fa-check-circle nav-icon"></i> -->
+          
+              <i class="fa fa-truck nav-icon"></i>
+              <p>
+                Outbound
+                <i class="fas fa-angle-left right"></i>
+              </p>
+            </a>
+            <ul class="nav nav-treeview">
+              <li class="nav-item"  (click)="Onclick_menu('scantracking') ">
+                <a class="nav-link"  [ngClass]='{active:page.outbound_Scantracking}'>
+                  <i class="fa fa-tags nav-icon"></i>
+                  <p>Tracking Order</p>
+                </a>
+              </li>
+              <li class="nav-item"  (click)="Onclick_menu('routing') ">
+                <a class="nav-link"  [ngClass]='{active:page.outbound_Routing}'>
+                  <i class="fas fa-truck-moving nav-icon"></i>
+                  <p>Outbount Routing</p>
+                </a>
+              </li>
+              
+            </ul>
+          </li>
+        </section>
+
         
-            <i class="fa fa-truck nav-icon"></i>
-            <p>
-              Outbound
-              <i class="fas fa-angle-left right"></i>
-            </p>
-          </a>
-          <ul class="nav nav-treeview">
-            <li class="nav-item"  (click)="Onclick_menu('scantracking') ">
-              <a class="nav-link"  [ngClass]='{active:page.outbound_Checktracking}'>
-                <i class="fa fa-tags nav-icon"></i>
-                <p>Tracking Order</p>
-              </a>
-            </li>
-            
-          </ul>
-        </li>
-       
-
 
 
       </ul>

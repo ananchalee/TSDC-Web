@@ -1,0 +1,56 @@
+.card-body {
+    max-height: 400px;  /* กำหนดความสูงของตาราง */
+    overflow-y: auto;   /* ให้มี Scroll แนวตั้ง */
+  }
+  
+  .table-responsive {
+    width: 100%;
+    max-height: 600px;  /* กำหนดความสูงของตาราง */
+    overflow-y: auto;   /* ให้มี Scroll แนวตั้ง */
+    flex: 1;
+  }
+  
+  .fixed-header-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  .fixed-header-table thead {
+    position: sticky;
+    top: 0;
+    background-color: rgba(0, 0, 0, 0.9); /* เปลี่ยนสีให้ทึบขึ้น */
+    color: white; 
+    z-index: 100; /* ให้ header อยู่ด้านบนสุด */
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2); /* เพิ่มเงาเพื่อแยกจากข้อมูลด้านล่าง */
+  }
+  
+  .fixed-header-table th, .fixed-header-table td {
+    padding: 3px;
+    border: 1px solid #ddd;
+    white-space: nowrap;
+  }
+  
+  .fixed-header-table tbody tr:nth-child(even) {
+    background-color: #ffffff;
+  }
+
+  .center-text {
+    text-align: center;
+  }
+  
+  .text-danger {
+    color: red;
+    font-weight: bold;
+    font-size: 18px;
+  }
+
+  .row-danger {
+    background-color: #ffcccc !important;  /* สีพื้นหลังแดงอ่อน */
+    color: red !important;  /* ตัวหนังสือสีแดง */
+    font-weight: bold;
+  }
+  
+  .brand-text {
+    font-size: 13px; /* ปรับขนาดตัวอักษร */
+    color: gray; /* สีเทา (สามารถเปลี่ยนได้) */
+  }
