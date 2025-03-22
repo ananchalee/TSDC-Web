@@ -39,6 +39,7 @@ export class AuditCheckComponent implements OnInit {
 
   public scanConPage = false;
   public scanItemPage = true;
+  public alertcancel = false;
   public scanQtyPage = true;
   public pagePrintShear = true;
   public pagePrintCoverSheet = true;
@@ -513,7 +514,8 @@ export class AuditCheckComponent implements OnInit {
 
   WorkType() {
 
-    this.dataService.CheckWork(this.input).subscribe(res => {
+    this.alertcancel = false;
+    this.dataService.CheckWork_ug(this.input).subscribe(res => {
       this.CheckWork = res;
       
       if (this.CheckWork.status === 'error') {
@@ -553,7 +555,7 @@ export class AuditCheckComponent implements OnInit {
            return;
          }else
          { 
-            if (this.input.ORDER_TYPE == 'ONLINE') {
+            if (this.input.ORDER_TYPE == 'ONLINE' || this.input.ORDER_TYPE == 'CANCEL') {
               console.log('ONLINE');
               this.dataService.CheckConOnline(this.input).subscribe(res => {
                 var data: any = res
@@ -629,6 +631,23 @@ export class AuditCheckComponent implements OnInit {
                             confirmButtonText: 'ตกลง',
                           }).then((result) => {
                             if (result.value) {
+                              this.dataService.CheckOrder_Cancel(this.input).subscribe(res => {
+                                var ordercancel: any = res
+                                console.log(ordercancel);
+                                if (ordercancel.status === 'error') {
+                                    console.log(data);
+                                    Swal.fire({
+                                      icon: 'error',
+                                      title: 'Get ONLINE_ORDER_CANCEL Error!',
+                                      showConfirmButton: false,
+                                      timer: 2500
+                                    });
+                                    this.playAudioError();
+                                }
+                                else if(ordercancel.status === 'success'){
+                                  this.alertcancel = true;
+                                }
+                              });
 
                               this.summaryConCheck();
                               this.CHECK_tracksum_qty();
@@ -641,6 +660,24 @@ export class AuditCheckComponent implements OnInit {
                           })
                         }else{
                           
+                          this.dataService.CheckOrder_Cancel(this.input).subscribe(res => {
+                            var ordercancel: any = res
+                            console.log(ordercancel);
+                            if (ordercancel.status === 'error') {
+                                console.log(data);
+                                Swal.fire({
+                                  icon: 'error',
+                                  title: 'Get ONLINE_ORDER_CANCEL Error!',
+                                  showConfirmButton: false,
+                                  timer: 2500
+                                });
+                                this.playAudioError();
+                            }
+                            else if(ordercancel.status === 'success'){
+                              this.alertcancel = true;
+                            }
+                          });
+
                           this.summaryConCheck();
                           this.CHECK_tracksum_qty();
                           this.scanConPage = true;
@@ -1179,14 +1216,25 @@ export class AuditCheckComponent implements OnInit {
 
     if (!this.input.ITEM_ID_BARCODE) { return; }
     this.view = false;
+    if(this.alertcancel){
+      this.playAudioError();
+      Swal.fire({
+        icon: 'warning',
+        title: 'ORDER ถูกยกเลิก',
+        html : 'นำใบงานติดไปกับสินค้าเพื่อทำรับคืน',
+        showConfirmButton: true,
+      });
+      this.input.ITEM_ID_BARCODE = '';
+    }else{
     if ((this.input.ORDER_TYPE == 'ONLINE' || this.input.ORDER_TYPE == 'OFFLINE' || this.input.ORDER_TYPE == 'CF_ORDER')) {
 
-      this.dataService.matchItemInCon(this.input).subscribe(res => {
+      this.dataService.matchItemInCon_ug(this.input).subscribe(res => {
         //console.log(res);
         var data: any = res
 
         if (data.status === 'error') {
           console.log(data)
+          this.playAudioError();
           Swal.fire({
             icon: 'error',
             title: 'เกิดข้อผิดพลาด กรุณาติดต่อ ADMIN!',
@@ -1207,11 +1255,23 @@ export class AuditCheckComponent implements OnInit {
           this.input.ITEM_ID_BARCODE = ''
         } else if (data.status === 'success') {
           this.res_matchItemInCon = data.data[0];
+          if(this.res_matchItemInCon.ORDER_TYPE == "CANCEL"){
+            this.playAudioError();
+            Swal.fire({
+              icon: 'warning',
+              title: 'รายการนี้ถูกยกเลิก',
+              html : 'นำใบงานติดไปกับสินค้าเพื่อทำรับคืน',
+              showConfirmButton: false,
+              timer: 3500
+            });
+            this.input.ITEM_ID_BARCODE = ''
+          }else{
+            this.input.ITEM_ID = this.res_matchItemInCon.ITEM_ID;
+            this.input.QTY_REQUESTED = this.res_matchItemInCon.QTY_REQUESTED;
+            this.input.QTY_PICK = this.res_matchItemInCon.QTY_PICK;
+            this.updateConQtyCheck();
+          }
 
-          this.input.ITEM_ID = this.res_matchItemInCon.ITEM_ID;
-          this.input.QTY_REQUESTED = this.res_matchItemInCon.QTY_REQUESTED;
-          this.input.QTY_PICK = this.res_matchItemInCon.QTY_PICK;
-          this.updateConQtyCheck();
         }
 
       })
@@ -1253,7 +1313,7 @@ export class AuditCheckComponent implements OnInit {
         //  //console.log(this.qtyFall);
       })
     }
-
+  }
 
   }
 

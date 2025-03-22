@@ -170,6 +170,10 @@ CheckWork(data:any){
    
 }
 
+CheckOrder_Cancel(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/CheckOrder_Cancel',data)
+}
+
 CheckWork_ug(data:any){
   return this.http.post('http://10.26.1.21:1661/api/CheckWork_ug',data)
    

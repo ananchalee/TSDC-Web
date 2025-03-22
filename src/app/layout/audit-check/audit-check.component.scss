@@ -48,3 +48,9 @@ hr.style19 {
     margin-top: -1px; 
     margin-bottom: 1px; 
   }
+
+  .row-danger {
+    background-color: #ffcccc !important;  /* สีพื้นหลังแดงอ่อน */
+    color: red !important;  /* ตัวหนังสือสีแดง */
+    font-weight: bold;
+  }

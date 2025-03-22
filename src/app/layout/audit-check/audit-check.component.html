@@ -104,6 +104,10 @@
                 <!-- /.card-header -->
                 <div class="card-body">
 
+                  <div [hidden]='!alertcancel' class="alert alert-danger color-palette align-items-center" role="alert">
+                   <h5><i class="icon fas fa-ban"> </i> ORDER CANCEL !</h5>
+                  </div>
+
                   <div class="text-center">
                     <h1 style="font-size:600%;" class="col-md-12"><b>
                        {{input.shipment_id}} </b></h1>
@@ -224,7 +228,7 @@
                       </div>
                     </div>
                     <!-- /.col -->
-                    <div class="col-md-7">
+                    <div class="col-md-9">
 
                       <div class="card">
                         <div class="card-body ">
@@ -237,10 +241,11 @@
                                 <th>หน่วย</th>
                                 <th style="width: 10px">TOTAL </th>
                                 <th style="width: 10px">CHECK</th>
+                                <th style="width: 10px">STATUS</th>
                               </tr>
                             </thead>
                             <tbody>
-                              <tr *ngFor="let data of res_list; let i = index">
+                              <tr *ngFor="let data of res_list; let i = index" [ngClass]="{ 'row-danger': data.ITME_CANCEL == 'CANCEL' }">
                                 <td>{{data.ITEM_ID_BARCODE}}</td>
 
                                 <td>{{data.ITEM_ID}}</td>
@@ -252,6 +257,9 @@
                                 <td class="text-center">{{data.QTY_PICK}}</td>
                                 <td class="text-center" [ngClass]="{'text_red':data.QTY_CHECK !=data.QTY_PICK}">
                                   {{data.QTY_CHECK}}
+                                </td>
+                                <td class="text-center" >
+                                  {{data.ITME_CANCEL}}
                                 </td>
 
                               </tr>
