@@ -166,10 +166,17 @@
                       <div class="card">
                         <div class="card-header">
                           <strong>รายระเอียด Order </strong>
+                          <br>
                           <span style="font-size:13px" type="button" class="badge badge-pill badge-success" 
                           (click)="Excel()">
                             &emsp; Excel &emsp;    
                           </span> 
+                          <span [hidden]='!ButtonprintCancel' style="color: #ccc; padding: 0 10px;">|</span>
+                          <span [hidden]='!ButtonprintCancel' style="font-size:13px" type="button" class="badge badge-pill badge-warning" 
+                          (click)="printcancel()">
+                            &emsp; Print Cancel &emsp;    
+                          </span> 
+                       
                         </div>
                         <div class="card-body">
                           <div class="row">
@@ -662,102 +669,6 @@
     </div>
 
 
-    <!-- <div class="container-fluid" [hidden]="pagePrintTrackAll">
-      <div style="page-break-after: always" class="page" *ngFor="let list of dataprint; let i = index;">
-        
-        <div class="row justify-content-center">
-          <div class="col-4 text-center">
-            <font size="4">Tracking No :</font>
-          </div>
-          <div class="col-8">
-            <ngx-barcode6 
-              [bc-element-type]="'svg'" 
-              [bc-format]="'CODE128'" 
-              [bc-text-position]="'button'" 
-              [bc-width]="2"
-              [bc-height]="50" 
-              [bc-font-size]="15" 
-              [bc-value]="list.REF_INDEX" 
-              [bc-display-value]="true">
-            </ngx-barcode6>
-          </div>
-        </div>
-    
-        <div class="row justify-content-center">
-          <div class="col-4 text-center">
-            <font size="4">Box Size :</font>
-          </div>
-          <div class="col-8">
-            <font size="4"><b>{{list.BOX_SIZE}}</b></font>
-          </div>
-        </div>
-    
-        <div class="row justify-content-center">
-          <div class="col-4 text-center">
-            <font size="4">Channel :</font>
-          </div>
-          <div class="col-8">
-            <font size="4"><b>{{list.TCHANNEL}}</b></font>
-          </div>
-        </div>
-    
-        <div class="row justify-content-center">
-          <div class="col-4 text-center">
-            <font size="4">Seller :</font>
-          </div>
-          <div class="col-8">
-            <font size="4"><b>{{list.SELLER_NO}}</b></font>
-          </div>
-        </div>
-    
-        <div class="row justify-content-center">
-          <div class="col-4 text-center">
-            <font size="4">Shipping Name :</font>
-          </div>
-          <div class="col-8">
-            <font size="4"><b>{{list.SHIPPING_NAME}}</b></font>
-          </div>
-        </div>
-    
-        <div class="row justify-content-center">
-          <div class="col-4 text-center">
-            <font size="4">Box No :</font>
-          </div>
-          <div class="col-8">
-            <font size="4"><b>{{list.BOX_NO_ORDER}} / {{input.MaxBox_NO}}</b></font>
-          </div>
-        </div>
-    
-        <div class="row justify-content-center">
-          <div class="col-4 text-center">
-            <font size="4">Table Check :</font>
-          </div>
-          <div class="col-8">
-            <font size="4"><b>{{list.TABLE_CHECK}}</b></font>
-          </div>
-        </div>
-    
-        <div class="row justify-content-center">
-          <div class="col-4 text-center">
-            <font size="4">Shipment :</font>
-          </div>
-          <div class="col-8">
-            <ngx-barcode6 
-              [bc-element-type]="'svg'" 
-              [bc-format]="'CODE128'" 
-              [bc-text-position]="'button'" 
-              [bc-width]="2"
-              [bc-height]="40" 
-              [bc-font-size]="15" 
-              [bc-value]="list.SHIPMENT_ID" 
-              [bc-display-value]="true">
-            </ngx-barcode6>
-          </div>
-        </div>
-    
-      </div>
-    </div> -->
- 
     <div class="container-fluid" [hidden]="pagePrintCoverSheet">
       <div style="page-break-after: always" class="page" *ngFor="let list of dataprintCoverSheet;let i = index;">
         <div class="row ">
@@ -973,6 +884,95 @@
         </div>
       </div>
     </div>
+
+    <div class="container-fluid" [hidden]="pagePrintCancel">
+      <div style="page-break-after: always" class="page" *ngFor="let list of dataprintcancel ; let i = index;">
+        <div class="row">
+          <div class="col-3">
+            <font size="4">
+              Shipment :
+            </font>
+          </div>
+          <div class="col-9">
+            <ngx-barcode6 [bc-element-type]="'svg'" [bc-format]="'CODE128'" [bc-text-position]="'button'" [bc-width]="2"
+              [bc-height]="40" [bc-font-size]="15" [bc-value]="list.SHIPMENT_ID" [bc-display-value]="true">
+            </ngx-barcode6>
+          </div>
+        </div>
+    
+        <div class="row">
+          <div class="col-3">
+            <font size="4">
+              Shipping :
+            </font>
+          </div>
+          <div class="col-9">
+            <font size="4"><b>{{ list.SHIPPING_NAME }}</b></font>
+          </div>
+        </div>
+    
+        <div class="row">
+          <div class="col-3">
+            <font size="4">
+              Channel :
+            </font>
+          </div>
+          <div class="col-2">
+            <font size="4"><b>{{ list.TCHANNEL }}</b></font>
+          </div>
+    
+          <div class="col-2">
+            <font size="4">
+              Seller :
+            </font>
+          </div>
+          <div>
+            <font size="4"><b>{{ list.SELLER_NO }}</b></font>
+          </div>
+        </div>
+    
+        <div class="row">
+          <div class="col-3">
+            <font size="4">
+              Company:
+            </font>
+          </div>
+          <div class="col-2">
+            <font size="4"><b>{{ list.COMPANY }}</b></font>
+          </div>
+    
+          <div class="col-3">
+            <font size="4">
+              OrderDate:
+            </font>
+          </div>
+          <div>
+            <font size="4"><b> {{ list.ORDER_DATE }}</b></font>
+          </div>
+        </div>
+    
+        <div class="row">
+          <div class="col-5"></div>
+          <div class="col-7">
+            <qrcode
+              [qrdata]="list.SHIPMENT_ID"
+              [width]="70"
+              [errorCorrectionLevel]="'M'">
+            </qrcode>
+          </div>
+        </div>
+        <br>
+        <div class="row">
+          <div class="col-4"></div>
+          <div class="col-8">
+            <font size="9"><span>CANCEL</span></font>
+          </div>
+          </div>
+    
+      </div>
+    </div>
+    
+
   </div>
 
 </div>

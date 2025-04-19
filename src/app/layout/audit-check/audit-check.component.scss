@@ -54,3 +54,15 @@ hr.style19 {
     color: red !important;  /* ตัวหนังสือสีแดง */
     font-weight: bold;
   }
+  .watermark {
+    position: absolute;
+    //bottom: 10px;
+    left: 10%;
+    transform: translateX(-50%);
+    font-size: 50px; /* ปรับขนาดตัวอักษรตามต้องการ */
+    font-weight: bold;
+    color: red;
+    opacity: 0.2;
+    pointer-events: none; /* ไม่ให้สามารถคลิกได้ */
+}
+ 

@@ -22,6 +22,7 @@ import { EditBoxComponent } from './layout/edit-box/edit-box.component';
 import { AuditCheckPrintOldComponent } from './layout/audit-check-Print-Old/audit-check-Print-Old.component';
 import { AuditCheckPrintOldFullComponent } from './layout/audit-check-Print-Old-fullcarton/audit-check-Print-Old-fullcarton.component';
 import { NgxBarcode6Module } from 'ngx-barcode6';
+import { QRCodeModule } from 'angularx-qrcode';
 
 import {DataTablesModule} from 'angular-datatables';
 import { OutboundScantrackingComponent } from './layout/outbound-scantracking/outbound-scantracking.component';
@@ -63,6 +64,7 @@ import { MoniterStatusRTSComponent } from './layout/moniter-statusRTS/moniter-st
     FormsModule,
     ReactiveFormsModule,
     NgxBarcode6Module,
+    QRCodeModule ,
     DataTablesModule,
  
 

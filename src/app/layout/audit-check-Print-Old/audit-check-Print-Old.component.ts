@@ -1683,7 +1683,8 @@ summaryConCheckPrint() {
                       MESSAGE_1: data.data[0].MESSAGE_1,
                       MESSAGE_2: data.data[0].MESSAGE_2,
                       MESSAGE_3: data.data[0].MESSAGE_3,
-                      BOX_SIZE :  datatrack.data[i].REF_INDEX
+                      BOX_SIZE :  datatrack.data[i].REF_INDEX,
+                      BILL_NO_REF : datatrack.data[i].Bill_NO_REF,
                     }
                     a.push(array)
                   }
@@ -1779,7 +1780,8 @@ coverSheet2() { //// ใบปะกล่อง
                   MESSAGE_1: data.data[0].MESSAGE_1,
                   MESSAGE_2: data.data[0].MESSAGE_2,
                   MESSAGE_3: data.data[0].MESSAGE_3,
-                  BOX_SIZE :  datatrack.data[i].BOX_SIZE
+                  BOX_SIZE :  datatrack.data[i].BOX_SIZE,
+                  BILL_NO_REF : datatrack.data[i].Bill_NO_REF,
                 }
                 a.push(array)
               }

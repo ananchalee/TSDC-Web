@@ -47,7 +47,9 @@ export class AuditCheckComponent implements OnInit {
   public pagePrintTrackAll = true;
   public pagePrint = true;
   public summaryPage = true;
+  public pagePrintCancel = true;
 
+  public ButtonprintCancel = false;
   public reButton = false;
   public box: any = {}
 
@@ -68,6 +70,7 @@ export class AuditCheckComponent implements OnInit {
 
   dataprintCoverSheet: any = [];
   dataprint: any = [];
+  dataprintcancel: any = [];
   input: any = {};
   btn: any = {};
   dataprint_LIST_ITEM: any = [];
@@ -449,6 +452,7 @@ export class AuditCheckComponent implements OnInit {
     this.pagePrint = true
     this.pagePrintCoverSheet = true;
     this.pagePrintShear = true;
+    this.pagePrintCancel = true;
     this.LOAD_USERTABLECHECK();
     setTimeout(() => { this.focusInput_item() }, 3000);
     setTimeout(() => { this.focusInput_con() }, 1000);
@@ -515,6 +519,7 @@ export class AuditCheckComponent implements OnInit {
   WorkType() {
 
     this.alertcancel = false;
+    this.ButtonprintCancel = false;
     this.dataService.CheckWork_ug(this.input).subscribe(res => {
       this.CheckWork = res;
       
@@ -646,6 +651,9 @@ export class AuditCheckComponent implements OnInit {
                                 }
                                 else if(ordercancel.status === 'success'){
                                   this.alertcancel = true;
+                                  this.ButtonprintCancel = true;
+                                  //setTimeout(() => { this.printcancel() }, 250)
+                               
                                 }
                               });
 
@@ -654,7 +662,7 @@ export class AuditCheckComponent implements OnInit {
                               this.scanConPage = true;
                               this.scanItemPage = false;
                               this.summaryPage = true;
-                              // setTimeout(() => { this.focusInput_item() }, 150)
+                              // 
 
                             }
                           })
@@ -675,6 +683,8 @@ export class AuditCheckComponent implements OnInit {
                             }
                             else if(ordercancel.status === 'success'){
                               this.alertcancel = true;
+                              this.ButtonprintCancel = true;
+                              //setTimeout(() => { this.printcancel() }, 250)
                             }
                           });
 
@@ -952,6 +962,10 @@ export class AuditCheckComponent implements OnInit {
           this.res_list = data.data;
           //console.log(this.res_list[0].MaxBox_NO)
           this.input.MaxBox_NO = this.res_list[0].MaxBox_NO
+
+          if (this.res_list?.some((item: any) => item.ITME_CANCEL === 'CANCEL')) {
+            this.ButtonprintCancel = true;
+          }
 
         }
       })
@@ -1559,7 +1573,7 @@ console.log(this.input.check_QTY_PICK,this.res_QTY_equal,this.Status_Print_Track
           SELLER_NO: data.data[0].SELLER_NO,
           BOX_NO_ORDER: data.data[0].BOX_NO_ORDER,
           SHIPPING_NAME: this.input.SHIPPING_NAME,
-          SHIPMENT_ID: this.input.shipment_id,
+          SHIPMENT_ID: data.data[0].PO_NO,
           TABLE_CHECK: this.input.TABLE_CHECK,
           BOX_SIZE: this.input.BOX_SIZE,
           TCHANNEL: this.input.TCHANNEL,
@@ -1623,7 +1637,7 @@ console.log(this.input.check_QTY_PICK,this.res_QTY_equal,this.Status_Print_Track
           SELLER_NO: data.data[0].SELLER_NO,
           BOX_NO_ORDER: data.data[0].BOX_NO_ORDER,
           SHIPPING_NAME: this.input.SHIPPING_NAME,
-          SHIPMENT_ID: this.input.shipment_id,
+          SHIPMENT_ID: data.data[0].PO_NO,
           TABLE_CHECK: data.data[0].TABLE_CHECK,
           BOX_SIZE: data.data[0].BOX_SIZE,
           TCHANNEL: this.input.TCHANNEL,
@@ -1672,7 +1686,7 @@ console.log(this.input.check_QTY_PICK,this.res_QTY_equal,this.Status_Print_Track
             SELLER_NO: data.data[i].SELLER_NO,
             BOX_NO_ORDER: data.data[i].BOX_NO_ORDER,
             SHIPPING_NAME: this.input.SHIPPING_NAME,
-            SHIPMENT_ID: this.input.shipment_id,
+            SHIPMENT_ID: data.data[i].PO_NO,
             TABLE_CHECK: data.data[i].TABLE_CHECK,
             BOX_SIZE: data.data[i].BOX_SIZE,
             TCHANNEL: this.input.TCHANNEL,
@@ -1701,6 +1715,25 @@ console.log(this.input.check_QTY_PICK,this.res_QTY_equal,this.Status_Print_Track
 
   Excel(){
     
+  }
+
+  printcancel(){
+    var a = Array();
+    for (var i = 0;i < 1; i++) {
+      let array = {
+        SHIPMENT_ID: this.input.shipment_id,
+        SHIPPING_NAME: this.input.SHIPPING_NAME,
+        TCHANNEL: this.input.TCHANNEL,
+        SELLER_NO: this.input.SELLER_NO,
+        COMPANY : this.input.COMPANY,
+        ORDER_DATE : this.input.ORDER_DATE
+
+      }
+      a.push(array)
+    }
+    this.dataprintcancel = a
+    this.pagePrint = false
+    this.pagePrintCancel = false;
   }
 
   backScanitem() {

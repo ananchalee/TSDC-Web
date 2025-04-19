@@ -379,12 +379,19 @@ tracking_running_Old2(data:any){
 check_Pallet_confirm_outbound(data:any){
   return this.http.post('http://10.26.1.21:1661/api/check_Pallet_confirm_outbound',data)
 }
+check_Pallet_confirm_outbound11(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/check_Pallet_confirm_outbound11',data)
+}
+
 Check_TRANSPORTATION_NAME(data:any){
   return this.http.post('http://10.26.1.13:1665/api99/Check_TRANSPORTATION_NAME',data)
 }
 
 Get_TRANSPORTATION_NAME(){
   return this.http.get('http://10.26.1.13:1665/api99/Get_TRANSPORTATION_NAME')
+}
+check_Tracking_Order_Cancel(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/check_Tracking_Order_Cancel',data)
 }
 
 check_Tracking_confirm_outbound(data:any){
@@ -396,6 +403,9 @@ insertTracking_confirmOutbound(data:any){
 
 update_Tracking_confirm_outbound(data:any){
   return this.http.post('http://10.26.1.21:1661/api/update_Tracking_confirm_outbound', data)
+}
+update_Tracking_confirm_outbound2(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/update_Tracking_confirm_outbound2', data)
 }
 DeleteAndBackup_Track_Outbound(data:any){
   return this.http.post('http://10.26.1.21:1661/api/DeleteAndBackup_Track_Outbound',data)
