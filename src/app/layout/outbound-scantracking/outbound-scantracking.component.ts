@@ -25,7 +25,7 @@ export class OutboundScantrackingComponent implements OnInit {
   pageactive: any;
   user: any;
   interval: any;
-
+  isLoading = false;
   user_pincode: any = {};
 
   showdataPage = false;
@@ -260,6 +260,8 @@ export class OutboundScantrackingComponent implements OnInit {
     
 
   interface(){
+    
+    this.isLoading = true;
     this.busy =  this.dataService.check_Pallet_confirm_outbound11(this.input).subscribe(res => {
       this.res_datas = res;
       if (this.res_datas.status === 'error'||this.res_datas.status === 'error2') {
@@ -270,6 +272,8 @@ export class OutboundScantrackingComponent implements OnInit {
           timer: 2500
         });
         this.playAudioError();
+        
+      this.isLoading = false;
       } 
       else if (this.res_datas.status === 'success'){
         Swal.fire({
@@ -280,9 +284,21 @@ export class OutboundScantrackingComponent implements OnInit {
           timer: 2500
         });
         this.playAudioError();
+        this.isLoading = false;
       }else{
+        var track = "";
+        console.log(this.data.length);
+        for (var i = 0; i < this.data.length; i++) {
+          track += "'" + this.data[i].BILL_NO + "',";
+        }
+        track = track.slice(0, -1);
+        
+        var condition = 'and BILL_NO in(' + track + ')';
+        this.input.condition = this.data.length > 0 ? condition : "";
+        
         this.dataService.interface_Tracking_confirm_outbound(this.input).subscribe(res => {
         this.res_datas = res;
+        this.isLoading = false;
         if (this.res_datas.status === 'error') {
           Swal.fire({
             icon: 'error',
@@ -411,7 +427,7 @@ export class OutboundScantrackingComponent implements OnInit {
         this.input.SHIP_PROVIDER_OOD = transport_name
         this.input.PIN_ID = this.input.USER_NAME
         this.input.INTERNAL_ID = this.input.PIN_CODE
-        
+
         this.dataService.check_Tracking_Order_Cancel(this.input).subscribe(res=>{
           this.res_datas = res;
           if (this.res_datas.status === 'error'||this.res_datas.status === 'error2') {
@@ -494,6 +510,7 @@ export class OutboundScantrackingComponent implements OnInit {
                     this.input.TRACK_CODE = ''
                     
                   }else if (this.res_datas.status === 'success') {
+                    
                     this.input.TRACK_CODE = ''
                     this.data = this.res_datas.data
                     this.showdataPage = true;

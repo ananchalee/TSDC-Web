@@ -419,7 +419,7 @@ check_ordercancel_online(data:any){
 }
 
 interface_Tracking_confirm_outbound(data:any){
-  return this.http.post('http://10.26.1.21:1661/api/interface_Tracking_confirm_outbound',data)
+  return this.http.post('http://10.26.1.21:1661/api/interface_Tracking_confirm_outbound2',data)
 }
 
 ///////// outbount routeing
