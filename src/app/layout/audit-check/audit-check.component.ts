@@ -119,22 +119,79 @@ export class AuditCheckComponent implements OnInit {
 
   }
 
-  //this.input.sa  = JSON.parse(localStorage.getItem('currentUser') || '')
+  printLabel() {
 
-  /* focusScrollMethod = function getFocus() {
+    this.dataService.checkpathfile_labeltrack(this.input).subscribe(res => {
+      var data: any = res
+      console.log(data)
+      if(data.status == "success"){
+        var rawPath = data.data[0].FILE_PACKING_OOS
+        const normalizedPath = rawPath.replace(/\\/g, '/');
+        var Key = '23'
+        if (rawPath.startsWith('TSDC_PACKING')) {
+          Key = '26';
+        }
+        const payload = {
+          networkKey: Key,
+          path:normalizedPath
+        };
+    
+        this.dataService.DownloadFileFromNetwork(payload).subscribe(blob => {
+          const fileURL = URL.createObjectURL(blob);
+    
+          const iframe = document.createElement('iframe');
+          iframe.style.display = 'none';
+          iframe.src = fileURL;
+          document.body.appendChild(iframe);
+    
+          iframe.onload = () => {
+            iframe.contentWindow?.focus();
+            iframe.contentWindow?.print();
 
-    var element = document.getElementById("YourElementId")
-              //element.focus();
-    //document.getElementById("id").focus();
+            new Promise(f => setTimeout(f, 2000));
+            this.scanCon();
+          };
+        }, err => {
+          console.error('Print failed:', err);
+          // Swal.fire({
+          //   icon: 'error',
+          //   title: 'ไม่สามารถโหลดไฟล์ได้',
+          //   text: 'Print Failed',
+          //   showConfirmButton: false,
+          //   timer: 2500
+          // });
 
-     
-    var elem = document.getElementById('result');
-    if(typeof elem != null  ) {
-      document.getElementById("result").focus();
-    }
+          this.pagePrint = false
+            this.pagePrintTrack = false;
+            this.pagePrintTrackAll = true;
+            this.isLoading = false;
+          
+    
+            if (this.input.OnclickCoverSheet == true) {
+              this.coverSheet();
+            } else {
+              this.pagePrintCoverSheet = true;
+            }
 
+        });
 
-  }  */
+      }else{
+
+        this.pagePrint = false
+        this.pagePrintTrack = false;
+        this.pagePrintTrackAll = true;
+        this.isLoading = false;
+      
+        if (this.input.OnclickCoverSheet == true) {
+          this.coverSheet();
+        } else {
+          this.pagePrintCoverSheet = true;
+        }
+      }
+      
+    })
+
+  }
 
 
   focusInput_item() {
@@ -938,7 +995,6 @@ export class AuditCheckComponent implements OnInit {
     if (this.input.ORDER_TYPE != 'SORTER') {
       this.loadallsum()
       this.loadTracking()
-      console.log('20');
       this.dataService.summaryCon(this.input).subscribe(res => {
 
         var data: any = res
@@ -1585,18 +1641,24 @@ console.log(this.input.check_QTY_PICK,this.res_QTY_equal,this.Status_Print_Track
         this.dataprint = a
         //console.log(this.dataprint)
         jQuery(this.myModalBOX.nativeElement).modal('hide');
-        this.pagePrint = false
-        this.pagePrintTrack = false;
-        this.pagePrintTrackAll = true;
-        this.isLoading = false;
-      
 
-        if (this.input.OnclickCoverSheet == true) {
-          this.coverSheet();
-        } else {
-          this.pagePrintCoverSheet = true;
-        }
 
+        /////// check file
+          if(this.input.ORDER_TYPE == 'ONLINE' && this.sumqty[0].SUMCHECK == this.sumqty[0].SUMCON && data.data[0].BOX_NO_ORDER == 1){
+            this.printLabel()
+          }else{
+            this.pagePrint = false
+            this.pagePrintTrack = false;
+            this.pagePrintTrackAll = true;
+            this.isLoading = false;
+        
+            if (this.input.OnclickCoverSheet == true) {
+              this.coverSheet();
+            } else {
+              this.pagePrintCoverSheet = true;
+            }
+          }
+            
       }
     })
 

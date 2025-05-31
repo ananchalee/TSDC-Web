@@ -6,7 +6,7 @@ import { Injectable, ErrorHandler } from '@angular/core';
 import { HttpClient,HttpHeaders,HttpErrorResponse } from '@angular/common/http';
 //import { errorHandler } from '@angular/platform-browser/src/browser';
 //import { error } from 'util';
-
+import { HttpParams } from '@angular/common/http';
 
 @Injectable()
 export class DataService {
@@ -468,6 +468,29 @@ Moniter_statusRTS(data:any){
 update_statusRTS(data:any){
   return this.http.post('http://10.26.1.21:1661/api/update_statusRTS',data)
 }
+
+//////////////
+
+DownloadFileFromNetwork(data: { networkKey: string, path: string }) {
+  const params = new HttpParams()
+    .set('networkKey', data.networkKey)
+    .set('path', encodeURIComponent(data.path)); // encode path เพื่อความปลอดภัย
+
+  return this.http.get('http://10.26.1.21:1661/api/downloadfile_NetworkPath', {
+    params,
+    responseType: 'blob'
+  }).pipe(
+    catchError(err => {
+      console.error('Download error:', err);
+      return throwError(() => err);
+    })
+  );
+}
+checkpathfile_labeltrack(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/checkpathfile_labeltrack',data)
+}
+
+
 
 
 }
