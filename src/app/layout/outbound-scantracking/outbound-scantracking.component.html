@@ -30,7 +30,7 @@
                       
                   </div>
                   <div class="card-body">
-                    <form >
+                <form >
                   <div class="row">
       
                     <div class="col-1"> 
@@ -62,7 +62,7 @@
                         <label for="Tracking" class="col-2 col-form-label">Tracking </label>
                         <div class="col-10">
                           <input type="text" class="form-control" name="Tracking" placeholder="SCAN เลข Tracking Order"
-                            [(ngModel)]="input.TRACK_CODE" (change)="check_Tracking();" minlength="10" maxlength="20" required
+                            [(ngModel)]="input.TRACK_CODE" (change)="check_Tracking();" minlength="10" maxlength="30" required
                             #inputTrack>
                         </div>
                       </div>
@@ -71,7 +71,7 @@
                         <label for="Tracking" class="col-2 col-form-label">Tracking++ </label>
                         <div class="col-10">
                           <input type="text" class="form-control is-invalid" name="Tracking2" placeholder="เลข Tracking Order(ยิงซ้ำบวกเพิ่ม)"
-                            [(ngModel)]="input.TRACK_CODE" (change)="check_Tracking2();" minlength="10" maxlength="20" required
+                            [(ngModel)]="input.TRACK_CODE" (change)="check_Tracking2();" minlength="10" maxlength="30" required
                             #inputTrack>
                         </div>
                       </div>
@@ -192,7 +192,12 @@
                         
                         </div>
                         
-                        
+                        <div class="row justify-content-md-center">
+                          <div *ngIf="isLoading" class="loading-spinner">
+                            <!-- You can style this div or add a spinner image/icon here -->
+                            Loading... <i class="fas fa-3x fa-sync-alt fa-spin"></i>
+                          </div>
+                        </div>
         
                         <div class="card-body" style="font-size:15px;">
         
