@@ -445,7 +445,7 @@ export class OutboundScantrackingComponent implements OnInit {
               Swal.fire({
                 icon: 'warning',
                 title: 'Order Cancel',
-                html:'Order' + this.res_datas.data[0].ORDER_NO + '/'+this.res_datas.data[0].COMPANY +'/'+this.res_datas.data[0].CHANNEL+'/'+this.res_datas.data[0].SELLER_NO,
+                html:'Order : ' + this.res_datas.data[0].ORDER_NO + '/'+this.res_datas.data[0].COMPANY +'/'+this.res_datas.data[0].CHANNEL+'/'+this.res_datas.data[0].SELLER_NO,
                 showConfirmButton: false,
                 timer: 3000
               });
@@ -455,7 +455,7 @@ export class OutboundScantrackingComponent implements OnInit {
               Swal.fire({
                 icon: 'warning',
                 title: 'Order RePack',
-                html:'Order' + this.res_datas.data[0].ORDER_NO + '/'+this.res_datas.data[0].COMPANY +'/'+this.res_datas.data[0].CHANNEL+'/'+this.res_datas.data[0].SELLER_NO,
+                html:'Order : ' + this.res_datas.data[0].ORDER_NO + '/'+this.res_datas.data[0].COMPANY +'/'+this.res_datas.data[0].CHANNEL+'/'+this.res_datas.data[0].SELLER_NO,
                 showConfirmButton: false,
                 timer: 3000
               });

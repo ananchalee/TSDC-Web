@@ -45,7 +45,7 @@
                         <label for="PIN" class="col-2 col-form-label">PIN CODE</label>
                         <div class="col-10">
                           <input  #inputPin type="text" class="form-control" name="PIN_CODE" placeholder="PIN CODE"
-                            [(ngModel)]="input.PIN_CODE" (change)="tablecheck_user();" minlength="1" maxlength="50" required>
+                            [(ngModel)]="input.PIN_CODE" (keyup.enter)="tablecheck_user();" (change)="tablecheck_user();" minlength="1" maxlength="50" required>
                         </div>
                       </div>
       
@@ -53,7 +53,7 @@
                         <label for="Pallet NO" class="col-2 col-form-label">Pallet NO </label>
                         <div class="col-10">
                           <input type="text" class="form-control" name="Pallet_NO" placeholder="เลขพาเลทไม่สามารถใช้ซ้ำได้ภายในวัน"
-                            [(ngModel)]="input.Pallet_NO" (change)="check_Pallet();" minlength="1" maxlength="4" required
+                            [(ngModel)]="input.Pallet_NO" (keyup.enter)="check_Pallet();" (change)="check_Pallet();" minlength="1" maxlength="4" required
                             #inputPallet>
                         </div>
                       </div>
@@ -62,7 +62,7 @@
                         <label for="Tracking" class="col-2 col-form-label">Tracking </label>
                         <div class="col-10">
                           <input type="text" class="form-control" name="Tracking" placeholder="SCAN เลข Tracking Order"
-                            [(ngModel)]="input.TRACK_CODE" (change)="check_Tracking();" minlength="10" maxlength="30" required
+                            [(ngModel)]="input.TRACK_CODE" (change)="check_Tracking();" (keyup.enter)="check_Tracking();" minlength="10" maxlength="30" required
                             #inputTrack>
                         </div>
                       </div>
@@ -71,7 +71,7 @@
                         <label for="Tracking" class="col-2 col-form-label">Tracking++ </label>
                         <div class="col-10">
                           <input type="text" class="form-control is-invalid" name="Tracking2" placeholder="เลข Tracking Order(ยิงซ้ำบวกเพิ่ม)"
-                            [(ngModel)]="input.TRACK_CODE" (change)="check_Tracking2();" minlength="10" maxlength="30" required
+                            [(ngModel)]="input.TRACK_CODE" (change)="check_Tracking2();" (keyup.enter)="check_Tracking2();" minlength="10" maxlength="30" required
                             #inputTrack>
                         </div>
                       </div>

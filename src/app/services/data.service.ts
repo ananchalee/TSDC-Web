@@ -469,6 +469,10 @@ update_statusRTS(data:any){
   return this.http.post('http://10.26.1.21:1661/api/update_statusRTS',data)
 }
 
+check_order_notclose(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/check_order_notclose',data)
+}
+
 //////////////
 
 DownloadFileFromNetwork(data: { networkKey: string, path: string }) {

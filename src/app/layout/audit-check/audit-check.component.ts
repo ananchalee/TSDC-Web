@@ -573,8 +573,13 @@ export class AuditCheckComponent implements OnInit {
     })
   }
 
-  WorkType() {
+  async WorkType() {
 
+    jQuery(this.myModalBOX.nativeElement).modal('show');
+    
+    var status_ = await this.checkorder_notclose();
+
+    if(status_){
     this.alertcancel = false;
     this.ButtonprintCancel = false;
     this.dataService.CheckWork_ug(this.input).subscribe(res => {
@@ -989,7 +994,41 @@ export class AuditCheckComponent implements OnInit {
       }
     })
   }
+  }
 
+  async checkorder_notclose() {
+    let status = false;
+    try {
+      const res = await this.dataService.check_order_notclose(this.input).toPromise();
+      this.CheckWork = res;
+  
+      if (this.CheckWork.status === 'error') {
+        Swal.fire({
+          icon: 'error',
+          title: 'เกิดข้อผิดพลาด กรุณาติดต่อ ADMIN!',
+          html: this.CheckWork.data,
+          showConfirmButton: false,
+          timer: 2500
+        });
+      } else if (this.CheckWork.status === 'success') {
+        Swal.fire({
+          icon: 'warning',
+          title: 'ยังไม่ถูกปิดงาน',
+          html: 'กรุณาปิดงานบนระบบ Man!!',
+          showConfirmButton: false,
+          timer: 4000
+        });
+        this,this.input.CONTAINER_ID = '';
+      } else if (this.CheckWork.status === 'null') {
+        status = true;
+        console.log(status);
+      }
+    } catch (error) {
+      console.error('Error during check_order_notclose:', error);
+    }
+    return status;
+  }
+  
   summaryConCheck() {
 
     if (this.input.ORDER_TYPE != 'SORTER') {
