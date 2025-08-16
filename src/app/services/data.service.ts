@@ -494,8 +494,65 @@ checkpathfile_labeltrack(data:any){
   return this.http.post('http://10.26.1.21:1661/api/checkpathfile_labeltrack',data)
 }
 
+///////////////////// check tracking
+CheckWork_track(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/CheckWorktrack',data)
+   
+}
+
+CheckConOnline_track(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/CheckConOnlinetrack',data)
+}
 
 
+summaryContrack(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/summaryContrack',data)
+
+}
+matchItemInContrack(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/matchItemInContrack',data)
+}
+
+checktracking_Inshipment(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/checktracking_Inshipment',data)
+}
+
+
+checkEqualContrack(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/checkEqualContrack',data)
+    
+}
+
+// trackBOX_CONTROL_DETAIL(data:any){
+//   return this.http.post('http://10.26.1.21:1661/api/trackBOX_CONTROL_DETAIL)',data)
+// }
+
+updateConQtyChecktrack(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/updateConQtyChecktrack',data)
+}
+
+UpdateChecktrackdate(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/UpdateChecktrackdate',data)
+
+}
+
+checkpathfile_labeltracking(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/checkpathfile_labeltracking',data)
+}
+
+updateCoverSheettrack(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/updateCoverSheettrack',data)
+}
+
+summary_ITEM_LACK_Track(data:any) {
+  return this.http.post('http://10.26.1.21:1661/api/summary_ITEM_LACK_Track', data)
+   
+}
+
+Rescan_checkitem_Track(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/Rescan_checkitem_track',data)
+
+}
 
 }
 

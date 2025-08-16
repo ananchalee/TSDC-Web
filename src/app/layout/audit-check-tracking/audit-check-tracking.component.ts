@@ -7,12 +7,21 @@ import { Router, ActivatedRoute } from '@angular/router';
 
 declare var jQuery: any;
 
+interface TrackingItem {
+  id: string;
+  name: string;
+  sumQTY_CHECK: number;
+  sumQTY_PICK: number;
+  status_closebox : string;
+  status_closebox_des: string;
+}
+
 @Component({
-  selector: 'app-audit-check',
-  templateUrl: './audit-check.component.html',
-  styleUrls: ['./audit-check.component.scss']
+  selector: 'app-audit-check-tracking',
+  templateUrl: './audit-check-tracking.component.html',
+  styleUrls: ['./audit-check-tracking.component.scss']
 })
-export class AuditCheckComponent implements OnInit {
+export class AuditCheckTrackingComponent implements OnInit {
   busy!: Subscription;
   @ViewChild('myModalBOX') myModalBOX!: ElementRef;
   @ViewChild('myModalSt') myModalSt!: ElementRef;
@@ -40,6 +49,7 @@ export class AuditCheckComponent implements OnInit {
   public scanConPage = false;
   public scanItemPage = true;
   public alertcancel = false;
+  public selecttrackPage = true;
   public scanQtyPage = true;
   public pagePrintShear = true;
   public pagePrintCoverSheet = true;
@@ -61,7 +71,7 @@ export class AuditCheckComponent implements OnInit {
   BUTTONPRINT = false;
   res_summary: any = {};   ///////
   res_matchItemInCon: any = {};
-  res_list: any = [];
+  res_list: Array<any> = [];
   trackall: any = [];
   sumqty: any = [];
   res_QTY_equal: any = {};
@@ -82,10 +92,14 @@ export class AuditCheckComponent implements OnInit {
   user_listCheckIn:  Array<any>  = [];
   user_listCheckHis:  Array<any>  = [];
 
+  matchItemInCon_track:  Array<any>  = [];
+  distinctTrackingList:  Array<any>  = [];
+
   VAS: any = [];
   vasFormArray: Array<any> = [];
 
   Status_Print_Track = 'Y';
+  
 
   constructor(
     private dataService: DataService,
@@ -97,7 +111,7 @@ export class AuditCheckComponent implements OnInit {
 
     var page = Array();
     let array = {
-      pagename: 'Check Order',
+      pagename: 'Check Order Tracking',
       active: 'Audit&Check',
     }
     page.push(array)
@@ -115,17 +129,18 @@ export class AuditCheckComponent implements OnInit {
     this.btn.CFOrder = true;
     this.btn.Printbill = true;
     this.input.OnclickCoverSheet = false;
+    this.input.TRACKING = null;
 
 
   }
 
   printLabel() {
 
-    this.dataService.checkpathfile_labeltrack(this.input).subscribe(res => {
+    this.dataService.checkpathfile_labeltracking(this.input).subscribe(res => {
       var data: any = res
       console.log(data)
       if(data.status == "success"){
-        var rawPath = data.data[0].FILE_PACKING_OOS
+        var rawPath = data.data[0].FILE_PACKING
         const normalizedPath = rawPath.replace(/\\/g, '/');
         var Key = '23'
         if (rawPath.startsWith('TSDC_PACKING')) {
@@ -135,7 +150,6 @@ export class AuditCheckComponent implements OnInit {
           networkKey: Key,
           path:normalizedPath
         };
-    
         this.dataService.DownloadFileFromNetwork(payload).subscribe(blob => {
           const fileURL = URL.createObjectURL(blob);
     
@@ -268,7 +282,6 @@ export class AuditCheckComponent implements OnInit {
     this.busy = this.dataService.tracksum_qty(this.input).subscribe(res => {
       var data: any = res;
       console.log('checkt',data)
-      console.log(data.data[0].TRACKSUM_QTY)
       if (data.status === 'success') {
         if (data.data[0].TRACKSUM_QTY == null) {
           this.btn.Box = true;
@@ -276,9 +289,10 @@ export class AuditCheckComponent implements OnInit {
           //console.log('ปิด re')
 
         } else {
+          console.log(this.sumcon,this.sumcheck,this.Status_Print_Track)
           if(this.Status_Print_Track == 'N'){
             this.btn.Box = true;
-          }else{
+          }else if (this.sumcon == this.sumcheck){
             this.btn.Box = false;
           }
           //this.btn.Box = false;
@@ -318,7 +332,9 @@ export class AuditCheckComponent implements OnInit {
 
     this.busy = this.dataService.tracksum_qty(this.input).subscribe(res => {
       var data: any = res
+      console.log(data)
       this.input.tracksum_qty = data.data[0].TRACKSUM_QTY
+
       Swal.fire({
         title: 'สแกนสินค้าใหม่ที่ยังไม่ทำการปิดกล่อง ?',
         html: 'จำนวน ' + '<font color="blue">' + this.input.tracksum_qty + '</font>' + 'ชิ้น',
@@ -331,7 +347,7 @@ export class AuditCheckComponent implements OnInit {
         cancelButtonText: 'ยกเลิก'
       }).then((result) => {
         if (result.value) {
-          this.busy = this.dataService.Rescan_checkitem(this.input).subscribe(res => {
+          this.busy = this.dataService.Rescan_checkitem_Track(this.input).subscribe(res => {
             var data: any = res;
             if (data.status === 'success') {
               this.summaryConCheck();
@@ -393,7 +409,6 @@ export class AuditCheckComponent implements OnInit {
     this.input.OnclickCoverSheet = false;
     this.busy = this.dataService.tracksum_qty(this.input).subscribe(res => {
       var data: any = res;
-      //console.log(data)
       //console.log(data.data[0].TRACKSUM_QTY)
       if (data.status === 'success') {
         if (data.data[0].TRACKSUM_QTY == null) {
@@ -402,7 +417,7 @@ export class AuditCheckComponent implements OnInit {
         } else {
           if(this.Status_Print_Track == 'N'){
             this.btn.Box = true;
-          }else{
+          }else if (this.sumcon == this.sumcheck){
             this.btn.Box = false;
           }
           //this.btn.Box = false;
@@ -497,6 +512,7 @@ export class AuditCheckComponent implements OnInit {
     this.view = true;
     this.scanConPage = false;
     this.scanItemPage = true;
+    this.selecttrackPage = true;
     this.btn.Box = true;
     this.btn.Re = true;
     //console.log('ปิด re')
@@ -573,14 +589,14 @@ export class AuditCheckComponent implements OnInit {
     })
   }
 
-  async WorkType() {
+  async WorkType(){
     
     var status_ = await this.checkorder_notclose();
 
     if(status_){
     this.alertcancel = false;
     this.ButtonprintCancel = false;
-    this.dataService.CheckWork_ug(this.input).subscribe(res => {
+    this.dataService.CheckWork_track(this.input).subscribe(res => {
       this.CheckWork = res;
       
       if (this.CheckWork.status === 'error') {
@@ -622,7 +638,8 @@ export class AuditCheckComponent implements OnInit {
          { 
             if (this.input.ORDER_TYPE == 'ONLINE' || this.input.ORDER_TYPE == 'CANCEL') {
               console.log('ONLINE');
-              this.dataService.CheckConOnline(this.input).subscribe(res => {
+              this.input.conditiontracking = ''
+              this.dataService.CheckConOnline_track(this.input).subscribe(res => {
                 var data: any = res
                 this.sumqty = data.data
                 if (data.status === 'error') {
@@ -718,10 +735,10 @@ export class AuditCheckComponent implements OnInit {
                               });
 
                               this.summaryConCheck();
-                              this.CHECK_tracksum_qty();
-                              this.scanConPage = true;
-                              this.scanItemPage = false;
-                              this.summaryPage = true;
+                              //this.CHECK_tracksum_qty();
+                              // this.scanConPage = true;
+                              // this.scanItemPage = false;
+                              // this.summaryPage = true;
                               // 
 
                             }
@@ -749,10 +766,10 @@ export class AuditCheckComponent implements OnInit {
                           });
 
                           this.summaryConCheck();
-                          this.CHECK_tracksum_qty();
-                          this.scanConPage = true;
-                          this.scanItemPage = false;
-                          this.summaryPage = true;
+                          //this.CHECK_tracksum_qty();
+                          // this.scanConPage = true;
+                          // this.scanItemPage = false;
+                          // this.summaryPage = true;
                           // setTimeout(() => { this.focusInput_item() }, 150)
                         }
 
@@ -1030,9 +1047,10 @@ export class AuditCheckComponent implements OnInit {
   summaryConCheck() {
 
     if (this.input.ORDER_TYPE != 'SORTER') {
-      this.loadallsum()
+  
       this.loadTracking()
-      this.dataService.summaryCon(this.input).subscribe(res => {
+      console.log(this.input)
+      this.dataService.summaryContrack(this.input).subscribe(res => {
 
         var data: any = res
         if (data.status === 'error') {
@@ -1060,8 +1078,52 @@ export class AuditCheckComponent implements OnInit {
             this.ButtonprintCancel = true;
           }
 
+          console.log(this.res_list)
+          console.log(this.input)
+          this.input.distinctTrackingCount = new Set(this.res_list.map(item => item.TRACKING)).size;
+          //console.log("จำนวน Tracking ไม่ซ้ำกัน:", distinctTrackingCount);
+
+          if(this.input.distinctTrackingCount > 1 && (this.input.TRACKING == '' || this.input.TRACKING == null)){
+            this.scanConPage = true;
+            this.scanItemPage = true;
+            this.summaryPage = true;
+            this.selecttrackPage = false;
+                          
+            const distinctMap = new Map<string, TrackingItem>();
+            this.res_list.forEach(item => {
+              const id = item.TRACKING?.trim() || '';
+              const name = id === '' ? 'รอ tracking' : id;
+              const status_closebox = item.REF_INDEX == null ? 'N' : 'Y';
+              const status_closebox_des = item.REF_INDEX == null ? 'ยังไม่ปิดกล่อง' : 'ปิดกล่องสำเร็จ';
+
+              if (!distinctMap.has(id)) {
+                distinctMap.set(id, {
+                  id,
+                  name,
+                  sumQTY_CHECK: 0,
+                  sumQTY_PICK: 0,
+                  status_closebox,
+                  status_closebox_des
+                });
+              }
+
+              const trackingItem = distinctMap.get(id)!;
+              trackingItem.sumQTY_CHECK += Number(item.QTY_CHECK) || 0;
+              trackingItem.sumQTY_PICK += Number(item.QTY_PICK) || 0;
+            });
+
+            // แปลง Map เป็น Array
+            this.distinctTrackingList = Array.from(distinctMap.values());
+            
+          }
+
+          
+          this.loadallsum()
+
         }
       })
+
+
     } else {
       this.loadallsumSorter()
       this.dataService.summaryConSorter(this.input).subscribe(res => {
@@ -1091,6 +1153,25 @@ export class AuditCheckComponent implements OnInit {
 
 
   }
+
+
+  startWork(){
+    this.input.conditiontracking = '';
+
+    if(this.input.TRACKING != null && this.input.TRACKING != ''){
+      this.input.conditiontracking ="and a.TRACKING ='"+ this.input.TRACKING +"'"
+    }
+
+    this.summaryConCheck();
+    this.CHECK_tracksum_qty();
+    this.scanConPage = true;
+    this.scanItemPage = false;
+    this.summaryPage = true;
+    this.selecttrackPage = true;
+    setTimeout(() => { this.focusInput_item() }, 150)
+
+  }
+
   loadTracking() {
 
     this.dataService.loadTracking(this.input).subscribe(res => {
@@ -1184,12 +1265,11 @@ export class AuditCheckComponent implements OnInit {
 
 
   loadallsum() {
-    this.dataService.CheckCon(this.input).subscribe(res => {
+    this.dataService.CheckConOnline_track(this.input).subscribe(res => {
       var data: any = res
       this.sumqty = data.data
 
-      //console.log(this.sumqty[0].SUMCHECK);
-      //console.log(this.sumqty[0].SUMCON);
+     console.log(data);
 
       if (data.status === 'error') {
         console.log(data)
@@ -1216,8 +1296,7 @@ export class AuditCheckComponent implements OnInit {
 
         //   //console.log(this.sumcon + 'sumcon');
         //  //console.log(this.sumcheck + 'sumcheck');
-
-        if (this.sumcon == this.sumcheck && this.res_summary.QTY_CHECK == this.res_summary.QTY_PICK) {
+        if (this.sumcon == this.sumcheck &&  this.selecttrackPage == true) {
 
           this.playAudioNice();
           this.closeBox();
@@ -1241,11 +1320,15 @@ export class AuditCheckComponent implements OnInit {
 
         this.busy = this.dataService.tracksum_qty(this.input).subscribe(res => {
           var data: any = res
-          this.input.tracksum_qty = data.data[0].TRACKSUM_QTY
-          if(this.input.tracksum_qty == null){
-            this.btn.Re = true
-          }else{
-            this.btn.Re = false
+          console.log(data);
+          
+            if(data.status == 'success'){
+              this.input.tracksum_qty = data.data[0].TRACKSUM_QTY
+            if(this.input.tracksum_qty == null){
+              this.btn.Re = true
+            }else{
+              this.btn.Re = false
+            }
           }
         })
         
@@ -1263,6 +1346,7 @@ export class AuditCheckComponent implements OnInit {
       }
     })
   }
+  
 
 
   loadallsumSorter() {
@@ -1335,7 +1419,7 @@ export class AuditCheckComponent implements OnInit {
     }else{
     if ((this.input.ORDER_TYPE == 'ONLINE' || this.input.ORDER_TYPE == 'OFFLINE' || this.input.ORDER_TYPE == 'CF_ORDER')) {
 
-      this.dataService.matchItemInCon_ug(this.input).subscribe(res => {
+      this.dataService.matchItemInContrack(this.input).subscribe(res => {
         //console.log(res);
         var data: any = res
 
@@ -1361,8 +1445,8 @@ export class AuditCheckComponent implements OnInit {
           });
           this.input.ITEM_ID_BARCODE = ''
         } else if (data.status === 'success') {
-          this.res_matchItemInCon = data.data[0];
-          if(this.res_matchItemInCon.ORDER_TYPE == "CANCEL"){
+          this.res_matchItemInCon = data.data;
+          if(this.res_matchItemInCon[0].ORDER_TYPE == "CANCEL"){
             this.playAudioError();
             Swal.fire({
               icon: 'warning',
@@ -1373,10 +1457,14 @@ export class AuditCheckComponent implements OnInit {
             });
             this.input.ITEM_ID_BARCODE = ''
           }else{
-            this.input.ITEM_ID = this.res_matchItemInCon.ITEM_ID;
-            this.input.QTY_REQUESTED = this.res_matchItemInCon.QTY_REQUESTED;
-            this.input.QTY_PICK = this.res_matchItemInCon.QTY_PICK;
-            this.updateConQtyCheck();
+
+            // this.input.ITEM_ID = this.res_matchItemInCon.ITEM_ID;
+            // this.input.QTY_REQUESTED = this.res_matchItemInCon.QTY_REQUESTED;
+            // this.input.QTY_PICK = this.res_matchItemInCon.QTY_PICK;
+            // this.updateConQtyCheck();
+
+            //track
+            this.Check_itembytrack()
           }
 
         }
@@ -1424,6 +1512,135 @@ export class AuditCheckComponent implements OnInit {
 
   }
 
+
+  Check_itembytrack(){
+    console.log('Check_itembytrack',this.res_matchItemInCon);
+    //this.input.conditiontracking = '';
+
+    console.log(this.input,this.res_matchItemInCon.length);
+
+    // if(this.input.TRACKING != null && this.res_matchItemInCon.length > 1){
+
+    //   this.matchItemInCon_track = this.res_matchItemInCon;
+    //   const result = this.matchItemInCon_track.find(item => item.TRACKING === this.input.TRACKING && item.QTY_CHECK < item.QTY_PICK);
+    //   console.log(result)
+    //   if(result){
+    //     this.input.ITEM_ID = result.ITEM_ID;
+    //     this.input.QTY_REQUESTED = result.QTY_REQUESTED;
+    //     this.input.QTY_PICK = result.QTY_PICK;
+    //     //this.input.conditiontracking ="and TRACKING !='"+ this.input.TRACKING +"'"
+    //   }else{
+    //     const result = this.matchItemInCon_track.find(item => item.QTY_CHECK < item.QTY_PICK && item.TRACKING != null && item.TRACKING != '');
+    //     if(result){
+          
+    //       this.input.TRACKING = result.TRACKING;
+    //       this.input.ITEM_ID = result.ITEM_ID;
+    //       this.input.QTY_REQUESTED = result.QTY_REQUESTED;
+    //       this.input.QTY_PICK = result.QTY_PICK;
+    //       //this.input.conditiontracking ="and TRACKING !='"+ this.input.TRACKING +"'"
+    //     }
+    //   }
+    // }else{
+    //   console.log('TRACKING null',this.res_matchItemInCon[0])
+    //   this.input.TRACKING = this.res_matchItemInCon[0].TRACKING;
+    //   this.input.ITEM_ID = this.res_matchItemInCon[0].ITEM_ID;
+    //   this.input.QTY_REQUESTED = this.res_matchItemInCon[0].QTY_REQUESTED;
+    //   this.input.QTY_PICK = this.res_matchItemInCon[0].QTY_PICK;
+      
+    // }
+
+    if(this.input.TRACKING != null && this.input.TRACKING != ''){
+      this.input.condition_nontracking ="and TRACKING !='"+ this.input.TRACKING +"'"
+    }
+
+    console.log('conditiontracking' ,this.input.condition_nontracking );
+
+
+      //check  มีการ scan track อื่นๆ ค้างไว้หรือไม่ ให้ scan item ใน track นั้นก่อน
+      this.dataService.checktracking_Inshipment(this.input).subscribe(res => {
+        var data: any = res
+        console.log(data);
+        if (data.status === 'error') {
+          //console.log(data);
+          Swal.fire({
+            icon: 'error',
+            title: 'Can not check tracking in shipment!',
+            showConfirmButton: false,
+            timer: 2500
+          });
+          this.input.ITEM_ID_BARCODE = ''
+          this.playAudioError();
+        } else if (data.status === 'success') {
+          Swal.fire({
+            icon: 'warning',
+            title: 'กำลังดำเนินดาร Scan สินค้าภายใต้ Tracking: '+data.data[0].TRACKING + ' จำนวน: '+data.data[0].QTY_CHECK  +' ชิ้น' ,
+            showConfirmButton: false,
+            timer: 2500
+          });
+          this.input.ITEM_ID_BARCODE = ''
+          //this.input.TRACKING = null
+          this.playAudioError();
+        }else{
+          console.log(this.res_matchItemInCon);
+
+          //i = this.res_matchItemInCon.length;
+          this.updateConQtyCheck();
+          
+        }
+      }); 
+
+    // for (let i = 0; i < this.res_matchItemInCon.length; i++) {
+
+    //   console.log(i,this.res_matchItemInCon.length);
+    //   if(this.res_matchItemInCon[i].TRACKING != null && this.res_matchItemInCon[i].TRACKING != ''){
+    //     this.input.TRACKING = this.res_matchItemInCon[i].TRACKING;
+    //     this.input.conditiontracking ="and TRACKING !='"+ this.res_matchItemInCon[i].TRACKING +"'"
+        
+    //   console.log('conditiontracking' ,this.input.conditiontracking );
+    //   }
+    //   console.log(this.input);
+
+    //   //check  มีการ scan track อื่นๆ ค้างไว้หรือไม่ ให้ scan item ใน track นั้นก่อน
+    //   this.dataService.checktracking_Inshipment(this.input).subscribe(res => {
+    //     var data: any = res
+    //     console.log(data);
+    //     if (data.status === 'error') {
+    //       //console.log(data);
+    //       Swal.fire({
+    //         icon: 'error',
+    //         title: 'Can not check tracking in shipment!',
+    //         showConfirmButton: false,
+    //         timer: 2500
+    //       });
+    //       this.input.ITEM_ID_BARCODE = ''
+    //       this.playAudioError();
+    //     } else if (data.status === 'success') {
+    //       if()
+    //       Swal.fire({
+    //         icon: 'warning',
+    //         title: 'กำลังดำเนินดาร Scan สินค้าภายใต้ Tracking: '+data.data[0].TRACKING + ' จำนวน: '+data.data[0].QTY_CHECK  +' ชิ้น' ,
+    //         showConfirmButton: false,
+    //         timer: 2500
+    //       });
+    //       this.input.ITEM_ID_BARCODE = ''
+    //       this.playAudioError();
+    //     }else{
+    //       console.log(this.res_matchItemInCon);
+
+    //       //i = this.res_matchItemInCon.length;
+    //       this.input.ITEM_ID = this.res_matchItemInCon[i].ITEM_ID;
+    //       this.input.QTY_REQUESTED = this.res_matchItemInCon[i].QTY_REQUESTED;
+    //       this.input.QTY_PICK = this.res_matchItemInCon[i].QTY_PICK;
+    //       this.updateConQtyCheck();
+          
+    //     }
+    //   }); 
+        
+
+      
+    // }
+  }
+
   updateConQtyCheck() {
     //console.log("UPDATE");
     //const user = JSON.parse(localStorage.getItem('currentUser')||'');
@@ -1435,7 +1652,7 @@ export class AuditCheckComponent implements OnInit {
     // ถ้าสแกนอันที่ผิด ซึ่งตรงกับที่เขากดปุ่มมา ก็ทำงาน อัพเดทเพิ่มตามปกติ
 
     if (this.input.ORDER_TYPE == 'ONLINE' || this.input.ORDER_TYPE == 'OFFLINE' || this.input.ORDER_TYPE == 'CF_ORDER') {
-      this.dataService.checkEqualCon(this.input).subscribe(res => {
+      this.dataService.checkEqualContrack(this.input).subscribe(res => {
         var data: any = res
         if (data.status === 'error') {
           //console.log(data);
@@ -1449,13 +1666,13 @@ export class AuditCheckComponent implements OnInit {
         } else if (data.status === 'success') {
           this.res_QTY_equal = data.data[0];
           this.input.check_QTY_PICK = data.data[0].QTY_PICK
-console.log(this.input.check_QTY_PICK,this.res_QTY_equal,this.Status_Print_Track)
+          console.log(this.input.check_QTY_PICK,this.res_QTY_equal,this.Status_Print_Track)
           if (this.res_QTY_equal.QTY_equal == "equal") {
             this.playAudioError();
             Swal.fire({
               icon: 'warning',
               title: 'ITEM เกินจำนวน',
-              html: 'ITEM_ID: ' + '<font color="red">' + this.input.ITEM_ID + '</font>' +
+              html: 'ITEM_ID: ' + '<font color="red">' + this.res_QTY_equal.ITEM_ID + '</font>' +
                 ' ใน CONTAINER_ID: ' + '<font color="red">' + this.input.CONTAINER_ID + '</font>',
               showConfirmButton: true,
               backdrop: false,
@@ -1463,13 +1680,7 @@ console.log(this.input.check_QTY_PICK,this.res_QTY_equal,this.Status_Print_Track
             });
             this.input.ITEM_ID_BARCODE = ''
           } else if (this.res_QTY_equal.QTY_equal == 'not_equal') {
-            if(this.Status_Print_Track == 'N'){
-              this.btn.Box = true;
-              
-            }else{
-              this.btn.Box = false;
-              console.log('ปิดกล่อง')
-            }
+           
             //this.btn.Box = false
             this.btn.CFOrder = true;
             this.dataService.BOX_CONTROL_DETAIL(this.input).subscribe(res => {
@@ -1484,7 +1695,7 @@ console.log(this.input.check_QTY_PICK,this.res_QTY_equal,this.Status_Print_Track
                   timer: 2500
                 });
               } else if (data.status === 'success') {
-                this.dataService.updateConQtyCheck(this.input).subscribe(res => {
+                this.dataService.updateConQtyChecktrack(this.input).subscribe(res => {
                   var data: any = res
 
                   if (data.status === 'error') {
@@ -1637,9 +1848,9 @@ console.log(this.input.check_QTY_PICK,this.res_QTY_equal,this.Status_Print_Track
       this.input.VAS_NAME_08 = array[7]
       this.input.VAS_NAME_09 = array[8]
     }
-    ////console.log(this.input)
+    console.log(this.input)
     if(this.input.ORDER_TYPE == 'ONLINE'){
-     this.dataService.UpdateCheckdate(this.input).subscribe(res => {
+     this.dataService.UpdateChecktrackdate(this.input).subscribe(res => {
       var data: any = res
       console.log(data);
     })
@@ -1650,6 +1861,7 @@ console.log(this.input.check_QTY_PICK,this.res_QTY_equal,this.Status_Print_Track
       //console.log('1',data);
       if (data.status === 'error') {
         console.log(data);
+        this.isLoading = false;
         Swal.fire({
           icon: 'error',
           title: 'เกิดข้อผิดพลาด กรุณาติดต่อ ADMIN!',
@@ -1681,7 +1893,8 @@ console.log(this.input.check_QTY_PICK,this.res_QTY_equal,this.Status_Print_Track
 
 
         /////// check file
-          if(this.input.ORDER_TYPE == 'ONLINE' && this.sumqty[0].SUMCHECK == this.sumqty[0].SUMCON && data.data[0].BOX_NO_ORDER == 1){
+        console.log(this.sumqty[0]);
+          if(this.input.ORDER_TYPE == 'ONLINE' && this.sumqty[0].SUMCHECK == this.sumqty[0].SUMCON){
             this.printLabel()
           }else{
             this.pagePrint = false
@@ -1715,48 +1928,133 @@ console.log(this.input.check_QTY_PICK,this.res_QTY_equal,this.Status_Print_Track
 
   ReprintTracking(i:any){
 
-
-    this.busy = this.dataService.ReprintTracking(this.trackall[i]).subscribe(res => {
+    this.dataService.checkpathfile_labeltracking(this.input).subscribe(res => {
       var data: any = res
-      //console.log(data);
-      if (data.status === 'error') {
-        console.log(data);
-        Swal.fire({
-          icon: 'error',
-          title: 'เกิดข้อผิดพลาด กรุณาติดต่อ ADMIN!',
-          showConfirmButton: false,
-          timer: 2500
-        });
-      } else if (data.status === 'success') {
-        var a = Array();
-        let array = {
-          REF_INDEX: data.data[0].REF_INDEX,
-          QTY: data.data[0].QTY,
-          PO_NO: data.data[0].PO_NO,
-          SELLER_NO: data.data[0].SELLER_NO,
-          BOX_NO_ORDER: data.data[0].BOX_NO_ORDER,
-          SHIPPING_NAME: this.input.SHIPPING_NAME,
-          SHIPMENT_ID: data.data[0].PO_NO,
-          TABLE_CHECK: data.data[0].TABLE_CHECK,
-          BOX_SIZE: data.data[0].BOX_SIZE,
-          TCHANNEL: this.input.TCHANNEL,
-          MaxBox_NO : this.input.MaxBox_NO,
-          COMPANY : this.input.COMPANY,
-          ORDER_DATE : this.input.ORDER_DATE
+      console.log(data)
+      if(data.status == "success"){
+        var rawPath = data.data[0].FILE_PACKING
+        const normalizedPath = rawPath.replace(/\\/g, '/');
+        var Key = '23'
+        if (rawPath.startsWith('TSDC_PACKING')) {
+          Key = '26';
         }
-        a.push(array)
-        this.dataprint = a
-        //console.log(this.dataprint)
-     
-        this.pagePrint = false
-        this.pagePrintTrack = false;
-        this.pagePrintTrackAll = true;
-        this.pagePrintCoverSheet = true;
+        const payload = {
+          networkKey: Key,
+          path:normalizedPath
+        };
+        this.dataService.DownloadFileFromNetwork(payload).subscribe(blob => {
+          const fileURL = URL.createObjectURL(blob);
+    
+          const iframe = document.createElement('iframe');
+          iframe.style.display = 'none';
+          iframe.src = fileURL;
+          document.body.appendChild(iframe);
+    
+          iframe.onload = () => {
+            iframe.contentWindow?.focus();
+            iframe.contentWindow?.print();
 
+            this.busy = this.dataService.ReprintTracking(this.trackall[i]).subscribe(res => {
+              
+              new Promise(f => setTimeout(f, 2000));
+              this.scanCon();
+            });
+          };
+        }, err => {
+          console.error('Print failed:', err);
+
+          this.busy = this.dataService.ReprintTracking(this.trackall[i]).subscribe(res => {
+            var data: any = res
+            //console.log(data);
+            if (data.status === 'error') {
+              console.log(data);
+              Swal.fire({
+                icon: 'error',
+                title: 'เกิดข้อผิดพลาด กรุณาติดต่อ ADMIN!',
+                showConfirmButton: false,
+                timer: 2500
+              });
+            } else if (data.status === 'success') {
+              var a = Array();
+              let array = {
+                REF_INDEX: data.data[0].REF_INDEX,
+                QTY: data.data[0].QTY,
+                PO_NO: data.data[0].PO_NO,
+                SELLER_NO: data.data[0].SELLER_NO,
+                BOX_NO_ORDER: data.data[0].BOX_NO_ORDER,
+                SHIPPING_NAME: this.input.SHIPPING_NAME,
+                SHIPMENT_ID: data.data[0].PO_NO,
+                TABLE_CHECK: data.data[0].TABLE_CHECK,
+                BOX_SIZE: data.data[0].BOX_SIZE,
+                TCHANNEL: this.input.TCHANNEL,
+                MaxBox_NO : this.input.MaxBox_NO,
+                COMPANY : this.input.COMPANY,
+                ORDER_DATE : this.input.ORDER_DATE
+              }
+              a.push(array)
+              this.dataprint = a
+              //console.log(this.dataprint)
+           
+              this.pagePrint = false
+              this.pagePrintTrack = false;
+              this.pagePrintTrackAll = true;
+              this.pagePrintCoverSheet = true;
       
+            
+      
+            }
+          })
 
+        });
+
+      }else{
+
+        this.busy = this.dataService.ReprintTracking(this.trackall[i]).subscribe(res => {
+          var data: any = res
+          //console.log(data);
+          if (data.status === 'error') {
+            console.log(data);
+            Swal.fire({
+              icon: 'error',
+              title: 'เกิดข้อผิดพลาด กรุณาติดต่อ ADMIN!',
+              showConfirmButton: false,
+              timer: 2500
+            });
+          } else if (data.status === 'success') {
+            var a = Array();
+            let array = {
+              REF_INDEX: data.data[0].REF_INDEX,
+              QTY: data.data[0].QTY,
+              PO_NO: data.data[0].PO_NO,
+              SELLER_NO: data.data[0].SELLER_NO,
+              BOX_NO_ORDER: data.data[0].BOX_NO_ORDER,
+              SHIPPING_NAME: this.input.SHIPPING_NAME,
+              SHIPMENT_ID: data.data[0].PO_NO,
+              TABLE_CHECK: data.data[0].TABLE_CHECK,
+              BOX_SIZE: data.data[0].BOX_SIZE,
+              TCHANNEL: this.input.TCHANNEL,
+              MaxBox_NO : this.input.MaxBox_NO,
+              COMPANY : this.input.COMPANY,
+              ORDER_DATE : this.input.ORDER_DATE
+            }
+            a.push(array)
+            this.dataprint = a
+            //console.log(this.dataprint)
+         
+            this.pagePrint = false
+            this.pagePrintTrack = false;
+            this.pagePrintTrackAll = true;
+            this.pagePrintCoverSheet = true;
+    
+          
+    
+          }
+        })
       }
+      
     })
+
+
 
   }
 
@@ -1913,7 +2211,7 @@ console.log(this.input.check_QTY_PICK,this.res_QTY_equal,this.Status_Print_Track
 
         this.isLoading = true; 
 
-        this.dataService.updateCoverSheet(this.input).subscribe(res => {
+        this.dataService.updateCoverSheettrack(this.input).subscribe(res => {
           var data: any = res
           if (data.status === 'error') {
             Swal.fire({
@@ -1964,7 +2262,7 @@ console.log(this.input.check_QTY_PICK,this.res_QTY_equal,this.Status_Print_Track
 
   PRINT_ITEM_LACK() {
     //console.log('OFFLINE');
-    this.dataService.summary_ITEM_LACK(this.input).subscribe(res => {
+    this.dataService.summary_ITEM_LACK_Track(this.input).subscribe(res => {
       //console.log(res.data[0].QTY_CHECK);
       //console.log(res);
       var data: any = res

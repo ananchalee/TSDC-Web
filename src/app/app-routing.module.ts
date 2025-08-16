@@ -5,6 +5,7 @@ import { Routes, RouterModule } from '@angular/router';
 import { LoginComponent } from './login/login.component';
 import { DashboardComponent} from './layout/dashboard/dashboard.component'
 import { AuditCheckComponent } from './layout/audit-check/audit-check.component';
+import { AuditCheckTrackingComponent } from './layout/audit-check-tracking/audit-check-tracking.component';
 import { AuditCheckFullcartonComponent} from './layout/audit-check-fullcarton/audit-check-fullcarton.component';
 import { EditBoxComponent } from './layout/edit-box/edit-box.component';
 import { AuditCheckPrintOldComponent } from './layout/audit-check-Print-Old/audit-check-Print-Old.component';
@@ -21,6 +22,7 @@ const routes: Routes = [
   { path: 'login', component:LoginComponent },
   { path: 'dashboard', component:DashboardComponent },
   { path:'audit-check',component:AuditCheckComponent},
+  { path:'audit-check-tracking',component:AuditCheckTrackingComponent},
   { path:'audit-check-fullcarton',component:AuditCheckFullcartonComponent},
   { path:'edit-box', component:EditBoxComponent },
   { path:'audit-check-Print-Old',component:AuditCheckPrintOldComponent},
