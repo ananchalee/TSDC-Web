@@ -469,6 +469,13 @@ update_statusRTS(data:any){
   return this.http.post('http://10.26.1.21:1661/api/update_statusRTS',data)
 }
 
+///AWB
+Get_ONLINE_ORDER_SHIPPING(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/Get_ONLINE_ORDER_SHIPPING',data)
+}
+UPDATE_TrackingAndRTS(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/UPDATE_TrackingAndRTS',data)
+}
 
 }
 

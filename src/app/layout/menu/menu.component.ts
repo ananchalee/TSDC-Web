@@ -65,6 +65,13 @@ export class MenuComponent implements OnInit {
               break;
           }
           break;
+        case 'AWB':
+          this.page.AWB = true;
+          switch (this.Pageactive[0].pagename){
+            case 'AWB' : this.page.AWB = true;
+              break;
+          }
+          break;
         case 'EditBox':
           this.page.EditBox = true;
           switch (this.Pageactive[0].pagename){
@@ -125,6 +132,9 @@ export class MenuComponent implements OnInit {
         break;
       case 'checkfullcarton':
           this.router.navigate(["/audit-check-fullcarton"]);
+        break;
+      case 'AWB':
+          this.router.navigate(["/AWB"]);
         break;
       case 'editbox':
           this.router.navigate(["/edit-box"]);
