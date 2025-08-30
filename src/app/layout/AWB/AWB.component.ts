@@ -333,6 +333,16 @@ export class AWBComponent implements OnInit {
             this.input.TRACK_CODE = '';
             this.input.shipment_id = '';
             this.input.REF_INDEX = '';
+
+            Swal.fire({
+              icon: 'success',
+              title: 'บันทึกสำเร็จ',
+              showConfirmButton: false,
+              timer: 2500
+            });
+            
+            this.focusInput();
+            
           }
         })
 
