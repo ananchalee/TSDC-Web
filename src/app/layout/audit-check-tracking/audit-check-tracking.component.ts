@@ -198,13 +198,14 @@ showRecordingFinished(fileName: string) {
 
    
     this.connectionStatusSubscription = this.videoRecordingService.getConnectionStatus().subscribe(isConnected => { 
-    console.log('Video Recording WebSocket Connected Status:', isConnected); });
+    //console.log('Video Recording WebSocket Connected Status:', isConnected); 
+  });
     this.getRecordingStatus();
   }
 
 getRecordingStatus(){
     this.recordingStatusSubscription = this.videoRecordingService.getRecordingStatus().subscribe((status: any) => {
-  console.log('✨ **AuditCheckComponent received recording status:**', status);
+  //console.log('✨ **AuditCheckComponent received recording status:**', status);
 
   // 🔔 เคลียร์ setTimeout ที่รอดำเนินการเสมอ เมื่อได้รับสถานะใหม่
   if (this.recordingToastTimeout) {
@@ -217,13 +218,13 @@ getRecordingStatus(){
     const fileName = status.fileName || 'ไม่ระบุชื่อไฟล์';
     const startedAt = status.startedAtLocal || 'ไม่ระบุเวลา'; // ดึงเวลาเริ่มต้น
 
-        console.log('🚀 Status is "recording", scheduling toast to show in 3 seconds.');
+        //console.log('🚀 Status is "recording", scheduling toast to show in 3 seconds.');
 
     // ⏰ หน่วงเวลาการแสดง Toast 3 วินาที
     this.recordingToastTimeout = setTimeout(() => {
     // เพิ่มเงื่อนไขการตรวจสอบ Popup
     if (Swal.isVisible()) {
-        console.log('A popup is visible, delaying recording toast...');
+        //console.log('A popup is visible, delaying recording toast...');
         // ถ้ามี popup ให้ตั้งเวลาหน่วงใหม่
         this.recordingToastTimeout = setTimeout(() => {
             this.showRecordingToast(`
@@ -246,7 +247,7 @@ getRecordingStatus(){
 }, 3500);
 
   } else if (status.status === 'stopped') {
-    console.log('🛑 Status is "stopped", attempting to close toast and show success.');
+    //console.log('🛑 Status is "stopped", attempting to close toast and show success.');
     this.closeRecordingToast();
     Swal.fire({
       toast: true,
@@ -296,7 +297,7 @@ ngOnDestroy(): void {
 
 // *** เพิ่มฟังก์ชัน didDestroy เป็นเมธอดของคลาส ***
 private didDestroy(): void {
-    console.log('Toast was closed, checking if recording is still active...');
+    //console.log('Toast was closed, checking if recording is still active...');
 
     // ตรวจสอบว่ามีตัวจับเวลาเดิมทำงานอยู่หรือไม่ ถ้ามี ให้ยกเลิกก่อน
     if (this.toastTimerId) {
@@ -310,7 +311,7 @@ private didDestroy(): void {
     // เก็บ ID ของ setTimeout ที่สร้างขึ้นใหม่
     this.toastTimerId = setTimeout(() => {
         if (Swal.isVisible()) {
-          console.log('A popup is currently visible, waiting for it to close...');
+          //console.log('A popup is currently visible, waiting for it to close...');
             this.toastTimerId = setTimeout(() => {
                 this.didDestroy();
             }, 10000); 
@@ -321,11 +322,11 @@ private didDestroy(): void {
         const currentStatus = this.videoRecordingService.getRecordingStatus().getValue();
         
         if (currentStatus && currentStatus.status === 'recording') {
-            console.log('Recording is still active, showing toast again.');
+            //console.log('Recording is still active, showing toast again.');
             // *** แก้ไขตรงนี้: เรียกใช้ showRecordingToast ด้วยข้อความที่เก็บไว้ ***
             this.showRecordingToast(this.currentToastMessage);
         } else {
-            console.log('Recording has stopped, clearing toast and timer.');
+            //console.log('Recording has stopped, clearing toast and timer.');
             this.recordingToast = null;
             clearTimeout(this.toastTimerId);
             this.toastTimerId = null;
@@ -334,7 +335,7 @@ private didDestroy(): void {
 }
 
 private showRecordingToast(message: string): void {
-    console.log('Showing recording toast with message:', message, this.recordingToast);
+    //console.log('Showing recording toast with message:', message, this.recordingToast);
     this.currentToastMessage = message;
     // ถ้ายังไม่มี toast → สร้างใหม่
     this.recordingToast = Swal.fire({
@@ -397,7 +398,8 @@ private closeRecordingToast(): void {
             iframe.contentWindow?.print();
 
             new Promise(f => setTimeout(f, 2000));
-            this.scanCon();
+            //this.scanCon();
+            this.check_closeShipment()
           };
         }, err => {
           console.error('Print failed:', err);
@@ -515,7 +517,7 @@ private closeRecordingToast(): void {
 
     this.busy = this.dataService.tracksum_qty(this.input).subscribe(res => {
       var data: any = res;
-      console.log('checkt',data)
+      //console.log('checkt',data)
       if (data.status === 'success') {
         if (data.data[0].TRACKSUM_QTY == null) {
           this.btn.Box = true;
@@ -523,7 +525,7 @@ private closeRecordingToast(): void {
           //console.log('ปิด re')
 
         } else {
-          console.log(this.sumcon,this.sumcheck,this.Status_Print_Track)
+          //console.log(this.sumcon,this.sumcheck,this.Status_Print_Track)
           if(this.Status_Print_Track == 'N'){
             this.btn.Box = true;
           }else if (this.sumcon == this.sumcheck){
@@ -638,7 +640,6 @@ private closeRecordingToast(): void {
 
 
   closeBox() {
-    console.log('1')
     this.input.BOX_SIZE = ''
     this.input.OnclickCoverSheet = false;
     this.busy = this.dataService.tracksum_qty(this.input).subscribe(res => {
@@ -765,6 +766,12 @@ private closeRecordingToast(): void {
     setTimeout(() => { this.focusInput_con() }, 1000);
     this.interval = setInterval(() => this.focusInput_item(), 3000);
     //console.log(this.input)
+
+    console.log(' สแกนกล่อง กำลังส่งคำสั่งหยุดการบันทึก...');
+    // ส่งคำสั่งหยุดการบันทึกผ่าน WebSocket
+        this.videoRecordingService.sendCommand('stop');
+        this.closeRecordingToast();
+
   }
 
 
@@ -1314,8 +1321,8 @@ private closeRecordingToast(): void {
             this.ButtonprintCancel = true;
           }
 
-          console.log(this.res_list)
-          console.log(this.input)
+          //console.log(this.res_list)
+          //console.log(this.input)
           this.input.distinctTrackingCount = new Set(this.res_list.map(item => item.TRACKING)).size;
           //console.log("จำนวน Tracking ไม่ซ้ำกัน:", distinctTrackingCount);
 
@@ -1350,7 +1357,7 @@ private closeRecordingToast(): void {
 
             // แปลง Map เป็น Array
             this.distinctTrackingList = Array.from(distinctMap.values());
-            
+
           }
 
           
@@ -1429,7 +1436,6 @@ private closeRecordingToast(): void {
   }
 
   CFOrder() {
-    console.log('ยืนยัน order');
 
     Swal.fire({
       title: 'คุณต้องการปิดงาน Orderนี้ ?',
@@ -1463,7 +1469,6 @@ private closeRecordingToast(): void {
             });
           } else if (data.status === 'null') {
 
-            console.log('update + insert');
             this.dataService.UpdateConfirmOrder(this.input).subscribe(res => {
               var data: any = res
 
@@ -1504,8 +1509,6 @@ private closeRecordingToast(): void {
     this.dataService.CheckConOnline_track(this.input).subscribe(res => {
       var data: any = res
       this.sumqty = data.data
-
-     console.log(data);
 
       if (data.status === 'error') {
         console.log(data)
@@ -1556,7 +1559,6 @@ private closeRecordingToast(): void {
 
         this.busy = this.dataService.tracksum_qty(this.input).subscribe(res => {
           var data: any = res
-          console.log(data);
           
             if(data.status == 'success'){
               this.input.tracksum_qty = data.data[0].TRACKSUM_QTY
@@ -1760,36 +1762,6 @@ private closeRecordingToast(): void {
 
     console.log(this.input,this.res_matchItemInCon.length);
 
-    // if(this.input.TRACKING != null && this.res_matchItemInCon.length > 1){
-
-    //   this.matchItemInCon_track = this.res_matchItemInCon;
-    //   const result = this.matchItemInCon_track.find(item => item.TRACKING === this.input.TRACKING && item.QTY_CHECK < item.QTY_PICK);
-    //   console.log(result)
-    //   if(result){
-    //     this.input.ITEM_ID = result.ITEM_ID;
-    //     this.input.QTY_REQUESTED = result.QTY_REQUESTED;
-    //     this.input.QTY_PICK = result.QTY_PICK;
-    //     //this.input.conditiontracking ="and TRACKING !='"+ this.input.TRACKING +"'"
-    //   }else{
-    //     const result = this.matchItemInCon_track.find(item => item.QTY_CHECK < item.QTY_PICK && item.TRACKING != null && item.TRACKING != '');
-    //     if(result){
-          
-    //       this.input.TRACKING = result.TRACKING;
-    //       this.input.ITEM_ID = result.ITEM_ID;
-    //       this.input.QTY_REQUESTED = result.QTY_REQUESTED;
-    //       this.input.QTY_PICK = result.QTY_PICK;
-    //       //this.input.conditiontracking ="and TRACKING !='"+ this.input.TRACKING +"'"
-    //     }
-    //   }
-    // }else{
-    //   console.log('TRACKING null',this.res_matchItemInCon[0])
-    //   this.input.TRACKING = this.res_matchItemInCon[0].TRACKING;
-    //   this.input.ITEM_ID = this.res_matchItemInCon[0].ITEM_ID;
-    //   this.input.QTY_REQUESTED = this.res_matchItemInCon[0].QTY_REQUESTED;
-    //   this.input.QTY_PICK = this.res_matchItemInCon[0].QTY_PICK;
-      
-    // }
-
     if(this.input.TRACKING != null && this.input.TRACKING != ''){
       this.input.condition_nontracking ="and TRACKING !='"+ this.input.TRACKING +"'"
     }
@@ -1830,56 +1802,7 @@ private closeRecordingToast(): void {
         }
       }); 
 
-    // for (let i = 0; i < this.res_matchItemInCon.length; i++) {
-
-    //   console.log(i,this.res_matchItemInCon.length);
-    //   if(this.res_matchItemInCon[i].TRACKING != null && this.res_matchItemInCon[i].TRACKING != ''){
-    //     this.input.TRACKING = this.res_matchItemInCon[i].TRACKING;
-    //     this.input.conditiontracking ="and TRACKING !='"+ this.res_matchItemInCon[i].TRACKING +"'"
-        
-    //   console.log('conditiontracking' ,this.input.conditiontracking );
-    //   }
-    //   console.log(this.input);
-
-    //   //check  มีการ scan track อื่นๆ ค้างไว้หรือไม่ ให้ scan item ใน track นั้นก่อน
-    //   this.dataService.checktracking_Inshipment(this.input).subscribe(res => {
-    //     var data: any = res
-    //     console.log(data);
-    //     if (data.status === 'error') {
-    //       //console.log(data);
-    //       Swal.fire({
-    //         icon: 'error',
-    //         title: 'Can not check tracking in shipment!',
-    //         showConfirmButton: false,
-    //         timer: 2500
-    //       });
-    //       this.input.ITEM_ID_BARCODE = ''
-    //       this.playAudioError();
-    //     } else if (data.status === 'success') {
-    //       if()
-    //       Swal.fire({
-    //         icon: 'warning',
-    //         title: 'กำลังดำเนินดาร Scan สินค้าภายใต้ Tracking: '+data.data[0].TRACKING + ' จำนวน: '+data.data[0].QTY_CHECK  +' ชิ้น' ,
-    //         showConfirmButton: false,
-    //         timer: 2500
-    //       });
-    //       this.input.ITEM_ID_BARCODE = ''
-    //       this.playAudioError();
-    //     }else{
-    //       console.log(this.res_matchItemInCon);
-
-    //       //i = this.res_matchItemInCon.length;
-    //       this.input.ITEM_ID = this.res_matchItemInCon[i].ITEM_ID;
-    //       this.input.QTY_REQUESTED = this.res_matchItemInCon[i].QTY_REQUESTED;
-    //       this.input.QTY_PICK = this.res_matchItemInCon[i].QTY_PICK;
-    //       this.updateConQtyCheck();
-          
-    //     }
-    //   }); 
-        
-
-      
-    // }
+   
   }
 
   updateConQtyCheck() {
@@ -2149,12 +2072,27 @@ private closeRecordingToast(): void {
               this.pagePrintCoverSheet = true;
             }
           }
-        console.log(' สแกนกล่อง กำลังส่งคำสั่งหยุดการบันทึก...');
-    // ส่งคำสั่งหยุดการบันทึกผ่าน WebSocket
-        this.videoRecordingService.sendCommand('stop');
-        this.closeRecordingToast();
+          
+   
       }
     })
+
+  }
+
+  check_closeShipment(){
+   
+    this.input.CloseTrackingCount = this.distinctTrackingList.filter(item => item.status_closebox == 'N').length;
+    console.log("CloseTrackingCount" ,this.input.CloseTrackingCount)
+    if(this.input.CloseTrackingCount <= 1){
+      this.scanCon();
+   
+    }else 
+    {
+      this.input.TRACKING = "";
+      this.input.conditiontracking = "";
+      this.isLoading = false;
+      this.summaryConCheck();
+    }
 
   }
 
@@ -2520,6 +2458,8 @@ private closeRecordingToast(): void {
         this.pagePrintShear = true;
         this.pagePrint = false;
 
+        this.check_closeShipment();
+
       } else if (data.status === 'success') {
         this.dataprint_LIST_ITEM = data.data;
 
@@ -2540,6 +2480,9 @@ private closeRecordingToast(): void {
         this.pagePrintCoverSheet = false;
         this.pagePrintShear = false;
         this.pagePrint = false;
+
+        
+        this.check_closeShipment();
       }
     })
   }
