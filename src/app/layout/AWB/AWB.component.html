@@ -1,0 +1,149 @@
+<!-- ส่งค่ายัง Component อื่นๆ  -->
+
+<body class="hold-transition sidebar-mini layout-navbar">
+  <div class="wrapper">
+
+    <app-header id="page" [Pageactive]="pageactive"></app-header>
+    <app-menu id="page" [Pageactive]="pageactive"></app-menu>
+
+    <div class="content-wrapper " style="min-height: 1300px;">
+      <div class="content-header">
+        <div class="container-fluid">
+          <div class="row ">
+            <div class="col-sm-6">
+              <a class="m-0">
+                <ol class="breadcrumb">
+                  <li class="breadcrumb-item">AWB</li>
+                </ol>
+              </a>
+            </div>
+
+            <div class="container-fluid" >
+              <div class="container-fluid barbar">
+
+                <div class="card card-info">
+                  <div class="card-header">
+                  </div>
+                  <div class="card-body">
+                    <form >
+                      <div class="row">
+          
+                        <div class="col-12">
+                          <div class="form-group row" >
+                            <!-- <div class="col-6">
+                              <label for="PIN_CODE" class="form-label">PIN CODE</label>
+                              <input
+                                type="text"
+                                id="PIN_CODE"
+                                class="form-control"
+                                name="PIN_CODE"
+                                placeholder="SCAN เลข Order number"
+                                [(ngModel)]="input.PIN_CODE"
+                                (keyup.enter)="check_user();"
+                                minlength="3"
+                                maxlength="30"
+                                required
+                                #inputPin
+                              />
+                            </div> -->
+                          
+                            <div class="col-12">
+                              <label for="REF_INDEX" class="form-label">ใบ P.</label>
+                              <input
+                                type="text"
+                                id="REF_INDEX"
+                                class="form-control"
+                                name="REF_INDEX"
+                                placeholder="SCAN เลข ใบ P."
+                                [(ngModel)]="input.REF_INDEX"
+                                (keyup.enter)="CheckTrackingP();"
+                                minlength="10"
+                                maxlength="30"
+                                required
+                                #inputTrackP
+                              />
+                            </div>
+                          </div>
+                          
+          
+                          <div class="form-group row">
+                            <div class="col-6">
+                              <label for="ORDER_NO" class="form-label">ORDER</label>
+                              <input
+                                type="text"
+                                id="ORDER_NO"
+                                class="form-control"
+                                name="ORDER_NO"
+                                placeholder="SCAN เลข Order number"
+                                [(ngModel)]="input.shipment_id"
+                                (keyup.enter)="checkOrderRTS();"
+                                minlength="5"
+                                maxlength="30"
+                                required
+                                #inputOrder
+                              />
+                            </div>
+                          
+                            <div class="col-6">
+                              <label for="TRACK_CODE" class="form-label">Tracking</label>
+                              <input
+                                type="text"
+                                id="TRACK_CODE"
+                                class="form-control"
+                                name="TRACK_CODE"
+                                placeholder="SCAN เลข Tracking"
+                                [(ngModel)]="input.TRACK_CODE"
+                                (keyup.enter)="Check_RTS();"
+                                minlength="5"
+                                maxlength="30"
+                                required
+                                #inputTrack
+                              />
+                            </div>
+                          </div>
+                          
+                        </div>
+                        
+                      </div>
+                    </form>
+                  </div>
+                </div>    
+                <div class="card card-outline card-info">
+                  <div class="card-header">
+                    <h3 class="card-title">Detail</h3>
+                  </div>
+                  <div class="card-body">
+                    <table class="table table-bordered">
+                      <tbody>
+                        <tr>
+                          <th style="width: 150px;">Order Number</th>
+                          <td>{{ input.ORDER_NO || '-' }}</td>
+                        </tr>
+                        <tr>
+                          <th>Order Date</th>
+                          <td>{{ input.ORDER_DATE | date:'dd/MM/yyyy' }}</td>
+                        </tr>
+                        <tr>
+                          <th>Tracking</th>
+                          <td>{{ input.TRACKING || '-' }}</td>
+                        </tr>
+                        <tr>
+                          <th>RTS Date</th>
+                          <td>{{ input.RTS_DATE | date:'dd/MM/yyyy HH:mm' }}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                
+
+              </div>
+            </div>
+          </div><!-- /.row -->
+        </div><!-- /.container-fluid -->
+      </div>
+    </div>
+
+
+  </div>
+</body>

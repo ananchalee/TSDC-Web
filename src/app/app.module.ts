@@ -30,7 +30,7 @@ import { OutboundRoutingComponent } from './layout/outbound-routing/outbound-rou
 import { RegisterPackComponent } from './layout/register-pack/register-pack.component';
 import { ReportSorterComponent } from './layout/reports/report-sorter/report-sorter.component';
 import { MoniterStatusRTSComponent } from './layout/moniter-statusRTS/moniter-statusRTS.component';
-
+import { AWBComponent } from './layout/AWB/AWB.component';
 
 
 
@@ -53,8 +53,7 @@ import { MoniterStatusRTSComponent } from './layout/moniter-statusRTS/moniter-st
     RegisterPackComponent,
     ReportSorterComponent,
     MoniterStatusRTSComponent,
-
-
+    AWBComponent
   
   ],
   imports: [
