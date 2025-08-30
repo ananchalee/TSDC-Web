@@ -1,1 +1,56 @@
-/* You can add global styles to this file, and also import other style files */
+/* ปรับแต่ง container หลักของ Toast ให้มีขนาดเล็กลง */
+.swal2-container.swal2-top-end > .swal2-toast.swal2-popup {
+    font-family: 'Arial', 'Helvetica', sans-serif !important;
+    font-size: 10px !important; /* ลดขนาดฟอนต์ให้เล็กลง */
+    font-weight: bold !important;
+    width: 200px !important; /* ลดความกว้างลง */
+    padding: 5px 8px !important; /* ลด padding ลง */
+    height: auto !important;
+    
+    /* สไตล์อื่นๆ ยังคงเดิม */
+    background-image: linear-gradient(to right, #F5F5DC, #D3D3D3);
+    color: #ffffff !important;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    border: none;
+    top: 40px !important;
+    margin-top: 30px !important;
+    animation: slideInRight 0.5s ease-out forwards;
+}
+
+/* @keyframes สำหรับ animation (ไม่ต้องเปลี่ยน) */
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* ปรับสไตล์ของข้อความใน Toast ให้มีขนาดเล็กลง */
+.swal2-popup.swal2-toast .swal2-html-container {
+    font-size: 10px !important; /* ลดขนาดฟอนต์ให้เท่ากัน */
+    font-weight: bold !important;
+    margin: 5px 0 !important;
+}
+
+/* ปรับสไตล์สำหรับ custom class ที่คุณสร้างไว้ (ไม่ต้องเปลี่ยน) */
+.my-custom-toast .swal2-html-container {
+    font-weight: bold !important;
+}
+
+/* ปรับแต่ง progress bar (ไม่ต้องเปลี่ยน) */
+.swal2-popup.swal2-toast .swal2-progress-bar {
+    background-color: #ffcc00 !important;
+    height: 4px !important; /* ลดความสูงลง */
+    border-radius: 5px;
+}
+
+/* ปรับแต่ง icon ใน Toast */
+.swal2-popup.swal2-toast .swal2-icon {
+    font-size: 0.8rem !important; /* ลดขนาด icon ให้เล็กลง */
+    margin: 0 5px 0 0 !important;
+}
