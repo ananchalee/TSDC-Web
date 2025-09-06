@@ -36,14 +36,16 @@
                   <table class="table table-bordered table-striped fixed-header-table">
                     <colgroup>
                       <col style="width: 10%">
-                      <col style="width: 20%">
                       <col style="width: 10%">
-                      <col style="width: 50%">
+                      <col style="width: 15%">
+                      <col style="width: 10%">
+                      <col style="width: 45%">
                     </colgroup>
                     <thead>
                       <tr class="center-text">
                         <!-- <th>No</th> -->
                         <th>DATE TIME STAMP</th>
+                        <th>PROCESS</th>
                         <th>SHIPMENT</th>
                         <th>COMPANY</th>
                         <th>ERROR MSG</th>
@@ -53,13 +55,14 @@
                     <tbody>
                       <tr *ngFor="let data of data_list; let i = index">
                         <td class="center-text">{{ data.DATE_TIME_STAMP }}</td>
+                        <td >{{ data.INTERFACE_PROCESS }}</td>
                         <td >{{ data.SHIPMENT_ID }}</td>
                         <td class="center-text">{{ data.COMPANY }} </td>
                         <td >{{ data.ERROR_MSG }}</td>
                       </tr>
                     
                       <tr *ngIf="data_list.length === 0">
-                        <td colspan="4" class="text-center text-muted">No data</td>
+                        <td colspan="5" class="text-center text-muted">No data</td>
                       </tr>
 
                     </tbody>
