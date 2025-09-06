@@ -14,6 +14,7 @@ import { RegisterPackComponent } from './layout/register-pack/register-pack.comp
 import { ReportSorterComponent } from './layout/reports/report-sorter/report-sorter.component';
 import { OutboundRoutingComponent } from './layout/outbound-routing/outbound-routing.component';
 import { MoniterStatusRTSComponent } from './layout/moniter-statusRTS/moniter-statusRTS.component';
+import {MoniterInterfaceErrorManHComponent} from './layout/moniter-InterfaceErrorManH/moniter-InterfaceErrorManH.component';
 import { AWBComponent } from './layout/AWB/AWB.component';
 const routes: Routes = [
 
@@ -31,6 +32,7 @@ const routes: Routes = [
   { path:'report-sorter',component:ReportSorterComponent},
   { path:'Outbound-Routing',component:OutboundRoutingComponent},
   { path:'monit-statusRTS',component:MoniterStatusRTSComponent},
+  { path:'monit-InterfaceError-ManH',component:MoniterInterfaceErrorManHComponent},
   { path:'AWB',component:AWBComponent},
   { path: '**', redirectTo: 'login' } ,
 

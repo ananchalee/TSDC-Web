@@ -112,6 +112,8 @@ export class MenuComponent implements OnInit {
           switch (this.Pageactive[0].pagename){
             case 'Moniter-Status-RTS' : this.page.Moniter_StatusRTS = true;
               break;
+            case 'Moniter-InterfaceError' : this.page.monit_InterfaceError = true;
+              break;
           }
           break; 
 
@@ -162,6 +164,9 @@ export class MenuComponent implements OnInit {
         break;
       case 'monit_statusRTS':
         this.router.navigate(["/monit-statusRTS"]);
+        break;
+      case 'monit_InterfaceError':
+        this.router.navigate(["/monit-InterfaceError-ManH"]);
         break;
     }
   }
