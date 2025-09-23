@@ -16,6 +16,7 @@ import { OutboundRoutingComponent } from './layout/outbound-routing/outbound-rou
 import { MoniterStatusRTSComponent } from './layout/moniter-statusRTS/moniter-statusRTS.component';
 import {MoniterInterfaceErrorManHComponent} from './layout/moniter-InterfaceErrorManH/moniter-InterfaceErrorManH.component';
 import { AWBComponent } from './layout/AWB/AWB.component';
+import {MoniterTrackingOrderInternalComponent} from './layout/moniter-TrackingOrderInternal/moniter-TrackingOrderInternal.component';
 const routes: Routes = [
 
  
@@ -33,6 +34,7 @@ const routes: Routes = [
   { path:'Outbound-Routing',component:OutboundRoutingComponent},
   { path:'monit-statusRTS',component:MoniterStatusRTSComponent},
   { path:'monit-InterfaceError-ManH',component:MoniterInterfaceErrorManHComponent},
+  { path:'monit-Trackorderinternal',component:MoniterTrackingOrderInternalComponent},
   { path:'AWB',component:AWBComponent},
   { path: '**', redirectTo: 'login' } ,
 

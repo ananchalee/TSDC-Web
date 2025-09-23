@@ -114,6 +114,8 @@ export class MenuComponent implements OnInit {
               break;
             case 'Moniter-InterfaceError' : this.page.monit_InterfaceError = true;
               break;
+              case 'Moniter-TrackOrderInternal' : this.page.monit_TrackorderInternal = true;
+              break;
           }
           break; 
 
@@ -167,6 +169,9 @@ export class MenuComponent implements OnInit {
         break;
       case 'monit_InterfaceError':
         this.router.navigate(["/monit-InterfaceError-ManH"]);
+        break;
+      case 'monit_TrackOrderInternal':
+        this.router.navigate(["/monit-Trackorderinternal"]);
         break;
     }
   }

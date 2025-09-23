@@ -1,0 +1,105 @@
+<!-- ส่งค่ายัง Component อื่นๆ  -->
+
+<body class="hold-transition sidebar-mini layout-navbar">
+  <div class="wrapper">
+
+    <app-header id="page" [Pageactive]="pageactive"></app-header>
+    <app-menu id="page" [Pageactive]="pageactive"></app-menu>
+
+    <div class="content-wrapper " >
+      
+      <div class="row justify-content-md-center">
+        <div *ngIf="isLoading" class="loading-spinner">
+          <!-- You can style this div or add a spinner image/icon here -->
+          Loading... <i class="fas fa-3x fa-sync-alt fa-spin"></i>
+        </div>
+      </div>
+
+      <section [hidden]="isLoading" class="content">
+        <div class="container-fluid">
+          <div class="row">
+            <div class="col-md-12">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                  Next reload in: {{ countdown | number: '1.0' }}
+                <button type="button" class="btn btn-sm btn-secondary" (click)="toggleFullScreen()">
+                  <i class="fas fa-expand"></i> Fullscreen
+                </button>
+              </div>
+            </div>
+          </div>
+       
+         
+          <div class="row">
+            <div class="col-md-12">
+              <div class="card card-danger">
+                <div class="card-header">
+                  <h3 class="card-title">Order Report</h3>
+                </div>
+                <div class="card-body table-responsive p-0">
+                  <table class="table table-bordered table-striped table-hover table-sm">
+                    <colgroup>
+                      <col style="width: 10%">
+                      <col style="width: 10%">
+                      <col style="width: 10%">
+                      <col style="width: 10%">
+                      <col style="width: 10%">
+                      <col style="width: 10%">
+                      <col style="width: 10%">
+                      <col style="width: 10%">
+                      <col style="width: 10%">
+                      <col style="width: 10%">
+                    </colgroup>
+                    <thead class="thead-dark text-center">
+                      <tr>
+                        <th rowspan="2">Order Date</th>
+                        <th rowspan="2">COMPANY</th>
+                        <th rowspan="2">Work Period</th>
+                        <th rowspan="2">ALL Order</th>
+                        <th colspan="2">Order รอนำเข้า Man</th>
+                        <th colspan="6">Order ค้าง</th>
+                      </tr>
+                      <tr>
+                        <th>ไม่ติด Shortage</th>
+                        <th>ติด Shortage</th>
+                        <th>PLAN Manht</th>
+                        <th>Close Pick Manht</th>
+                        <th>Audit&Check</th>
+                        <th>RTS</th>
+                        <th>รอขนส่ง</th>
+                        <th>Cancel</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let data of data_list">
+                        <td class="text-center">{{ data.orderDate }}</td>
+                        <td class="text-center">{{ data.company }}</td>
+                        <td class="text-center">{{ data.workPeriod }}</td>
+                        <td class="text-center">{{ data.allOrder }}</td>
+                        <td class="text-center">{{ data.notShortage }}</td>
+                        <td class="text-center">{{ data.hasShortage }}</td>
+                        <td class="text-center">{{ data.planManht }}</td>
+                        <td class="text-center">{{ data.closePickManht }}</td>
+                        <td class="text-center">{{ data.auditCheck }}</td>
+                        <td class="text-center">{{ data.RTS }}</td>
+                        <td class="text-center">{{ data.outbound }}</td>
+                        <td class="text-center">{{ data.cancel }}</td>
+                      </tr>
+
+                      <tr *ngIf="data_list.length === 0">
+                        <td colspan="12" class="text-center text-muted">No data</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+
+        </div>
+      </section>
+
+    </div>
+    
+  </div>
+</body>

@@ -32,7 +32,7 @@ import { ReportSorterComponent } from './layout/reports/report-sorter/report-sor
 import { MoniterStatusRTSComponent } from './layout/moniter-statusRTS/moniter-statusRTS.component';
 import { MoniterInterfaceErrorManHComponent } from './layout/moniter-InterfaceErrorManH/moniter-InterfaceErrorManH.component';
 import { AWBComponent } from './layout/AWB/AWB.component';
-
+import { MoniterTrackingOrderInternalComponent } from './layout/moniter-TrackingOrderInternal/moniter-TrackingOrderInternal.component';
 
 
 
@@ -55,7 +55,8 @@ import { AWBComponent } from './layout/AWB/AWB.component';
     ReportSorterComponent,
     MoniterStatusRTSComponent,
     MoniterInterfaceErrorManHComponent,
-    AWBComponent
+    AWBComponent,
+    MoniterTrackingOrderInternalComponent
   
   ],
   imports: [
