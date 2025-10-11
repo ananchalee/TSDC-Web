@@ -42,8 +42,8 @@ export class MoniterTrackingOrderInternalComponent implements OnInit {
   ngOnInit(): void {
     var page = Array();
     let array = {
-      pagename: 'Moniter-TrackorderInternal',
-      active: 'Moniter',
+      pagename: 'Monitor-Tracking OrderInternal',
+      active: 'Monitor',
     }
     page.push(array)
     this.pageactive = page;

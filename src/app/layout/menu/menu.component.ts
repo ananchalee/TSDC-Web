@@ -12,7 +12,7 @@ export class MenuComponent implements OnInit {
 
   page:any = {}
   USER: any = {}
-  menu_Moniter:boolean = false;
+  menu_Monitor:boolean = false;
   menu_User:boolean = true;
 
   constructor(private router: Router,) { }
@@ -36,10 +36,10 @@ export class MenuComponent implements OnInit {
 
        switch(this.USER.CATEGORY){
         case 'SuperAdmin' :
-          this.menu_Moniter = true;
+          this.menu_Monitor = true;
         break;
         case 'Admin' :
-          this.menu_Moniter = true;
+          this.menu_Monitor = true;
           this.menu_User = false;
         break;
         default:
@@ -47,7 +47,7 @@ export class MenuComponent implements OnInit {
        }
 
        if(this.USER.CATEGORY == 'SuperAdmin' || this.USER.CATEGORY == 'Admin'){
-        this.menu_Moniter = true;
+        this.menu_Monitor = true;
        }
       
 
@@ -107,14 +107,17 @@ export class MenuComponent implements OnInit {
               break;
           }
         break;
-        case 'Moniter':
-          this.page.moniter = true;
-          switch (this.Pageactive[0].pagename){
-            case 'Moniter-Status-RTS' : this.page.Moniter_StatusRTS = true;
+        case 'Monitor':
+          this.page.Monitor = true;
+
+          console.log("chimmui",this.Pageactive[0].pagename)
+          switch (this.Pageactive[0].pagename) {
+            case 'Monitor-Status-RTS' : this.page.Monitor_StatusRTS = true;
               break;
-            case 'Moniter-InterfaceError' : this.page.monit_InterfaceError = true;
+            case 'Monitor-InterfaceError' : this.page.monit_InterfaceError = true;
               break;
-              case 'Moniter-TrackOrderInternal' : this.page.monit_TrackorderInternal = true;
+            case 'Monitor-Tracking OrderInternal': this.page.monit_TrackorderInternal = true;
+              console.log("chimmui", this.page.monit_TrackorderInternal)
               break;
           }
           break; 

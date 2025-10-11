@@ -42,8 +42,8 @@ export class MoniterStatusRTSComponent implements OnInit {
   ngOnInit(): void {
     var page = Array();
     let array = {
-      pagename: 'Moniter-Status-RTS',
-      active: 'Moniter',
+      pagename: 'Monitor-Status-RTS',
+      active: 'Monitor',
     }
     page.push(array)
     this.pageactive = page;

@@ -41,8 +41,8 @@ export class MoniterInterfaceErrorManHComponent implements OnInit {
   ngOnInit(): void {
     var page = Array();
     let array = {
-      pagename: 'Moniter-InterfaceError',
-      active: 'Moniter',
+      pagename: 'Monitor-InterfaceError',
+      active: 'Monitor',
     }
     page.push(array)
     this.pageactive = page;
