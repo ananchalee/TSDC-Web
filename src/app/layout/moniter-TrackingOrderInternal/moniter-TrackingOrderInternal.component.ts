@@ -12,6 +12,7 @@ import { Router, ActivatedRoute } from '@angular/router';
 })
 export class MoniterTrackingOrderInternalComponent implements OnInit {
 
+
   @ViewChild(DataTableDirective, { static: false })
   dtElement!: DataTableDirective;
 
@@ -28,8 +29,8 @@ export class MoniterTrackingOrderInternalComponent implements OnInit {
   detail_list: any = [];
   data_list  : any = [];
   isLoading = false;
-  intervalId: any;
-  countdown: any;
+  //intervalId: any;
+  //countdown: any;
   isUpdateButtonDisabled: boolean = true;
   ListOrder: Array<any> = [];
 
@@ -55,59 +56,106 @@ export class MoniterTrackingOrderInternalComponent implements OnInit {
     });
 
     this.getdata()
-    this.input.count = 301; ////ค่านับถอยหลัง รีเฟส 301 วิ
-    this.intervalId = setInterval(() =>  this.getdata(), 300000);
-    this.startTime();
-    setInterval(() => this.startTime(), 1000);
+    //this.input.count = 301; ////ค่านับถอยหลัง รีเฟส 301 วิ
+    //this.intervalId = setInterval(() =>  this.getdata(), 300000);
+    //this.startTime();
+    //setInterval(() => this.startTime(), 1000);
   
   }
 
-  startTime() {
+  //startTime() {
 
-    this.input.count = this.checkTime(this.input.count);
-    this.countdown = this.input.count;
+    //this.input.count = this.checkTime(this.input.count);
+    //this.countdown = this.input.count;
 
-  }
+ // }
 
-  checkTime(i: any) {
-    if (i > 0) { i = i - 1 };
-    return i;
-  }
+ // checkTime(i: any) {
+   // if (i > 0) { i = i - 1 };
+   // return i;
+  //}
 
-  ngOnDestroy(): void {
+  //ngOnDestroy(): void {
     // Clear the intervals when the component is destroyed
-    if (this.intervalId) {
-      clearInterval(this.intervalId);
-    }
+    //if (this.intervalId) {
+     // clearInterval(this.intervalId);
+    //}
     
+  //}
+  
+  updateMaxDate() {
+    if (this.input.dateTo && this.input.dateFrom && this.input.dateTo < this.input.dateFrom) {
+      this.input.dateTo = this.input.dateFrom; // ป้องกันไม่ให้เลือกวันที่เกิน
+    }
   }
 
+
+  // getdata(){
+  //   this.input.count = 301;////ค่านับถอยหลัง รีเฟส 301 วิ
+  //   this.startTime();
+  //   this.isLoading = true;
+  //   this.dataService.Moniter_InterfaceErrorManH(this.input).subscribe(res => {
+  //     this.res = res;
+  //     this.isLoading = false;
+
+  //     if (this.res.status === 'error') {
+  //       console.log(this.res)
+  //       Swal.fire({
+  //         icon: 'error',
+  //         title: 'Error! can not get data',
+  //         showConfirmButton: false,
+  //         timer: 2500
+  //       });
+  //     }else if  (this.res.status === 'null'){
+  //       this.data_list = [];
+  //     }else{
+  //       this.data_list = this.res.data;
+  //     }
+  //   });
+
+  // }
 
   getdata(){
-    this.input.count = 301;////ค่านับถอยหลัง รีเฟส 301 วิ
-    this.startTime();
-    this.isLoading = true;
-    this.dataService.Moniter_InterfaceErrorManH(this.input).subscribe(res => {
-      this.res = res;
-      this.isLoading = false;
-
-      if (this.res.status === 'error') {
-        console.log(this.res)
-        Swal.fire({
-          icon: 'error',
-          title: 'Error! can not get data',
-          showConfirmButton: false,
-          timer: 2500
-        });
-      }else if  (this.res.status === 'null'){
-        this.data_list = [];
-      }else{
-        this.data_list = this.res.data;
+   
+      console.log("===== getdata() called =====");  //คอมเม้น log
+      console.log("this.input:", this.input);    //คอมเม้นมา log
+      
+      //this.input.count = 301;////ค่านับถอยหลัง รีเฟส 301 วิ
+      //this.startTime();
+      this.isLoading = true;  
+      console.log("this.input:", this.input); //log ที่เพิ่มมา
+      if(this.input.dateTo != "" && this.input.dateFrom == ""){
+      this.input.dateFrom = this.input.dateTo
       }
+
+      this.dataService.Moniter_TrackingOrderInternal_Summary(this.input).subscribe(res => {
+  this.res = res;
+   console.log(this.res)
+  this.isLoading = false;
+  
+  if (this.res.status === 'error') {
+    console.log(this.res)
+    Swal.fire({
+      icon: 'error',
+      title: 'Error! can not get data',
+      showConfirmButton: false,
+      timer: 2500
     });
+  }else if  (this.res.status === 'null'){
+    this.data_list = [];
+    
+  }else{
+     //this.data_list = this.res;
+    this.data_list = this.res.data;
+    console.log(this.data_list)
+    console.log("Test"); //log p nick
+     console.log("3. จำนวนแถว:", this.data_list.length); //log permma
+     //console.log('res.data:', res?.data);  //log permma
 
   }
-
+});
+   
+    }
 
   toggleFullScreen() {
     const elem = document.querySelector('.content-wrapper') as HTMLElement;

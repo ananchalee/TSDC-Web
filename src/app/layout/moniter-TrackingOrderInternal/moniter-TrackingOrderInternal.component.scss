@@ -51,11 +51,11 @@
     font-size: 20px;
   }
 
-  .row-danger {
-    background-color: #ffcccc !important;  /* สีพื้นหลังแดงอ่อน */
-    color: red !important;  /* ตัวหนังสือสีแดง */
-    font-weight: bold;
-  }
+  //.row-danger {
+  //  background-color: #ffcccc !important;  /* สีพื้นหลังแดงอ่อน */
+  //  color: red !important;  /* ตัวหนังสือสีแดง */
+  //  font-weight: bold;
+  //}
   
   .brand-text {
     font-size: 14px; /* ปรับขนาดตัวอักษร */
@@ -111,3 +111,33 @@
     font-size: 1.2rem;
   }
   
+
+
+    .thead-dark th {
+  /* 1. ปรับขนาดตัวอักษร (Font Size) */
+  font-size: 12px; /* เล็กมาก ถ้าอยากให้ใหญ่ขึ้นให้ปรับเป็น 11px หรือ 12px */
+  /* 2. ปรับ Padding (ลดความสูงและความกว้างของเซลล์) */
+  padding: 1px 10px; /* บน-ล่าง 2px, ซ้าย-ขวา 4px (จะทำให้ตารางดูแคบลง) */
+  /*3. สามารถยกเลิกการจัดกึ่งกลางของ Bootstrap ได้ถ้าต้องการ 
+       text-align: left !important; 
+    */
+}
+
+
+
+.table-data-small {
+  /* 1. กำหนดขนาดฟอนต์ให้ TABLE โดยรวม */
+  font-size: 12px;
+  /* การกำหนดที่ <table> จะทำให้ <td> สืบทอดขนาดฟอนต์นี้ไป */
+}
+
+/* 2. (ทางเลือก) ปรับ Padding ของข้อมูลในตารางให้เล็กลงอีก */
+.table-data-small tbody td {
+  padding: 4px; /* ลองลดจาก 8px ในโค้ดล่างสุดของคุณ เป็น 4px */
+}
+
+//.fixed-header-table th, .fixed-header-table td {
+//  padding: 8px; /* <--- ตรงนี้กำหนด Padding เป็น 8px ซึ่งอาจจะทำให้ตารางดูใหญ่ขึ้น */
+//  border: 1px solid #ddd;
+//  white-space: nowrap;
+//}

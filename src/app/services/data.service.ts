@@ -473,6 +473,12 @@ Moniter_InterfaceErrorManH(data:any){
   return this.http.post('http://10.26.1.21:1661/api/Moniter_InterfaceErrorManH',data)
 }
 
+Moniter_TrackingOrderInternal_Summary(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/Moniter_TrackingOrderInternal_Summary',data)
+   //return this.http.get('http://localhost:3008/orders')
+}
+
+
 ///AWB
 Get_ONLINE_ORDER_SHIPPING(data:any){
   return this.http.post('http://10.26.1.21:1661/api/Get_ONLINE_ORDER_SHIPPING',data)
