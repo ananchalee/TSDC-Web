@@ -1578,7 +1578,8 @@ console.log(this.input.check_QTY_PICK,this.res_QTY_equal,this.Status_Print_Track
           BOX_SIZE: this.input.BOX_SIZE,
           TCHANNEL: this.input.TCHANNEL,
           COMPANY : this.input.COMPANY,
-          ORDER_DATE : this.input.ORDER_DATE
+          ORDER_DATE : this.input.ORDER_DATE,
+          BILL_NO_REF: data.data[0].BILL_NO_REF
 
         }
         a.push(array)
@@ -1643,7 +1644,8 @@ console.log(this.input.check_QTY_PICK,this.res_QTY_equal,this.Status_Print_Track
           TCHANNEL: this.input.TCHANNEL,
           MaxBox_NO : this.input.MaxBox_NO,
           COMPANY : this.input.COMPANY,
-          ORDER_DATE : this.input.ORDER_DATE
+          ORDER_DATE : this.input.ORDER_DATE,
+          BILL_NO_REF: data.data[0].BILL_NO_REF
         }
         a.push(array)
         this.dataprint = a
@@ -1692,8 +1694,8 @@ console.log(this.input.check_QTY_PICK,this.res_QTY_equal,this.Status_Print_Track
             TCHANNEL: this.input.TCHANNEL,
             MaxBox_NO : this.input.MaxBox_NO,
             COMPANY : this.input.COMPANY,
-            ORDER_DATE : this.input.ORDER_DATE
-
+            ORDER_DATE : this.input.ORDER_DATE,
+            BILL_NO_REF: data.data[i].BILL_NO_REF
           }
           a.push(array)
         }
