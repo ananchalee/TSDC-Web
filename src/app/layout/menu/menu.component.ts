@@ -43,7 +43,8 @@ export class MenuComponent implements OnInit {
           this.menu_User = false;
         break;
         default:
-          throw Error('Invalid Menu');
+          this.menu_User = true;
+          //throw Error('Invalid Menu');
        }
 
        if(this.USER.CATEGORY == 'SuperAdmin' || this.USER.CATEGORY == 'Admin'){

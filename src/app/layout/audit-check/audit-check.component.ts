@@ -20,7 +20,6 @@ export class AuditCheckComponent implements OnInit {
   @ViewChild('inputcontainer') inputcontainer!: ElementRef;
   @ViewChild('inputItem') inputItem!: ElementRef;
   @ViewChild('inputbox') inputbox!: ElementRef;
-  @ViewChild('inputITEMBARCODE') inputITEMBARCODE!: ElementRef;
 
   @ViewChild('Btn_printTrack') Btn_printTrack!: ElementRef; 
 
@@ -456,7 +455,7 @@ export class AuditCheckComponent implements OnInit {
     this.LOAD_USERTABLECHECK();
     setTimeout(() => { this.focusInput_item() }, 3000);
     setTimeout(() => { this.focusInput_con() }, 1000);
-    this.interval = setInterval(() => this.focusInput_item(), 3000);
+    //this.interval = setInterval(() => this.focusInput_item(), 3000);
     //console.log(this.input)
   }
 
@@ -902,7 +901,7 @@ export class AuditCheckComponent implements OnInit {
                         this.btn.Printbill = false;
                       }
 
-                      setTimeout(() => { this.focusInput_item() }, 300)
+                      //setTimeout(() => { this.focusInput_item() }, 300)
                     } else {
                       this.input.CONTAINER_ID = ''
                     }
@@ -1232,12 +1231,19 @@ export class AuditCheckComponent implements OnInit {
     this.view = false;
     if(this.alertcancel){
       this.playAudioError();
+
+      clearInterval(this.interval);
       Swal.fire({
         icon: 'warning',
         title: 'ORDER ถูกยกเลิก',
         html : 'นำใบงานติดไปกับสินค้าเพื่อทำรับคืน',
         showConfirmButton: true,
+        allowEnterKey: false,
+        backdrop: false,
+      }).then(() => {
+       this.interval = setInterval(() => this.focusInput_item(), 2000);
       });
+
       this.input.ITEM_ID_BARCODE = '';
     }else{
     if ((this.input.ORDER_TYPE == 'ONLINE' || this.input.ORDER_TYPE == 'OFFLINE' || this.input.ORDER_TYPE == 'CF_ORDER')) {
@@ -1245,7 +1251,7 @@ export class AuditCheckComponent implements OnInit {
       this.dataService.matchItemInCon_ug(this.input).subscribe(res => {
         //console.log(res);
         var data: any = res
-
+        clearInterval(this.interval);
         if (data.status === 'error') {
           console.log(data)
           this.playAudioError();
@@ -1257,6 +1263,9 @@ export class AuditCheckComponent implements OnInit {
           });
         } else if (data.status === 'notfound') {
           this.playAudioError();
+
+          clearInterval(this.interval);
+
           Swal.fire({
             icon: 'warning',
             title: 'ไม่พบข้อมูล',
@@ -1265,19 +1274,31 @@ export class AuditCheckComponent implements OnInit {
             showConfirmButton: true,
             backdrop: false,
             confirmButtonText: 'ตกลง',
+            allowEnterKey: false,
+          }).then(() => {
+            this.interval = setInterval(() => this.focusInput_item(), 2000);
           });
           this.input.ITEM_ID_BARCODE = ''
+
+
         } else if (data.status === 'success') {
           this.res_matchItemInCon = data.data[0];
           if(this.res_matchItemInCon.ORDER_TYPE == "CANCEL"){
             this.playAudioError();
+
+            clearInterval(this.interval);
             Swal.fire({
               icon: 'warning',
               title: 'รายการนี้ถูกยกเลิก',
               html : 'นำใบงานติดไปกับสินค้าเพื่อทำรับคืน',
-              showConfirmButton: false,
-              timer: 3500
+              backdrop: false,
+              showConfirmButton: true,
+              confirmButtonText: 'ตกลง',
+              allowEnterKey: false,
+            }).then(() => {
+              this.interval = setInterval(() => this.focusInput_item(), 2000);
             });
+
             this.input.ITEM_ID_BARCODE = ''
           }else{
             this.input.ITEM_ID = this.res_matchItemInCon.ITEM_ID;
@@ -1305,6 +1326,8 @@ export class AuditCheckComponent implements OnInit {
           });
         } else if (data.status === 'notfound') {
           this.playAudioError();
+
+          clearInterval(this.interval);
           Swal.fire({
             icon: 'warning',
             title: 'ไม่พบข้อมูล',
@@ -1313,8 +1336,13 @@ export class AuditCheckComponent implements OnInit {
             showConfirmButton: true,
             backdrop: false,
             confirmButtonText: 'ตกลง',
+            allowEnterKey: false,
+          }).then(() => {
+          this.interval = setInterval(() => this.focusInput_item(), 2000);
           });
+
           this.input.ITEM_ID_BARCODE = ''
+
         } else if (data.status === 'success') {
           this.res_matchItemInCon = data.data[0];
 
@@ -1359,6 +1387,9 @@ export class AuditCheckComponent implements OnInit {
 console.log(this.input.check_QTY_PICK,this.res_QTY_equal,this.Status_Print_Track)
           if (this.res_QTY_equal.QTY_equal == "equal") {
             this.playAudioError();
+
+            clearInterval(this.interval);
+
             Swal.fire({
               icon: 'warning',
               title: 'ITEM เกินจำนวน',
@@ -1367,7 +1398,11 @@ console.log(this.input.check_QTY_PICK,this.res_QTY_equal,this.Status_Print_Track
               showConfirmButton: true,
               backdrop: false,
               confirmButtonText: 'ตกลง',
-            });
+              allowEnterKey: false,
+            }).then(() => {
+              this.interval = setInterval(() => this.focusInput_item(), 2000);
+              });
+
             this.input.ITEM_ID_BARCODE = ''
           } else if (this.res_QTY_equal.QTY_equal == 'not_equal') {
             if(this.Status_Print_Track == 'N'){
@@ -1435,6 +1470,7 @@ console.log(this.input.check_QTY_PICK,this.res_QTY_equal,this.Status_Print_Track
           if (this.res_QTY_equal.QTY_equal == "equal") {
             this.playAudioError();
 
+            clearInterval(this.interval);
             Swal.fire({
               icon: 'warning',
               title: 'ITEM เกินจำนวน',
@@ -1443,6 +1479,9 @@ console.log(this.input.check_QTY_PICK,this.res_QTY_equal,this.Status_Print_Track
               showConfirmButton: true,
               backdrop: false,
               confirmButtonText: 'ตกลง',
+              allowEnterKey: false,
+            }).then(() => {
+              this.interval = setInterval(() => this.focusInput_item(), 2000);
             });
             this.input.ITEM_ID_BARCODE = ''
           } else if (this.res_QTY_equal.QTY_equal == 'not_equal') {
