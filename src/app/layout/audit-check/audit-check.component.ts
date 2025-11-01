@@ -210,7 +210,6 @@ export class AuditCheckComponent implements OnInit {
     this.busy = this.dataService.tracksum_qty(this.input).subscribe(res => {
       var data: any = res;
       console.log('checkt',data)
-      console.log(data.data[0].TRACKSUM_QTY)
       if (data.status === 'success') {
         if (data.data[0].TRACKSUM_QTY == null) {
           this.btn.Box = true;
@@ -453,7 +452,7 @@ export class AuditCheckComponent implements OnInit {
     this.pagePrintShear = true;
     this.pagePrintCancel = true;
     this.LOAD_USERTABLECHECK();
-    setTimeout(() => { this.focusInput_item() }, 3000);
+    setTimeout(() => { this.focusInput_item() }, 2000);
     setTimeout(() => { this.focusInput_con() }, 1000);
     //this.interval = setInterval(() => this.focusInput_item(), 3000);
     //console.log(this.input)
@@ -661,7 +660,7 @@ export class AuditCheckComponent implements OnInit {
                               this.scanConPage = true;
                               this.scanItemPage = false;
                               this.summaryPage = true;
-                              // 
+                              setTimeout(() => { this.focusInput_item() }, 150)
 
                             }
                           })
@@ -692,7 +691,7 @@ export class AuditCheckComponent implements OnInit {
                           this.scanConPage = true;
                           this.scanItemPage = false;
                           this.summaryPage = true;
-                          // setTimeout(() => { this.focusInput_item() }, 150)
+                          setTimeout(() => { this.focusInput_item() }, 150)
                         }
 
                       } else {
@@ -1147,7 +1146,11 @@ export class AuditCheckComponent implements OnInit {
 
         this.busy = this.dataService.tracksum_qty(this.input).subscribe(res => {
           var data: any = res
-          this.input.tracksum_qty = data.data[0].TRACKSUM_QTY
+          console.log(data);
+          if(data.status != 'null'){
+
+            this.input.tracksum_qty = data.data[0].TRACKSUM_QTY
+          }
           if(this.input.tracksum_qty == null){
             this.btn.Re = true
           }else{
@@ -1631,11 +1634,14 @@ console.log(this.input.check_QTY_PICK,this.res_QTY_equal,this.Status_Print_Track
         this.isLoading = false;
       
 
+        
         if (this.input.OnclickCoverSheet == true) {
           this.coverSheet();
         } else {
           this.pagePrintCoverSheet = true;
         }
+
+        setTimeout(() => { this.focusInput_item() }, 300)
 
       }
     })
