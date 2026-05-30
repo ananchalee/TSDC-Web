@@ -14,8 +14,16 @@ import { RegisterPackComponent } from './layout/register-pack/register-pack.comp
 import { ReportSorterComponent } from './layout/reports/report-sorter/report-sorter.component';
 import { OutboundRoutingComponent } from './layout/outbound-routing/outbound-routing.component';
 import { MoniterStatusRTSComponent } from './layout/moniter-statusRTS/moniter-statusRTS.component';
-import {MoniterInterfaceErrorManHComponent} from './layout/moniter-InterfaceErrorManH/moniter-InterfaceErrorManH.component';
+import { MoniterInterfaceErrorManHComponent} from './layout/moniter-InterfaceErrorManH/moniter-InterfaceErrorManH.component';
 import { AWBComponent } from './layout/AWB/AWB.component';
+import { MoniterTrackingOrderInternalComponent} from './layout/moniter-TrackingOrderInternal/moniter-TrackingOrderInternal.component';
+import { ReportPrintOrderCancelComponent } from './layout/reports/report-print-ordercancel/report-print-ordercancel.component';
+import { OutboundSignatureOrderCancelComponent } from './layout/outbound-signature-ordercancel/outbound-signature-ordercancel.component';
+import { TsuruhaOrderdetailComponent }from './layout/TSURUHA/tsuruha-orderdetail/tsuruha-orderdetail.component'
+import {TsuruhaMapInvoiceComponent} from './layout/TSURUHA/tsuruha-mapping-invoice/tsuruha-mapping-invoice.component';
+import {ReportPackingListComponent} from './layout/reports/report-packinglist/report-packinglist.component';
+import {ReportPrintWaveOrderComponent} from './layout/reports/report-print-waveorder/report-print-waveorder.component';
+
 const routes: Routes = [
 
  
@@ -34,6 +42,13 @@ const routes: Routes = [
   { path:'monit-statusRTS',component:MoniterStatusRTSComponent},
   { path:'monit-InterfaceError-ManH',component:MoniterInterfaceErrorManHComponent},
   { path:'AWB',component:AWBComponent},
+  { path:'monit-Trackorderinternal',component:MoniterTrackingOrderInternalComponent},
+  { path:'report-printordercancel',component:ReportPrintOrderCancelComponent},
+  { path:'Outbound-SignatureOrderCancel',component:OutboundSignatureOrderCancelComponent},
+  { path:'tsuruha-orderdetail',component:TsuruhaOrderdetailComponent},
+  { path:'tsuruha-mappinginvoice',component:TsuruhaMapInvoiceComponent},
+  { path: 'report-packinglist',component:ReportPackingListComponent},
+  { path: 'report-printWaveOrder',component:ReportPrintWaveOrderComponent},
   { path: '**', redirectTo: 'login' } ,
 
 ];

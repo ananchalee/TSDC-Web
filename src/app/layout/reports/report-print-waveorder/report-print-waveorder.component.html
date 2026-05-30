@@ -1,0 +1,386 @@
+<!-- ส่งค่ายัง Component อื่นๆ  -->
+
+<body class="hold-transition sidebar-mini layout-navbar">
+  <div class="wrapper full-page">
+
+    <app-header id="page" [Pageactive]="pageactive"></app-header>
+    <app-menu id="page" [Pageactive]="pageactive"></app-menu>
+
+    <div class="content-wrapper flex-content">
+      <section class="content h-100">
+        <div class="container-fluid h-100 d-flex flex-column">
+    
+          <div class="screen-wrapper"> 
+            <!-- Search Card -->
+            <div class="card">
+              <div class="card-header">
+                <h5 class="card-title mb-0">
+                  <i class="fas fa-search mr-2"></i>ค้นหา Wave
+                </h5>
+              </div>
+              <div class="card-body">
+                <div class="form-row align-items-end">
+                  <div class="col-auto">
+                    <label class="mb-1">Wave No</label>
+                    <input type="text"
+                           class="form-control"
+                           [(ngModel)]="input.waveno"
+                           name="waveno"
+                           (keydown.enter)="getdata()" />
+                  </div>
+                  <div class="col-auto">
+                    <button type="button"
+                            class="btn btn-primary"
+                            [disabled]="isLoading"
+                            (click)="getdata()">
+                      <i class="fas"
+                         [ngClass]="isLoading ? 'fa-spinner fa-spin' : 'fa-search'"></i>
+                      {{ isLoading ? 'กำลังค้นหา...' : 'ค้นหา' }}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Result Card -->
+            <div class="card mt-3" >
+              <div class="card-header d-flex align-items-center justify-content-between">
+                <h5 class="card-title mb-0">
+                  <i class="fas fa-list mr-2"></i>ผลลัพธ์
+                  <span class="badge badge-info ml-2">{{ data_list[0]?.LAUNCH_NUM }}</span>
+                </h5>
+                <small class="text-muted">ทั้งหมด {{ data_list.length }} รายการ</small>
+              </div>
+
+              <div class="card-body">
+
+                <!-- Summary Cards -->
+                <div class="row mb-3">
+                  <div class="row mb-3">
+                    <div class="col-auto" *ngFor="let t of typeList">
+                      <div class="card mb-0"
+                          style="cursor:pointer;min-width:140px;"
+                          [style.border-left]="t.key === 'Order' ? '3px solid #6f42c1' : '3px solid #17a2b8'"
+                          [ngClass]="activeType === t.key
+                            ? (t.key === 'Order' ? 'bg-purple text-white' : 'bg-info text-white')
+                            : ''"
+                          (click)="setType(t.key)">
+                        <div class="card-body py-2 px-3">
+                          <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                              <div style="font-size:11px;opacity:0.75">{{ t.label }}</div>
+                              <div style="font-size:22px;font-weight:500;line-height:1.2">
+                                {{ getTypeCount(t.key) }}
+                              </div>
+                            </div>
+                            <i class="fas"
+                              style="font-size:20px;opacity:0.3"
+                              [ngClass]="t.key === 'Order' ? 'fa-sort-amount-down' : 'fa-print'"></i>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Type Tabs -->
+                <div class="d-flex align-items-center flex-wrap mb-3" style="gap:8px">
+                  <span class="text-muted mr-1" style="font-size:13px">
+                    เลือกประเภทพิมพ์ :
+                  </span>
+                  <button *ngFor="let t of typeList"
+                          type="button"
+                          class="btn btn-sm rounded-pill"
+                          [ngClass]="activeType === t.key ? 'btn-primary' : 'btn-outline-secondary'"
+                          (click)="setType(t.key)">
+                    {{ t.label }}
+                    <span class="badge ml-1"
+                          [ngClass]="activeType === t.key ? 'badge-light' : 'badge-secondary'">
+                      {{ getTypeCount(t.key) }}
+                    </span>
+                  </button>
+                </div>
+
+                <!-- Info Bar -->
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <small class="text-muted">
+                    แสดง <strong>{{ filteredList.length }}</strong> รายการ
+                    <span *ngIf="activeType">
+                      &nbsp;|&nbsp; ประเภท: <strong>{{ activeLabel }}</strong>
+                    </span>
+                  </small>
+                  <div class="d-flex align-items-center" style="gap:8px">
+
+                    <!-- แสดง badge เตือนถ้าพิมพ์ครบแล้ว -->
+                    <span *ngIf="activeType && filteredList.length > 0 && !hasPending"
+                          class="badge badge-success p-2">
+                      <i class="fas fa-check mr-1"></i> พิมพ์แล้วทั้งหมด
+                    </span>
+
+                    <button type="button"
+                            class="btn btn-success btn-sm"
+                            [disabled]="!activeType || filteredList.length === 0 || !hasPending"
+                            (click)="openModal()">
+                      <i class="fas fa-print mr-1"></i>
+                      พิมพ์ทั้งหมด
+                      <span class="badge badge-light ml-1"
+                            *ngIf="activeType && hasPending">
+                        {{ filteredList.length }}
+                      </span>
+                    </button>
+
+                  </div>
+                </div>
+
+                <!-- Table -->
+                <div class="table-responsive"
+                    style="max-height: calc(100vh - 420px); overflow-y: auto;">
+                  <table class="table table-bordered table-hover table-sm">
+                    <thead class="thead-light text-center"
+                          style="position: sticky; top: 0; z-index: 1;">
+                      <tr>
+                        <th style="width:50px">No</th>
+                        <th>ORDER No</th>
+                        <th style="width:120px">Total QTY</th>
+                        <th style="width:110px">สถานะ Print</th>
+                        <th style="width:160px">ประเภท</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <ng-container *ngIf="filteredList.length > 0; else noData">
+                        <tr *ngFor="let row of filteredList; index as i">
+                          <td class="text-center text-muted">{{ i + 1 }}</td>
+                          <td><strong>{{ row.REFERENCE_ID }}</strong></td>                     
+                          <td class="text-center">{{ row.Total_QTY | number:'1.0-0' }}</td>
+                          <td class="text-center">
+                            <span class="badge"
+                                  [ngClass]="row.STATUS_PRINT === 'N'   
+                                    ? 'badge-warning' : 'badge-success'">      
+                               {{ row.STATUS_PRINT === 'N' ? 'รอพิมพ์' : 'พิมพ์แล้ว' }}
+                            </span>
+                          </td>
+                          <td class="text-center">
+                            <span class="badge badge-info">
+                              {{ row.TYPE_PICK_DESC }}                       
+                            </span>
+                          </td>
+                        </tr>
+                      </ng-container>
+                      <ng-template #noData>
+                        <tr>
+                          <td colspan="7" class="text-center text-muted py-4">
+                            <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
+                            <span *ngIf="activeType">
+                              ไม่มีรายการ {{ activeType }}
+                            </span>
+                            <span *ngIf="!activeType">
+                              — ไม่พบรายการ —
+                            </span>
+                          </td>
+                        </tr>
+                      </ng-template>
+                    </tbody>
+                  </table>
+                </div>
+
+              </div>
+            </div>
+          </div> 
+        </div>
+
+      </section>
+    </div>
+    
+    
+
+
+  </div>
+</body>
+
+
+<!-- Print Modal -->
+<div class="modal fade" id="printModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-print mr-2"></i>ยืนยันการพิมพ์
+        </h5>
+        <button type="button" class="close" (click)="closeModal()">
+          <span>&times;</span>
+        </button>
+      </div>
+
+      <div class="modal-body">
+
+        <!-- ประเภท -->
+        <p class="text-muted mb-3" style="font-size:13px">
+          ประเภท : <strong class="text-dark">{{ activeLabel }}</strong>
+        </p>
+
+        <!-- Summary -->
+        <div class="row mb-3">
+          <div class="col-6">
+            <div class="card mb-0" style="border-left:3px solid #17a2b8">
+              <div class="card-body py-2 px-3">
+                <div style="font-size:11px;color:#6c757d">จำนวน ORDER</div>
+                <div style="font-size:24px;font-weight:500">
+                  {{ filteredList.length }}
+                  <small style="font-size:13px;color:#6c757d"> รายการ</small>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="card mb-0" style="border-left:3px solid #28a745">
+              <div class="card-body py-2 px-3">
+                <div style="font-size:11px;color:#6c757d">จำนวน QTY รวม</div>
+                <div style="font-size:24px;font-weight:500">
+                  {{ totalQty | number:'1.0-0' }}
+                  <small style="font-size:13px;color:#6c757d"> ชิ้น</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Preview List -->
+        <div class="border rounded p-2"
+             style="max-height:200px;overflow-y:auto">
+          <div *ngFor="let row of filteredList"
+               class="d-flex justify-content-between align-items-center
+                      py-1 border-bottom">
+            <div>
+              <div style="font-size:13px;font-weight:500">
+                {{ row.REFERENCE_ID }}
+              </div>
+              <div class="text-muted" style="font-size:11px">
+                {{ row.LAUNCH_NUM }}
+                &nbsp;·&nbsp;
+                Qty: {{ row.Total_QTY | number:'1.0-0' }}
+              </div>
+            </div>
+            <span class="badge"
+                  [ngClass]="row.STATUS_PRINT === 'N'
+                    ? 'badge-warning' : 'badge-success'">
+              {{ row.STATUS_PRINT === 'N' ? 'รอพิมพ์' : 'พิมพ์แล้ว' }}
+            </span>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <button type="button"
+                class="btn btn-secondary"
+                (click)="closeModal()">ยกเลิก</button>
+
+        <!-- ปุ่มพิมพ์ใบปะหน้า -->
+        <button type="button"
+                class="btn btn-warning"
+                (click)="printCoverPage()">
+          <i class="fas fa-file-alt mr-1"></i> พิมพ์ใบปะหน้า
+        </button>
+
+        <!-- ปุ่มพิมพ์ใบ Pick -->
+        <button type="button"
+                class="btn btn-success"
+                (click)="confirmPrint()">
+          <i class="fas fa-print mr-1"></i> พิมพ์ใบ Pick
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ========== COVER PAGE PRINT SECTION ========== -->
+<div class="container-fluid cover-print-section"
+     [class.d-none]="pagePrintCoverSheet">
+
+  <!-- PAGE 1 : ใบปะหน้า -->
+  <div class="cover-paper">
+
+    <div class="cover-hd-top">
+      <div class="cover-company">TSDC FULFILLMENT CENTER</div>
+      <div class="cover-doc-title">ใบปะหน้า Wave</div>
+    </div>
+
+    <div class="cover-row">
+      <span class="cover-lbl">Wave No</span>
+      <span class="cover-val-wave">{{ input.waveno }}</span>
+    </div>
+
+    <div class="cover-row">
+      <span class="cover-lbl">ประเภท</span>
+      <span class="cover-val">{{ activeLabel }}</span>
+    </div>
+
+    <div class="cover-row">
+      <span class="cover-lbl">วันที่ปล่อย Man</span>
+      <span class="cover-val">{{ firstRow?.PROCRESS_DATE }}</span>
+    </div>
+
+    <div class="cover-row">
+      <span class="cover-lbl">วันที่พิมพ์</span>
+      <span class="cover-val">{{ firstRow?.GETDATEDATE  }}</span>
+    </div>
+
+    <hr class="cover-divider">
+
+    <div class="cover-sum-grid">
+      <div class="cover-sum-box">
+        <div class="cover-s-lbl">จำนวน Order</div>
+        <div class="cover-s-num">{{ filteredList.length }}</div>
+        <div class="cover-s-unit">รายการ</div>
+      </div>
+      <div class="cover-sum-box">
+        <div class="cover-s-lbl">QTY รวม</div>
+        <div class="cover-s-num">{{ totalQty}}</div>
+        <div class="cover-s-unit">ชิ้น</div>
+      </div>
+    </div>
+
+  </div>
+  <!-- END PAGE 1 -->
+
+  <!-- PAGE 2 : Item Location -->
+<div class="cover-paper cover-page2"
+     *ngIf="isGroupSingleSku && itemLocationList.length > 0">
+
+  <div class="cover-hd-top">
+    <div class="cover-company">TSDC FULFILLMENT CENTER</div>
+    <div class="cover-doc-title">รายการ Item / Location — Wave {{ input.waveno }}</div>
+  </div>
+
+  <table class="cover-item-table">
+    <thead>
+      <tr>
+        <th>Item ID</th>
+        <th>Location</th>
+        <th style="text-align:right">QTY</th>
+      </tr>
+    </thead>
+    <tbody>
+     
+      <tr *ngFor="let r of itemLocationList">
+        <td>{{ r.ITEM }}</td>
+        <td>{{ r.FROM_LOC }}</td>
+        <td style="text-align:right">{{ r.Total_QTY | number:'1.0-0' }}</td>
+      </tr>
+    </tbody>
+    <tfoot>
+      <tr>
+        <td colspan="2" style="text-align:right"><strong>รวม</strong></td>
+        <td style="text-align:right"><strong>{{ totalItemQty | number:'1.0-0' }}</strong></td>
+      </tr>
+    </tfoot>
+  </table>
+
+</div>
+
+</div>
+<!-- ========== END COVER PAGE ========== -->
+
+

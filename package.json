@@ -18,7 +18,9 @@
     "@angular/platform-browser": "~11.0.9",
     "@angular/platform-browser-dynamic": "~11.0.9",
     "@angular/router": "~11.0.9",
+    "@ng-select/ng-select": "file:ng-select-ng-select-5.1.0.tgz",
     "angular-datatables": "^12.0.1",
+    "angular2-signaturepad": "file:angular2-signaturepad-2.11.0.tgz",
     "angularx-qrcode": "^11.0.0",
     "bootstrap": "^5.1.3",
     "datatables.net": "^1.11.3",
@@ -29,8 +31,9 @@
     "ngx-barcode": "^0.3.0",
     "ngx-barcode6": "^1.0.18",
     "rxjs": "~6.6.0",
+    "signature_pad": "file:signature_pad-2.3.2.tgz",
     "sweetalert2": "^11.1.7",
-    "tslib": "^2.0.0",
+    "tslib": "file:tslib-1.10.0.tgz",
     "zone.js": "~0.10.2"
   },
   "devDependencies": {

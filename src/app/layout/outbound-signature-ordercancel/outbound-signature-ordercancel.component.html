@@ -1,0 +1,190 @@
+<!-- ส่งค่ายัง Component อื่นๆ  -->
+
+<body class="hold-transition sidebar-mini layout-navbar">
+  <div class="wrapper full-page">
+
+    <app-header id="page" [Pageactive]="pageactive"></app-header>
+    <app-menu id="page" [Pageactive]="pageactive"></app-menu>
+
+    <div class="content-wrapper flex-content">
+      <section class="content h-100">
+        <div class="container-fluid h-100 d-flex flex-column">
+    
+          <!-- input -->
+          <div class="card">
+            <div class="card-header">
+              <h5 class="card-title">ค้นหาข้อมูลสำหรับพิมพ์</h5>
+            </div>
+    
+            <div class="card-body">
+              <form class="form-row">
+
+                <!-- Print Date -->
+                <div class="form-group col-md-2">
+                  <label>Print Date</label>
+                  <input type="date"
+                         class="form-control"
+                         [(ngModel)]="input.printDate"
+                         name="printDate">
+                </div>
+
+                <!-- Time From -->
+                <div class="form-group col-md-2">
+                  <label>Time From</label>
+                  <input type="text"
+                         id="timeFrom"
+                         class="form-control"
+                         placeholder="เลือกเวลาเริ่ม"
+                         [(ngModel)]="input.timeFrom"
+                         name="timeFrom"
+                         required>
+                </div>
+                <!-- Time To -->
+                <div class="form-group col-md-2">
+                  <label>Time To</label>
+                  <input type="text"
+                         id="timeTo"
+                         class="form-control"
+                         placeholder="HH:mm"
+                         [(ngModel)]="input.timeTo"
+                         name="timeTo"
+                         placeholder="เลือกเวลาสิ้นสุด"
+                         required>
+                </div>
+                
+                              
+                <!-- Zone -->
+                <div class="form-group col-md-2">
+                  <label>Zone</label>
+                
+                  <ng-select
+                    [items]="zones"
+                    bindLabel=""
+                    bindValue=""
+                    [(ngModel)]="input.zone"
+                    name="zone"
+                    placeholder="-- เลือกโซนทั้งหมด --"
+                    [searchable]="true"
+                    [clearable]="true">
+                  </ng-select>
+                </div>
+              
+                <!-- Table Check -->
+                <div class="form-group col-md-2">
+                  <label>โต๊ะเช็ค</label>
+                
+                  <ng-select
+                    [items]="tablecheck_list"
+                    bindLabel="table_check"
+                    bindValue="table_check"
+                    [(ngModel)]="input.tablecheck"
+                    name="tablecheck"
+                    placeholder="-- เลือกโต๊ะเช็คทั้งหมด --"
+                    [searchable]="true"
+                    [clearable]="true">
+                  </ng-select>
+                </div>
+              
+                <!-- Buttons -->
+                <div class="form-group col-md-2 d-flex align-items-end">
+                  <button type="button"
+                          class="btn btn-primary mr-2"
+                          (click)="getdata()">
+                    <i class="fas fa-search"></i> ค้นหา
+                  </button>
+              
+                  <button type="button"
+                          class="btn btn-success"
+                          (click)="print()">
+                    <i class="fas fa-print"></i> Print
+                  </button>
+                </div>
+              
+              </form>
+              
+            </div>
+          </div>
+    
+          <!-- Table -->
+          <div class="card mt-3 full-height-card" id="print-area">
+            <!-- ===== PRINT HEADER ===== -->
+            <!-- Print Header -->
+            <div class="print-header">
+              <div class="title">
+                Report Print Order Cancel
+              </div>
+
+              <div class="print-date">
+                Print Date : {{ input.printreport | date:'dd/MM/yyyy HH:mm' }}
+              </div>
+            </div>
+            <!-- ===== END PRINT HEADER ===== -->
+            
+            <div class="card-body p-0 table-scroll">
+              <table class="table fixed-header-table">
+                <thead class="table-dark">
+                  <tr>
+                    <th>#</th>
+                    <th>Order</th>
+                    <th>Zone</th>
+                    <th>Table Check</th>
+                    <th>User Check</th>
+                    <th>Print time</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let row of data_list; index as i">
+                    <td>{{i + 1}}</td>
+                    <td>{{row.shipment_id}}</td>
+                    <td>{{row.zone}}</td>
+                    <td>{{row.table_check}}</td>
+                    <td>{{row.user_check}}</td>
+                    <td>{{row.print_datetime}}</td>
+                  </tr>
+    
+                  <tr *ngIf="data_list.length === 0">
+                    <td colspan="6" class="text-center text-muted">
+                      ไม่พบข้อมูล
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="card mt-3">
+              <div class="card-header">
+                <h5 class="card-title">ลายเซ็นผู้รับรอง</h5>
+              </div>
+            
+              <div class="card-body text-center">
+            
+                <signature-pad
+                  [options]="signaturePadOptions"
+                  class="signature-box">
+                </signature-pad>
+            
+                <div class="mt-3">
+                  <button class="btn btn-danger mr-2" (click)="clearSignature()">
+                    ล้างลายเซ็น
+                  </button>
+            
+                  <button class="btn btn-success" (click)="uploadSignature()">
+                    บันทึกลายเซ็น
+                  </button>
+                </div>
+            
+              </div>
+            </div>
+
+            
+          </div>
+    
+        </div>
+      </section>
+    </div>
+    
+    
+
+
+  </div>
+</body>

@@ -1,0 +1,180 @@
+.card-body {
+    max-height: 400px;  /* กำหนดความสูงของตาราง */
+    overflow-y: auto;   /* ให้มี Scroll แนวตั้ง */
+  }
+  
+  .table-responsive {
+    width: 100%;
+    max-height: 600px;  /* กำหนดความสูงของตาราง */
+    overflow-y: auto;   /* ให้มี Scroll แนวตั้ง */
+    flex: 1;
+  }
+
+  .table-responsive.fullscreen {
+    //max-height: 100vh;   /* จำกัดความสูงตามขนาดจอ */
+    //height: auto;        /* สูงอัตโนมัติตามเนื้อหา */
+    max-height: calc(100vh - 50px); /* ลบความสูง header 60px */
+    overflow-y: auto;    /* ให้ scroll ได้ */
+  }
+  
+  .fixed-header-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  .fixed-header-table thead {
+    position: sticky;
+    top: 0;
+    background-color: rgba(0, 0, 0, 0.9); /* เปลี่ยนสีให้ทึบขึ้น */
+    color: white; 
+    z-index: 100; /* ให้ header อยู่ด้านบนสุด */
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2); /* เพิ่มเงาเพื่อแยกจากข้อมูลด้านล่าง */
+  }
+  
+  .fixed-header-table th, .fixed-header-table td {
+    padding: 4px;
+    border: 1px solid #ddd;
+    white-space: nowrap;
+  }
+  
+  .fixed-header-table tbody tr:nth-child(even) {
+    background-color: #ffffff;
+  }
+
+  .center-text {
+    text-align: center;
+  }
+  
+  .text-danger {
+    color: red;
+    font-weight: bold;
+    font-size: 20px;
+  }
+
+  //.row-danger {
+  //  background-color: #ffcccc !important;  /* สีพื้นหลังแดงอ่อน */
+  //  color: red !important;  /* ตัวหนังสือสีแดง */
+  //  font-weight: bold;
+  //}
+  
+  .brand-text {
+    font-size: 14px; /* ปรับขนาดตัวอักษร */
+    color: gray; /* สีเทา (สามารถเปลี่ยนได้) */
+  }
+
+  .form-check-input {
+    margin: 5 auto; /* จัดให้อยู่กลาง */
+    display: block;
+  }
+
+  .custom-checkbox {
+    width: 18px;  /* ปรับขนาดกว้าง */
+    height: 18px; /* ปรับขนาดสูง */
+  }
+  
+
+
+  .info-box-container {
+    width: 19%; /* แบ่งเป็น 5 คอลัมน์ */
+  }
+  @media (max-width: 768px) {
+    .info-box-container {
+      width: 48%; /* บนจอเล็ก จะแสดง 2 คอลัมน์ */
+    }
+  }
+  @media (max-width: 576px) {
+    .info-box-container {
+      width: 100%; /* บนมือถือให้เต็มจอ */
+    }
+  }
+
+  .fixed-header-table th, .fixed-header-table td {
+    padding: 8px;
+    border: 1px solid #ddd;
+    white-space: nowrap;
+  }
+  
+  .fixed-header-table td input[type="checkbox"] {
+    margin: 0 auto;
+    display: block;
+  }
+  
+  .loading-spinner {
+    position: fixed;      /* ลอยอยู่บนสุด */
+    top: 50%;
+    left: 50%;
+    transform: translate(-20%, -80%); /* จัดให้อยู่กึ่งกลางจอ */
+    z-index: 1050;        /* ให้อยู่บนสุดเหนือ element อื่น */
+    padding: 20px 40px;
+    border-radius: 10px;
+    text-align: center;
+    font-size: 1.2rem;
+  }
+  
+
+
+    .thead-dark th {
+  /* 1. ปรับขนาดตัวอักษร (Font Size) */
+  font-size: 12px; /* เล็กมาก ถ้าอยากให้ใหญ่ขึ้นให้ปรับเป็น 11px หรือ 12px */
+  /* 2. ปรับ Padding (ลดความสูงและความกว้างของเซลล์) */
+  padding: 1px 10px; /* บน-ล่าง 2px, ซ้าย-ขวา 4px (จะทำให้ตารางดูแคบลง) */
+  /*3. สามารถยกเลิกการจัดกึ่งกลางของ Bootstrap ได้ถ้าต้องการ 
+       text-align: left !important; 
+    */
+}
+
+
+
+.table-data-small {
+  /* 1. กำหนดขนาดฟอนต์ให้ TABLE โดยรวม */
+  font-size: 12px;
+  /* การกำหนดที่ <table> จะทำให้ <td> สืบทอดขนาดฟอนต์นี้ไป */
+}
+
+/* 2. (ทางเลือก) ปรับ Padding ของข้อมูลในตารางให้เล็กลงอีก */
+.table-data-small tbody td {
+  padding: 4px; /* ลองลดจาก 8px ในโค้ดล่างสุดของคุณ เป็น 4px */
+}
+
+//.fixed-header-table th, .fixed-header-table td {
+//  padding: 8px; /* <--- ตรงนี้กำหนด Padding เป็น 8px ซึ่งอาจจะทำให้ตารางดูใหญ่ขึ้น */
+//  border: 1px solid #ddd;
+//  white-space: nowrap;
+//}
+
+.table thead th {
+  position: sticky;
+  top: 0;
+  background-color: #343a40 !important;
+  color: white;
+  z-index: 5;
+}
+
+
+.table thead tr:nth-child(1) th {
+  top: 0;
+}
+
+.table thead tr:nth-child(2) th {
+  top: 19px; /* ความสูง row แรก */
+}
+
+.clickable {
+  cursor: pointer;
+  color: blue;
+  font-weight: 600;
+}
+
+
+/* Header ของตาราง */
+.custom-table thead th {
+  font-size: 16px;      /* ขนาดตัวอักษร header */
+  font-weight: bold;     /* ตัวหนา */
+  text-align: center;    /* จัดกลาง (ถ้าต้องการ) */
+}
+
+/* ข้อมูล detail */
+.custom-table tbody td {
+  font-size: 14px;       /* ขนาดตัวอักษร detail */
+  font-weight: normal;   /* ตัวปกติ */
+}

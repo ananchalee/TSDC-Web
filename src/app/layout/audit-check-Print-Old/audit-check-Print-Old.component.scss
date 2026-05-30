@@ -66,3 +66,101 @@ hr.style19 {
     margin-bottom: 1px; 
   }
  
+
+  .header .title {
+	font-size: 18px;
+	font-weight: bold;
+  }
+
+  
+  .address {
+	white-space: normal;
+	overflow-wrap: break-word;
+	word-break: break-word;
+	font-size: 16px;
+	margin-bottom: 4px;
+  }
+
+
+@media print {
+	.body {
+			margin-top: 6px;
+			margin-left: 6px;
+			margin-right: 6px;
+		  }
+  
+	.page {
+	  width: 6in;
+	  height: 3in;
+	  page-break-after: always;
+	}
+  }
+
+
+.barcode-zone {
+	display: flex;
+	justify-content: flex-end;   
+	//align-items: center;
+	//gap: 3px;
+  
+	padding-right: 2px;        
+	box-sizing: border-box;
+  }
+  
+  .info {
+	font-size: 16px;
+	margin-top: 4px;
+  }
+
+  .right-info {
+	margin-top: 4px;
+	font-size: 16px;
+	text-align: left;
+	line-height: 1.5;
+	white-space: nowrap;
+  }
+
+  .bill-no {
+	font-size: 18px;  
+	font-weight: bold;
+	letter-spacing: 0.5px;
+  }
+  
+  .box-no {
+	font-size: 35px;
+	font-weight: bold;
+  
+	min-height: 80px;     
+	display: flex;
+	align-items: center;     
+	//justify-content: flex-end;
+  
+	line-height: 1;
+  }
+
+  .box-no-13 {
+	font-size: 40px;
+	font-weight: bold;
+  
+	min-height: 80px;     
+	display: flex;
+	align-items: center;     
+	//justify-content: flex-end;
+  
+	line-height: 1;
+  }
+  
+  .transport-id {
+	font-size: 55px;
+	font-weight: bold;
+	line-height: 1;
+	margin-top: 4px;
+  }
+  
+  .transport-name {
+	margin-top: 2px;
+	font-size: 16px;
+  }
+  
+ 
+  

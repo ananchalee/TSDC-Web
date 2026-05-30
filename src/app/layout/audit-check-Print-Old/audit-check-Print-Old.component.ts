@@ -4,6 +4,7 @@ import { DataService } from '../../services/index'
 import Swal from 'sweetalert2';
 import { Subscription } from 'rxjs';
 import { Router, ActivatedRoute } from '@angular/router';
+//import { NgxQrcodeModule } from 'angularx-qrcode';
 
 declare var jQuery: any;
 
@@ -26,6 +27,13 @@ export class AuditCheckPrintOldComponent implements OnInit {
 
   //@ViewChild('myModalList') myModalList!: ElementRef;
   @ViewChild('myModalP') myModalP!: ElementRef;
+
+  // @NgModule({
+  //   imports: [
+  //     NgxQrcodeModule
+  //   ]
+  // })
+  
 
   isLoading = false;
   
@@ -1729,9 +1737,11 @@ coverSheet2() { //// ใบปะกล่อง
           showConfirmButton: false,
           timer: 2500
         });
+        this.isLoading = false;
       }else{
         this.dataService.loaddataToOut(this.input).subscribe(res => {
           var data: any = res
+          this.input.BILL_NO = data.data[0].BILL_NO;
           if (data.status === 'error') {
             Swal.fire({
               icon: 'error',
@@ -1941,4 +1951,19 @@ coverSheet2() { //// ใบปะกล่อง
 
   }
 
+  getLineWidth(value: string): number {
+    if (value.length <= 13) return 2.3;
+    else return 2.4;
+  }
+  
+
+  getLineWidth2(value: string): number {
+    if (value.length <= 16) return 2;
+    else return 1.6;
+  }
+
+  showQr(billNo: string): boolean {
+    return !!billNo && billNo.length <= 13;
+  }
+  
 }

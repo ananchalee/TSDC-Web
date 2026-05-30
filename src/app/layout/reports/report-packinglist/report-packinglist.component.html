@@ -1,0 +1,201 @@
+<!-- ส่งค่ายัง Component อื่นๆ  -->
+
+<body class="hold-transition sidebar-mini layout-navbar">
+  <div class="wrapper full-page">
+
+    <app-header id="page" [Pageactive]="pageactive"></app-header>
+    <app-menu id="page" [Pageactive]="pageactive"></app-menu>
+
+    <div class="content-wrapper flex-content">
+      <section class="content h-100">
+        <div class="container-fluid h-100 d-flex flex-column">
+    
+          <div class="screen-wrapper"> 
+            <!-- input -->
+            <div class="card">
+              <div class="card-header">
+                <h5 class="card-title">ค้นหาข้อมูล</h5>
+              </div>
+      
+              <div class="card-body d-flex flex-column justify-content-center">
+                <form class="form">
+                  <div class="row justify-content-center">
+
+                    <!-- Date -->
+                    <div class="col-md-2">
+                      <label>Pack Date</label>
+                      <input type="date"
+                            class="form-control"
+                            [(ngModel)]="input.date"
+                            name="date">
+                    </div>
+
+                    <!-- ORDER -->
+                    <div class="col-md-2">
+                      <label>ORDER NO</label>
+                     <input type="text" class="form-control"  [(ngModel)]="input.orderno" name="orderno">
+                     
+                    </div>
+                    
+                    <div class="col-md-1 d-flex align-items-end">
+                      <button type="button"
+                              class="btn btn-primary mr-2"
+                              (click)="getdata()">
+                        <i class="fas fa-search"></i> ค้นหา
+                      </button>
+                      </div>
+                      
+                  </div>
+                </form>
+
+                
+              </div>
+            </div>
+    
+            <!-- Table Header-->
+            <div class="card mt-3 full-height-card">
+              
+              <div class="card-body p-0 table-scroll">
+                <table class="table fixed-header-table">
+                  <thead class="text-center fw-bold">
+                    <tr>
+                      <th>No</th>
+                      <th>View Detail</th>
+                      <th>SHIPMENT</th>
+                      <th>SELLER NO</th>
+                      <th>QTY PICK</th>
+                      <th>QTY CHECK</th>
+                      <th>จำนวนกล่อง</th>
+                      <th>จำนวนชิ้นในกล่องทั้งหมด</th>
+                      <th>STATUS CONFRIM</th>
+                      <th>CONFRIM DATE</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <ng-container *ngFor="let order of data_list; index as i">
+                  
+                      <!--ROW -->
+                      <tr class="fw-bold">
+                        <td>{{ i + 1 }}</td>
+                         <td class="text-center">
+                                <span style="font-size:13px" type="button" class="badge badge-pill badge-info" (click)="ViewDetail(order.SHIPMENT_ID,order.STATUS_CONFIRM)">
+                                  &emsp; รายละเอียด &emsp;</span> 
+                        </td> 
+                        <td>{{ order.SHIPMENT_ID }}</td>
+                        <td>{{ order.SELLER_NO }}</td>
+                        <td class="text-center">{{ order.SUM_QTY_PICK | number:'1.0-0'}}</td>
+                        <td class="text-center">{{ order.SUM_QTY_CHECK | number:'1.0-0'}}</td>
+                        <td class="text-center">{{ order.COUNT_BOX | number:'1.0-0'}}</td>
+                        <td class="text-center">{{ order.SUM_QTY_CloseBOX | number:'1.0-0'}}</td>
+                        <td class="text-center">
+                          <i class="fas"
+                            [ngClass]="order.STATUS_CONFIRM === 'true' ? 'fa-check text-success' : 'fa-times text-danger'">
+                          </i>
+                        </td>
+                        <td>{{ order.CONFIRM_DATE | date:'dd/MM/yyyy HH:mm:ss'}}</td>
+                       
+                      </tr>
+                  
+                  
+                    </ng-container>
+                  
+                    <tr *ngIf="data_list.length === 0">
+                      <td colspan="10" class="text-center text-muted">
+                        ไม่พบข้อมูล
+                      </td>
+                    </tr>
+                  </tbody>
+                  
+
+                </table>
+              </div>
+              
+            </div>
+          </div> 
+        </div>
+
+
+        
+          <div #myModalDetail class="modal fade" id="myModalDetail" role="dialog">
+            <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+              
+              <div class="modal-content">
+
+                <!-- Header -->
+                <div class="modal-header">
+                  <h5 class="modal-title">รายละเอียด Shipment : 
+                    <span style="color: rgb(92, 82, 235);"> {{input.SHIPMENT_ID}}</span></h5>
+                  
+                 <button type="button" class="close" (click)="closeModal()">
+                  <span>&times;</span>
+                </button>
+                </div>
+
+                  <!-- ปุ่มอยู่บรรทัดใหม่ -->
+                  <div class="mt-2" style="margin-left: 15px;">
+                    <button class="btn btn-info btn-sm mr-2"
+                            (click)="Print(input.SHIPMENT_ID)"
+                            [disabled]="input.btn_confirm">
+                      พิมพ์
+                    </button>
+
+                    <button class="btn btn-success btn-sm"
+                            (click)="Confirm(input.SHIPMENT_ID)"
+                            [disabled]="input.btn_confirm">
+                      Confirm
+                    </button>
+                  </div>
+
+
+                <!-- Body -->
+                <div class="modal-body">
+
+                  <table class="table table-bordered text-center">
+                    <thead class="text-center fw-bold" style="font-size:16px;">
+                      <tr>
+                        <th>No</th>
+                        <th>REF_INDEX</th>
+                        <th>BOX_NUMBER</th>
+                        <th>ITEM ID</th>
+                        <th>BARCODE</th>
+                        <th>ITEM_DESC</th>
+                        <th>QTY</th>
+                        <th>BOX_SIZE</th>
+                        <th>TABLE_CHECK</th>
+                        <th>USER_CHECK</th>
+                      </tr>
+                    </thead>
+
+                    <tbody style="font-size:14px;">
+                      <tr *ngFor="let d of detail_list">
+
+                        <td>{{ d.NO }}</td>
+                        <td>{{ d.REF_INDEX }}</td>
+                        <td>{{ d.BOX_NO_ORDER_INT }}</td>
+                        <td>{{ d.ITEM_ID }}</td>
+                        <td>{{ d.ITEM_ID_BARCODE }}</td>
+                        <td>{{ d.ITEM_DESC }}</td>
+                        <td>{{ d.QTY }}</td>
+                        <td>{{ d.BOX_SIZE}}</td>
+                        <td>{{ d.TABLE_CHECK}}</td>
+                        <td>{{ d.USER_CHECK}}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+
+                </div>
+
+              </div>
+            </div>
+          </div>
+       
+
+
+      </section>
+    </div>
+    
+    
+
+
+  </div>
+</body>

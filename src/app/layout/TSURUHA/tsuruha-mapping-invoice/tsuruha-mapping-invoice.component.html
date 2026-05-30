@@ -1,0 +1,222 @@
+<!-- ส่งค่ายัง Component อื่นๆ  -->
+
+<body class="hold-transition sidebar-mini layout-navbar">
+  <div class="wrapper">
+
+    <app-header id="page" [Pageactive]="pageactive"></app-header>
+    <app-menu id="page" [Pageactive]="pageactive"></app-menu>
+
+    <div class="content-wrapper " style="min-height: 1300px;">
+      <div class="content-header">
+        <div class="container-fluid">
+          <div class="row ">
+            <div class="col-sm-6">
+              <a class="m-0">
+                <ol class="breadcrumb">
+                  <!-- <li class="breadcrumb-item">AWB</li> -->
+                </ol>
+              </a>
+            </div>
+
+            <div class="container-fluid" >
+              <div class="container-fluid barbar">
+
+                <div class="card card-Warning">
+
+                  <div class="card-body">
+                    <!-- TAB MENU -->
+                    <ul class="nav nav-tabs">
+                      <li class="nav-item">
+                        <a 
+                          class="nav-link" 
+                          [class.active]="input.tab === 'invoice'"
+                          (click)="Activetab('invoice')">
+                          Map Invoice
+                        </a>
+                      </li>
+
+                      <li class="nav-item">
+                        <a 
+                          class="nav-link" 
+                          [class.active]="input.tab === 'goodreturn'"
+                          (click)="Activetab('goodreturn')">
+                          Map Good Return (เอกสารรับคืน)
+                        </a>
+                      </li>
+                    </ul>
+
+                    <!-- TAB CONTENT -->
+                    <div class="tab-content mt-3">
+
+                      <!-- MAP INVOICE -->
+                      <div *ngIf="input.tab === 'invoice'">
+
+                        <div class="card card-info">
+                          <div class="card-header">
+                            <h4>Map Invoice</h4>
+                          </div>
+
+                          <div class="card-body">
+
+                            <div class="form-group row">
+                              <div class="col-4">
+                                <label>ORDER</label>
+                                <input
+                                  type="text"
+                                  class="form-control"
+                                  placeholder="SCAN เลข Order number"
+                                  [(ngModel)]="input.orderno"
+                                  (keyup.enter)="checkOrder()"
+                                  minlength="5"
+                                  maxlength="30"
+                                  required
+                                  #inputOrder
+                                />
+                              </div>
+
+                              <div class="col-4">
+                                <label>Invoice Date</label>
+                                <input type="date"
+                                  class="form-control"
+                                  [(ngModel)]="input.invdate"
+                                  name="invdate">
+                              </div>
+
+                              <div class="col-4">
+                                <label>Invoice Nember</label>
+                                <input
+                                  type="text"
+                                  class="form-control"
+                                  placeholder="SCAN เลข Invoice"
+                                  [(ngModel)]="input.invno"
+                                  (keyup.enter)="CheckInvno()"
+                                  minlength="5"
+                                  maxlength="30"
+                                  required
+                                  #inputInv
+                                />
+                              </div>
+                            </div>
+
+                          </div>
+                        </div>
+
+                      </div>
+
+                      <!-- MAP GOOD RETURN -->
+                      <div *ngIf="input.tab === 'goodreturn'">
+
+                        <div class="card card-warning">
+                          <div class="card-header">
+                            <h4>Map Good Return เอกสารรับคืน</h4>
+                          </div>
+
+                          <div class="card-body">
+
+                            <div class="form-group row">
+                              <div class="col-4">
+                                <label>Invoice Nember</label>
+                                <input
+                                  type="text"
+                                  class="form-control"
+                                  placeholder="SCAN เลข Invoice"
+                                  [(ngModel)]="input.invno"
+                                  (keyup.enter)="CheckInvno()"
+                                  minlength="5"
+                                  maxlength="30"
+                                  required
+                                  #inputInv
+                                />
+                              </div>
+
+                              <div class="col-4">
+                                <label>Void Date</label>
+                                <input type="date"
+                                  class="form-control"
+                                  [(ngModel)]="input.voiddate"
+                                  name="voiddate">
+                              </div>
+
+                              <div class="col-4">
+                                <label>Void Number</label>
+                                <input
+                                  type="text"
+                                  class="form-control"
+                                  placeholder="SCAN เลข Void"
+                                  [(ngModel)]="input.voidno"
+                                  (keyup.enter)="CheckVoidno()"
+                                  minlength="5"
+                                  maxlength="30"
+                                  #inputReturn
+                                />
+                              </div>
+                            </div>
+
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div> 
+
+                <div class="card card-outline card-info">
+                  <div class="card-header d-flex align-items-center">
+                    <h3 class="card-title">Detail</h3>
+                    
+                    <button type="button"
+                    class="btn btn-danger ml-auto" 
+                    (click)="Cancel()"> Cancel Mapping
+                    </button>
+                  </div>
+                  
+                  <div class="card-body">
+                    <table class="table table-bordered">
+                      <tbody>
+                        <tr>
+                          <th style="width: 150px;">Order Number</th>
+                          <td>{{ input.ORDER_NO || '-' }}</td>
+                        </tr>
+                        <tr>
+                          <th>Invoice Number</th>
+                          <td>{{ input.TSRH_INVNO || '-'}}</td>
+                        </tr>
+                         <tr>
+                          <th>Invoice DATE</th>
+                          <td>{{ input.INV_DATE | date:'dd/MM/yyyy' }}</td>
+                        </tr>
+                        <tr>
+                          <th>Channel</th>
+                          <td>{{ input.CHANNEL || '-'}}</td>
+                        </tr>
+                        <tr>
+                          <th>Tracking Number</th>
+                          <td>{{ input.TRACKING_NO || '-' }}</td>
+                        </tr>
+                        <tr>
+                          <th>RTS Status</th>
+                          <td>{{ input.STATUS_RTS || '-' }}</td>
+                        </tr>
+                        <tr>
+                          <th>Void Number</th>
+                          <td>{{ input.TSRH_VOIDNO || '-' }}</td>
+                        </tr>
+                         <tr>
+                          <th>Void DATE</th>
+                          <td>{{ input.VOID_DATE | date:'dd/MM/yyyy' }}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                
+
+              </div>
+            </div>
+          </div><!-- /.row -->
+        </div><!-- /.container-fluid -->
+      </div>
+    </div>
+
+
+  </div>
+</body>

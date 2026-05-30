@@ -1,0 +1,306 @@
+/* =========================
+   FULL HEIGHT BASE
+========================= */
+html, body {
+  height: 100%;
+  margin: 0;
+}
+
+.screen-wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.card {
+  overflow: visible;
+}
+
+/* =========================
+   WRAPPER FLEX
+========================= */
+.wrapper.full-page {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+/* =========================
+   HEADER / MENU
+   (กินเท่าที่จำเป็น)
+========================= */
+app-header,
+app-menu {
+  flex: 0 0 auto;
+}
+
+/* =========================
+   CONTENT (พื้นที่ที่เหลือ)
+========================= */
+.flex-content {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* =========================
+   SECTION / CONTAINER
+========================= */
+.content,
+.container-fluid {
+  flex: 1;
+  min-height: 0;
+}
+
+/* =========================
+   CARD ตารางเต็มพื้นที่
+========================= */
+.full-height-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* =========================
+   STICKY HEADER
+========================= */
+.fixed-header-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background-color: #212529;
+  color: white;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+}
+
+/* =========================
+   SCROLL เฉพาะตาราง
+========================= */
+.table-scroll {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: auto;
+}
+
+
+/* =========================
+   TABLE STYLE
+========================= */
+.fixed-header-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.fixed-header-table th,
+.fixed-header-table td {
+  padding: 8px;
+  border: 1px solid #ddd;
+  white-space: nowrap;
+}
+
+
+/* ===== flatpickr align with input ===== */
+.flatpickr-calendar {
+  width: auto !important;
+  min-width: 160px;
+  box-sizing: border-box;
+}
+
+.flatpickr-time {
+  max-width: 160px;
+}
+
+.flatpickr-calendar.open {
+  left: auto !important;
+  right: auto !important;
+}
+
+/* ================= NORMAL SCREEN ================= */
+
+/* ซ่อน print layout บนหน้าจอปกติ */
+.print-wrapper {
+  display: none;
+}
+
+
+/* ================= PRINT MODE ================= */
+@media print {
+
+
+  /* ---------------- RESET LAYOUT ---------------- */
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    height: auto !important;
+  }
+  /* ซ่อน layout หลัก */
+  .wrapper,
+  app-header,
+  app-menu,
+  .sidebar,
+  .flex-content,
+  .content,
+  .container-fluid {
+    display: none !important;
+  }
+
+  .screen-wrapper {
+    display: none !important;
+  }
+
+  /* แสดง print area */
+  .print-wrapper {
+
+    display: block !important;
+    position: static !important;
+    width: 100%;
+  }
+
+
+  .wrapper,
+  .wrapper.full-page,
+  .flex-content,
+  .content,
+  .container-fluid,
+  .full-height-card,
+  .table-scroll {
+    height: auto !important;
+    min-height: auto !important;
+    overflow: visible !important;
+    display: block !important;
+  }
+
+
+
+  /* ======================================================
+     A4 SETTINGS
+  ====================================================== */
+
+
+  .a4-layout {
+    min-height: auto;
+    box-sizing: border-box;
+  }
+
+  .a4-page {
+    padding: 15mm;
+    page-break-after: always;
+    break-after: page;
+  }
+
+  .a4-page:last-child {
+    page-break-after: auto;
+    break-after: auto;
+  }
+
+  .a4-layout th,
+  .a4-layout td {
+    border: 1px solid #000 !important;
+    font-size: 10px !important;
+    padding: 2px !important;   /* ลด padding ให้แน่นขึ้น */
+  }
+
+  .a4-layout ngx-barcode6 {
+    display: block;
+    margin: 0 auto;
+    font-size: 12px;
+  }
+
+  .a4-layout table {
+    border: none !important;
+  }
+
+
+
+  /* ======================================================
+     A5 SETTINGS
+  ====================================================== */
+
+
+  .a5-layout {
+    width: 100%;
+    min-height: auto;
+    padding: 0;
+    box-sizing: border-box;
+
+    page-break-after: always;
+    break-after: page;
+    font-size: 12px;
+  }
+
+
+  .a5-layout:last-child {
+    page-break-after: auto;
+    break-after: auto;
+  }
+
+  .a5-layout th,
+  .a5-layout td {
+    font-size: 10px !important;
+    padding: 2px !important;   /* ลด padding ให้แน่นขึ้น */
+  }
+
+
+  /* ======================================================
+     TABLE STYLE FOR PRINT
+  ====================================================== */
+
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    table-layout: fixed;
+  }
+  
+  th, td {
+    border: 1px solid #000 !important;
+    padding: 4px !important;
+    font-size: 12px !important;
+    color: black !important;
+  
+    white-space: normal !important;     /* ให้ขึ้นบรรทัดใหม่ */
+    word-break: break-word;             /* ตัดคำยาว */
+    overflow-wrap: break-word;          /* รองรับ browser ใหม่ */
+  
+  }
+  
+  thead {
+    background: white !important;
+    display: table-header-group;   /* header ซ้ำอัตโนมัติถ้าขึ้นหน้าใหม่ */
+  }
+
+  tr {
+    page-break-inside: avoid;
+  }
+
+}
+
+.summary-box {
+  width: 200px;          /* กำหนดความกว้าง block */
+  margin-left: auto;     /* ดันไปชิดขวา */
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+}
+
+.label {
+  text-align: left;
+}
+
+.value {
+  text-align: right;
+  min-width: 80px;
+}
+
+
+
+
+
+
+
+
+
+

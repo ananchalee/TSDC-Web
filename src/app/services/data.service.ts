@@ -252,6 +252,18 @@ ReprintTrackingAll(data:any){
   return this.http.post('http://10.26.1.21:1661/api/ReprintTrackingAll',data)
 }
 
+pickcheck_print_ordercancel(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/pickcheck_print_ordercancel',data)
+}
+
+get_report_printcancel(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/get_report_printcancel',data)
+}
+
+get_table_printcancel(){
+  return this.http.get('http://10.26.1.21:1661/api/get_table_printcancel')
+}
+
 outstanding_online(){
   return this.http.get('http://10.26.1.21:1661/api/outstanding_online')
 
@@ -473,12 +485,87 @@ Moniter_InterfaceErrorManH(data:any){
   return this.http.post('http://10.26.1.21:1661/api/Moniter_InterfaceErrorManH',data)
 }
 
+Moniter_TrackingOrderInternal_Summary(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/Moniter_TrackingOrderInternal_Summary',data)
+   //return this.http.get('http://localhost:3008/orders')
+}
+
+Moniter_TrackingOrderInternal_Detail(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/Moniter_TrackingOrderInternal_Detail',data)
+}
+
 ///AWB
 Get_ONLINE_ORDER_SHIPPING(data:any){
   return this.http.post('http://10.26.1.21:1661/api/Get_ONLINE_ORDER_SHIPPING',data)
 }
 UPDATE_TrackingAndRTS(data:any){
   return this.http.post('http://10.26.1.21:1661/api/UPDATE_TrackingAndRTS',data)
+}
+////// tsuruha
+tsuruha_get_channel(){
+  return this.http.get('http://10.26.1.21:1661/api/tsuruha_get_channel')
+}
+tsuruha_get_lastprocess(){
+  return this.http.get('http://10.26.1.21:1661/api/tsuruha_get_lastprocess')
+}
+tsuruha_process_job_TSRH_A5(){
+  return this.http.get('http://10.26.1.21:1661/api/tsuruha_process_job_TSRH_A5')
+}
+
+tsuruha_get_orderdetail(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/tsuruha_get_orderdetail',data)
+}
+tsuruha_get_orderdetail_invhistory(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/tsuruha_get_orderdetail_invhistory',data)
+}
+tsuruha_check_order(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/tsuruha_check_order',data)
+}
+tsuruha_check_invoice(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/tsuruha_check_invoice',data)
+}
+tsuruha_update_invoice(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/tsuruha_update_invoice',data)
+}
+
+tsuruha_check_void(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/tsuruha_check_void',data)
+}
+tsuruha_update_void(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/tsuruha_update_void',data)
+}
+tsuruha_history_invoice(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/tsuruha_history_invoice',data)
+}
+tsuruha_get_history_invoice(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/tsuruha_get_history_invoice',data)
+}
+tsuruha_cancel_invoice(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/tsuruha_cancel_invoice',data)
+}
+///////////////// report packinglist
+packinglist_header(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/packinglist_header',data)
+}
+packinglist_detail(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/packinglist_detail',data)
+}
+confirm_packinglist_header(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/confirm_packinglist_header',data)
+}
+confirm_packinglist_detail(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/confirm_packinglist_detail',data)
+}
+
+//////// report print wave
+Get_MANHT_PICK_PAPER(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/Get_MANHT_PICK_PAPER',data)
+}
+Get_ITEM_LOCATION_MANHT_PICK_PAPER(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/Get_ITEM_LOCATION_MANHT_PICK_PAPER',data)
+}
+Update_MANHT_PICK_PAPER(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/Update_MANHT_PICK_PAPER',data)
 }
 
 }

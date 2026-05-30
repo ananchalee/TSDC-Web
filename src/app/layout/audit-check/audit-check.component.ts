@@ -1,6 +1,6 @@
 import { Component, OnInit, ElementRef, ViewChild } from '@angular/core';
 //import {MatButton} from '@angular/material/button';
-import { DataService } from '../../services/index'
+import { DataService,TimeService } from '../../services/index'
 import Swal from 'sweetalert2';
 import { Subscription } from 'rxjs';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -16,15 +16,18 @@ export class AuditCheckComponent implements OnInit {
   busy!: Subscription;
   @ViewChild('myModalBOX') myModalBOX!: ElementRef;
   @ViewChild('myModalSt') myModalSt!: ElementRef;
+  @ViewChild('myModalZonePrint') myModalZonePrint!: ElementRef;
+  @ViewChild('okBtn') okBtn!: ElementRef<HTMLButtonElement>;
 
   @ViewChild('inputcontainer') inputcontainer!: ElementRef;
   @ViewChild('inputItem') inputItem!: ElementRef;
   @ViewChild('inputbox') inputbox!: ElementRef;
-  @ViewChild('inputITEMBARCODE') inputITEMBARCODE!: ElementRef;
 
   @ViewChild('Btn_printTrack') Btn_printTrack!: ElementRef; 
 
   
+  zones = ['Zone F1A', 'Zone F1B','Zone 2 CoolRoom','Zone 3A', 'Zone 3B', 'Zone 3C'];
+
   isLoading = false;
   pageactive: any;
 
@@ -89,6 +92,7 @@ export class AuditCheckComponent implements OnInit {
 
   constructor(
     private dataService: DataService,
+    private timeService:TimeService,
     private router: Router,
     //private busy: Subscription,
   ) { }
@@ -118,6 +122,8 @@ export class AuditCheckComponent implements OnInit {
 
 
   }
+
+
 
   //this.input.sa  = JSON.parse(localStorage.getItem('currentUser') || '')
 
@@ -211,7 +217,6 @@ export class AuditCheckComponent implements OnInit {
     this.busy = this.dataService.tracksum_qty(this.input).subscribe(res => {
       var data: any = res;
       console.log('checkt',data)
-      console.log(data.data[0].TRACKSUM_QTY)
       if (data.status === 'success') {
         if (data.data[0].TRACKSUM_QTY == null) {
           this.btn.Box = true;
@@ -454,9 +459,9 @@ export class AuditCheckComponent implements OnInit {
     this.pagePrintShear = true;
     this.pagePrintCancel = true;
     this.LOAD_USERTABLECHECK();
-    setTimeout(() => { this.focusInput_item() }, 3000);
+    setTimeout(() => { this.focusInput_item() }, 2000);
     setTimeout(() => { this.focusInput_con() }, 1000);
-    this.interval = setInterval(() => this.focusInput_item(), 3000);
+    //this.interval = setInterval(() => this.focusInput_item(), 3000);
     //console.log(this.input)
   }
 
@@ -662,7 +667,7 @@ export class AuditCheckComponent implements OnInit {
                               this.scanConPage = true;
                               this.scanItemPage = false;
                               this.summaryPage = true;
-                              // 
+                              setTimeout(() => { this.focusInput_item() }, 150)
 
                             }
                           })
@@ -693,7 +698,7 @@ export class AuditCheckComponent implements OnInit {
                           this.scanConPage = true;
                           this.scanItemPage = false;
                           this.summaryPage = true;
-                          // setTimeout(() => { this.focusInput_item() }, 150)
+                          setTimeout(() => { this.focusInput_item() }, 150)
                         }
 
                       } else {
@@ -902,7 +907,7 @@ export class AuditCheckComponent implements OnInit {
                         this.btn.Printbill = false;
                       }
 
-                      setTimeout(() => { this.focusInput_item() }, 300)
+                      //setTimeout(() => { this.focusInput_item() }, 300)
                     } else {
                       this.input.CONTAINER_ID = ''
                     }
@@ -1148,7 +1153,11 @@ export class AuditCheckComponent implements OnInit {
 
         this.busy = this.dataService.tracksum_qty(this.input).subscribe(res => {
           var data: any = res
-          this.input.tracksum_qty = data.data[0].TRACKSUM_QTY
+          console.log(data);
+          if(data.status != 'null'){
+
+            this.input.tracksum_qty = data.data[0].TRACKSUM_QTY
+          }
           if(this.input.tracksum_qty == null){
             this.btn.Re = true
           }else{
@@ -1232,12 +1241,19 @@ export class AuditCheckComponent implements OnInit {
     this.view = false;
     if(this.alertcancel){
       this.playAudioError();
+
+      clearInterval(this.interval);
       Swal.fire({
         icon: 'warning',
         title: 'ORDER ถูกยกเลิก',
         html : 'นำใบงานติดไปกับสินค้าเพื่อทำรับคืน',
         showConfirmButton: true,
+        allowEnterKey: false,
+        backdrop: false,
+      }).then(() => {
+       this.interval = setInterval(() => this.focusInput_item(), 2000);
       });
+
       this.input.ITEM_ID_BARCODE = '';
     }else{
     if ((this.input.ORDER_TYPE == 'ONLINE' || this.input.ORDER_TYPE == 'OFFLINE' || this.input.ORDER_TYPE == 'CF_ORDER')) {
@@ -1245,7 +1261,7 @@ export class AuditCheckComponent implements OnInit {
       this.dataService.matchItemInCon_ug(this.input).subscribe(res => {
         //console.log(res);
         var data: any = res
-
+        clearInterval(this.interval);
         if (data.status === 'error') {
           console.log(data)
           this.playAudioError();
@@ -1257,6 +1273,9 @@ export class AuditCheckComponent implements OnInit {
           });
         } else if (data.status === 'notfound') {
           this.playAudioError();
+
+          clearInterval(this.interval);
+
           Swal.fire({
             icon: 'warning',
             title: 'ไม่พบข้อมูล',
@@ -1265,19 +1284,31 @@ export class AuditCheckComponent implements OnInit {
             showConfirmButton: true,
             backdrop: false,
             confirmButtonText: 'ตกลง',
+            allowEnterKey: false,
+          }).then(() => {
+            this.interval = setInterval(() => this.focusInput_item(), 2000);
           });
           this.input.ITEM_ID_BARCODE = ''
+
+
         } else if (data.status === 'success') {
           this.res_matchItemInCon = data.data[0];
           if(this.res_matchItemInCon.ORDER_TYPE == "CANCEL"){
             this.playAudioError();
+
+            clearInterval(this.interval);
             Swal.fire({
               icon: 'warning',
               title: 'รายการนี้ถูกยกเลิก',
               html : 'นำใบงานติดไปกับสินค้าเพื่อทำรับคืน',
-              showConfirmButton: false,
-              timer: 3500
+              backdrop: false,
+              showConfirmButton: true,
+              confirmButtonText: 'ตกลง',
+              allowEnterKey: false,
+            }).then(() => {
+              this.interval = setInterval(() => this.focusInput_item(), 2000);
             });
+
             this.input.ITEM_ID_BARCODE = ''
           }else{
             this.input.ITEM_ID = this.res_matchItemInCon.ITEM_ID;
@@ -1305,6 +1336,8 @@ export class AuditCheckComponent implements OnInit {
           });
         } else if (data.status === 'notfound') {
           this.playAudioError();
+
+          clearInterval(this.interval);
           Swal.fire({
             icon: 'warning',
             title: 'ไม่พบข้อมูล',
@@ -1313,8 +1346,13 @@ export class AuditCheckComponent implements OnInit {
             showConfirmButton: true,
             backdrop: false,
             confirmButtonText: 'ตกลง',
+            allowEnterKey: false,
+          }).then(() => {
+          this.interval = setInterval(() => this.focusInput_item(), 2000);
           });
+
           this.input.ITEM_ID_BARCODE = ''
+
         } else if (data.status === 'success') {
           this.res_matchItemInCon = data.data[0];
 
@@ -1359,6 +1397,9 @@ export class AuditCheckComponent implements OnInit {
 console.log(this.input.check_QTY_PICK,this.res_QTY_equal,this.Status_Print_Track)
           if (this.res_QTY_equal.QTY_equal == "equal") {
             this.playAudioError();
+
+            clearInterval(this.interval);
+
             Swal.fire({
               icon: 'warning',
               title: 'ITEM เกินจำนวน',
@@ -1367,7 +1408,11 @@ console.log(this.input.check_QTY_PICK,this.res_QTY_equal,this.Status_Print_Track
               showConfirmButton: true,
               backdrop: false,
               confirmButtonText: 'ตกลง',
-            });
+              allowEnterKey: false,
+            }).then(() => {
+              this.interval = setInterval(() => this.focusInput_item(), 2000);
+              });
+
             this.input.ITEM_ID_BARCODE = ''
           } else if (this.res_QTY_equal.QTY_equal == 'not_equal') {
             if(this.Status_Print_Track == 'N'){
@@ -1435,6 +1480,7 @@ console.log(this.input.check_QTY_PICK,this.res_QTY_equal,this.Status_Print_Track
           if (this.res_QTY_equal.QTY_equal == "equal") {
             this.playAudioError();
 
+            clearInterval(this.interval);
             Swal.fire({
               icon: 'warning',
               title: 'ITEM เกินจำนวน',
@@ -1443,6 +1489,9 @@ console.log(this.input.check_QTY_PICK,this.res_QTY_equal,this.Status_Print_Track
               showConfirmButton: true,
               backdrop: false,
               confirmButtonText: 'ตกลง',
+              allowEnterKey: false,
+            }).then(() => {
+              this.interval = setInterval(() => this.focusInput_item(), 2000);
             });
             this.input.ITEM_ID_BARCODE = ''
           } else if (this.res_QTY_equal.QTY_equal == 'not_equal') {
@@ -1564,6 +1613,7 @@ console.log(this.input.check_QTY_PICK,this.res_QTY_equal,this.Status_Print_Track
           showConfirmButton: false,
           timer: 2500
         });
+        this.isLoading = false;
       } else if (data.status === 'success') {
         var a = Array();
         let array = {
@@ -1578,7 +1628,8 @@ console.log(this.input.check_QTY_PICK,this.res_QTY_equal,this.Status_Print_Track
           BOX_SIZE: this.input.BOX_SIZE,
           TCHANNEL: this.input.TCHANNEL,
           COMPANY : this.input.COMPANY,
-          ORDER_DATE : this.input.ORDER_DATE
+          ORDER_DATE : this.input.ORDER_DATE,
+          BILL_NO_REF: data.data[0].BILL_NO_REF
 
         }
         a.push(array)
@@ -1591,11 +1642,14 @@ console.log(this.input.check_QTY_PICK,this.res_QTY_equal,this.Status_Print_Track
         this.isLoading = false;
       
 
+        
         if (this.input.OnclickCoverSheet == true) {
           this.coverSheet();
         } else {
           this.pagePrintCoverSheet = true;
         }
+
+        setTimeout(() => { this.focusInput_item() }, 300)
 
       }
     })
@@ -1643,7 +1697,8 @@ console.log(this.input.check_QTY_PICK,this.res_QTY_equal,this.Status_Print_Track
           TCHANNEL: this.input.TCHANNEL,
           MaxBox_NO : this.input.MaxBox_NO,
           COMPANY : this.input.COMPANY,
-          ORDER_DATE : this.input.ORDER_DATE
+          ORDER_DATE : this.input.ORDER_DATE,
+          BILL_NO_REF: data.data[0].BILL_NO_REF
         }
         a.push(array)
         this.dataprint = a
@@ -1692,8 +1747,8 @@ console.log(this.input.check_QTY_PICK,this.res_QTY_equal,this.Status_Print_Track
             TCHANNEL: this.input.TCHANNEL,
             MaxBox_NO : this.input.MaxBox_NO,
             COMPANY : this.input.COMPANY,
-            ORDER_DATE : this.input.ORDER_DATE
-
+            ORDER_DATE : this.input.ORDER_DATE,
+            BILL_NO_REF: data.data[i].BILL_NO_REF
           }
           a.push(array)
         }
@@ -1717,23 +1772,56 @@ console.log(this.input.check_QTY_PICK,this.res_QTY_equal,this.Status_Print_Track
     
   }
 
+  selectZone(){
+    jQuery(this.myModalZonePrint.nativeElement).modal('show');
+  }
+
   printcancel(){
     var a = Array();
-    for (var i = 0;i < 1; i++) {
-      let array = {
-        SHIPMENT_ID: this.input.shipment_id,
-        SHIPPING_NAME: this.input.SHIPPING_NAME,
-        TCHANNEL: this.input.TCHANNEL,
-        SELLER_NO: this.input.SELLER_NO,
-        COMPANY : this.input.COMPANY,
-        ORDER_DATE : this.input.ORDER_DATE
-
-      }
-      a.push(array)
+    if(this.input.TABLE_CHECK == null || this.input.TABLE_CHECK == undefined){
+      Swal.fire({
+        icon: 'warning',
+        title: 'ระบุหมายเลขโต๊ะเช็คไม่ได้ กรุณา login ใหม่อีกครั้ง',
+        showConfirmButton: false,
+        timer: 2500
+      });
+      return;
     }
-    this.dataprintcancel = a
-    this.pagePrint = false
-    this.pagePrintCancel = false;
+
+    this.busy = this.dataService.pickcheck_print_ordercancel(this.input).subscribe(res => {
+      var data: any = res
+      if(data.status == "success"){
+        jQuery(this.myModalZonePrint.nativeElement).modal('hide');
+
+        for (var i = 0;i < 1; i++) {
+          let array = {
+            SHIPMENT_ID: this.input.shipment_id,
+            SHIPPING_NAME: this.input.SHIPPING_NAME,
+            TCHANNEL: this.input.TCHANNEL,
+            SELLER_NO: this.input.SELLER_NO,
+            COMPANY : this.input.COMPANY,
+            ORDER_DATE : this.input.ORDER_DATE,
+            Zone:this.input.Zone,
+            Table:this.input.TABLE_CHECK,
+            PRINT_DATE: this.timeService.getNow()
+
+          }
+          a.push(array)
+        }
+        this.dataprintcancel = a
+        this.pagePrint = false
+        this.pagePrintCancel = false;
+        
+        }
+    });
+  }
+
+  onZoneSelected() {
+    setTimeout(() => {
+      if (this.okBtn) {
+        this.okBtn.nativeElement.focus();
+      }
+    });
   }
 
   backScanitem() {

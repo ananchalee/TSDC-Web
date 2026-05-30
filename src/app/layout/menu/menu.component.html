@@ -77,6 +77,12 @@
                   <p>Interface Error</p>
                 </a>
               </li>
+              <li class="nav-item"  (click)="Onclick_menu('monit_TrackOrderInternal') ">
+                <a class="nav-link"  [ngClass]='{active:page.monit_TrackOrderInternal}'>
+                  <i class="fas fa-paper-plane nav-icon"></i>
+                  <p>Track Order Internal</p>
+                </a>
+              </li>
             </ul>
           </li>
         </section>
@@ -167,6 +173,37 @@
             </ul>
           </li>
 
+          <li class="nav-header" >TSURUHA</li>
+          <li class="nav-item ">
+            <a class="nav-link" [ngClass]='{active:page.tsuruha}'  >
+          
+              <i class="fa fa-book nav-icon"></i>
+              <p>
+                TSURUHA 
+                <i class="fas fa-angle-left right"></i>
+              </p>
+            </a>
+            <ul class="nav nav-treeview">
+              
+              <li class="nav-item"  (click)="Onclick_menu('tsuruha_MappingInvoice') ">
+                <a class="nav-link"  [ngClass]='{active:page.Tsuruha_MappingInvoice}'>
+                  <i class="fa fa-tags nav-icon"></i>
+                  <p>Map Invoice</p>
+                </a>
+              </li>
+
+              <li class="nav-item"  (click)="Onclick_menu('tsuruha_Orderdetail') ">
+                <a class="nav-link"  [ngClass]='{active:page.Tsuruha_Orderdetail}'>
+                  <i class="fa fa-tags nav-icon"></i>
+                  <p>Report Tsuruha</p>
+                </a>
+              </li>
+              
+            </ul>
+          </li>
+
+
+          <li class="nav-header" >Report</li>
           <li class="nav-item ">
             <a class="nav-link" [ngClass]='{active:page.report}'  >
 
@@ -176,6 +213,27 @@
                 <i class="fas fa-angle-left right"></i>
               </p>
             </a>
+
+            <ul class="nav nav-treeview">
+              <li class="nav-item"  (click)="Onclick_menu('report_packinglist') ">
+                <a class="nav-link"  [ngClass]='{active:page.report_packinglist}'>
+                  <i class="nav-icon fas fa-file-contract"></i>
+                  <p>Report Packing List</p>
+                </a>
+              </li>
+              
+            </ul>
+
+            <ul class="nav nav-treeview">
+              <li class="nav-item"  (click)="Onclick_menu('report_printordercancel') ">
+                <a class="nav-link"  [ngClass]='{active:page.report_printordercancel}'>
+                  <i class="nav-icon fas fa-file-contract"></i>
+                  <p>Report Print OrderCancel</p>
+                </a>
+              </li>
+              
+            </ul>
+
             <ul class="nav nav-treeview">
               <li class="nav-item"  (click)="Onclick_menu('report_sorter') ">
                 <a class="nav-link"  [ngClass]='{active:page.report_sorter}'>
@@ -185,6 +243,17 @@
               </li>
               
             </ul>
+
+            <ul class="nav nav-treeview">
+              <li class="nav-item"  (click)="Onclick_menu('report_printwave') ">
+                <a class="nav-link"  [ngClass]='{active:page.report_printwave}'>
+                  <i class="nav-icon fas fa-file-contract"></i>
+                  <p>Report Print Wave</p>
+                </a>
+              </li>
+              
+            </ul>
+
           </li>
 
           <li class="nav-header" >Outbound</li>

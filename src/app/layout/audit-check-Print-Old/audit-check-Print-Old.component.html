@@ -435,8 +435,8 @@
 
     <div class="container-fluid" [hidden]="pagePrintCoverSheet">
       
-      <div style="page-break-after: always" class="page" *ngFor="let list of dataprintCoverSheet;let i = index;">
-        <div class="row ">
+     <!-- <div style="page-break-after: always" class="page" *ngFor="let list of dataprintCoverSheet;let i = index;">
+       <div class="row ">
           <div class="col" align="center">
             <font size="4"><b>
                 {{list.SHIPPING_NAME}}</b>
@@ -530,23 +530,6 @@
 
         </div>
 
-        <!-- <div class="row ">
-          <div class="col-8">
-
-            <font size="3"><b>
-                BATCH : {{list.BATCH_CODE}}</b>
-            </font>
-
-          </div>
-
-          <div class="col" align="center">
-            <font size="7"><b>
-              {{list.BOX_NO_ORDER}}/ {{input.BOX_NUM}}</b>
-            </font>
-
-          </div>
-        </div> -->
-
         <div class="row" style="margin-top: -45px;">
           <div class="col-4" style=" font-size:350%;" align="center">
             <div class="e-icons">
@@ -556,15 +539,6 @@
             </div>
           </div>
         </div>
-
-        <!-- <div class="row " style="margin-top: -80px;" >
-          <div class="col-4"></div>
-          <div class="col-4">
-          <font size="4"><b>
-              {{list.BRAND_NAME}}</b>
-          </font>
-        </div>
-        </div>  -->
 
         <div class="row " style="margin-top: -40px;">
           <div class="col-3"></div>
@@ -581,8 +555,139 @@
           </ngx-barcode6>
           </div>
 
+
         </div>
+
+      </div> -->
+
+
+        <div style="page-break-after: always" class="page" *ngFor="let list of dataprintCoverSheet;let i = index;">
+        <div class="page">
+
+          <div class="row header">
+            <div class="col">
+              <div class="title">TSDC FULFILLMENT CENTER</div>
+            </div>
+          </div>
+        
+          <!-- BODY -->
+          <div class="row body">
+        
+            <div class="col-6 ">
+              <div [ngClass]="{
+                'box-no-13': list.BILL_NO?.length <= 13,
+                'box-no': list.BILL_NO?.length > 13
+              }">
+                {{list.BOX_NO_ORDER}}/{{input.BOX_NUM}}
+              </div>
+            </div>
+        
+            <!-- BARCODE + QR -->
+
+            <!-- <div *ngIf="!showQr(list.BILL_NO)" class="row row-cols">
+              <div class="col" align="center">
+                <ngx-barcode6 [bc-element-type]="'svg'" [bc-format]="'CODE128'" [bc-width]="2" [bc-height]="70"
+                  [bc-font-size]="16" [bc-text-position]="'button'" [bc-value]="list.BILL_NO" [bc-display-value]="true">
+                </ngx-barcode6>
+              </div>
+            </div> -->
+
+            <div  class="col-6 barcode-zone">
+              <qrcode
+                *ngIf="showQr(list.BILL_NO)"
+                [qrdata]="list.BILL_NO"
+                [width]="90"
+                [errorCorrectionLevel]="'M'">
+              </qrcode>
+
+              <ngx-barcode6
+                [bc-element-type]="'svg'"
+                [bc-format]="'CODE128'"
+                [bc-width]="getLineWidth(list.BILL_NO)"
+                [bc-height]="65"
+                [bc-font-size]="12"
+                [bc-value]="list.BILL_NO"
+                [bc-display-value]="true">
+              </ngx-barcode6>
+              
+            </div>
+        
+          </div>
+        
+          <!-- HEADER -->
+          <div class="row header">
+            <div class="col">
+              <div class="title">{{list.SHIPPING_NAME}}</div>
+              <div class="address">{{ list.STORE_ADDRESS.length > 150 
+                ? (list.STORE_ADDRESS | slice:0:150) + '...' 
+                : list.STORE_ADDRESS }}</div> 
+              
+            </div>
+          </div>
+
+          <!-- INFO -->
+         
+
+          <div class="row info">
+            <div class="col-6">
+              <span class="bill-no">{{ list.BRAND_NAME }}</span><br>
+              Shop No : {{list.SELLER_NO}} &nbsp;&nbsp;  {{list.CORNER_ID_BLH}}<br>
+              Bill No : <span class="bill-no">{{list.BILL_N8_BLH}}</span><br>
+              Bill Date : {{list.BILL_DATE}}
+            </div>
+          
+            <div class="col-6 right-info">
+              Site : {{list.SITE_ID_BLH}} | Box : {{list.BOX_SIZE}}<br>
+              Table No : {{input.TABLE_CHECK}}<br>
+              Batch : {{list.BATCH_CODE}}<br>
+          
+              <div><b>{{list.MESSAGE_1}}</b></div>
+              
+            </div>
+          </div>
+          
+        
+          <!-- FOOTER -->
+          <div class="row body">
+
+            <!-- LEFT : TRANSPORT -->
+            <div class="col-5 ">
+              <div class="transport-id">
+                {{ list.TRANSPORT_ID }}
+              </div>
+
+              <div class="transport-name">
+                {{ list.TRANSPORT_NAME }}
+              </div>
+            </div>
+
+            <!-- BARCODE + QR -->
+            <div class="col-7 barcode-zone">
+              <qrcode
+                [qrdata]="list.BILL_NO_REF"
+                [width]="90"
+                [errorCorrectionLevel]="'M'">
+              </qrcode>
+  
+              <ngx-barcode6
+                [bc-element-type]="'svg'"
+                [bc-format]="'CODE128'"
+                [bc-width]="getLineWidth2(list.BILL_NO_REF)"
+                [bc-height]="65"
+                [bc-font-size]="12"
+                [bc-value]="list.BILL_NO_REF"
+                [bc-display-value]="true">
+              </ngx-barcode6>
+              
+            </div>
+
+          </div>
+
+  
+        </div>
+  
       </div>
+
 
       <!-- //////////////////////////////// shot /////////-->
       <div class="container-fluid" [hidden]="pagePrintShear">
@@ -664,6 +769,7 @@
 
         </div>
       </div>
+
     </div>
   </div>
 

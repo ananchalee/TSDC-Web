@@ -23,6 +23,8 @@ import { AuditCheckPrintOldComponent } from './layout/audit-check-Print-Old/audi
 import { AuditCheckPrintOldFullComponent } from './layout/audit-check-Print-Old-fullcarton/audit-check-Print-Old-fullcarton.component';
 import { NgxBarcode6Module } from 'ngx-barcode6';
 import { QRCodeModule } from 'angularx-qrcode';
+import { NgSelectModule } from '@ng-select/ng-select';
+import { SignaturePadModule } from 'angular2-signaturepad';
 
 import {DataTablesModule} from 'angular-datatables';
 import { OutboundScantrackingComponent } from './layout/outbound-scantracking/outbound-scantracking.component';
@@ -32,9 +34,13 @@ import { ReportSorterComponent } from './layout/reports/report-sorter/report-sor
 import { MoniterStatusRTSComponent } from './layout/moniter-statusRTS/moniter-statusRTS.component';
 import { MoniterInterfaceErrorManHComponent } from './layout/moniter-InterfaceErrorManH/moniter-InterfaceErrorManH.component';
 import { AWBComponent } from './layout/AWB/AWB.component';
-
-
-
+import { MoniterTrackingOrderInternalComponent } from './layout/moniter-TrackingOrderInternal/moniter-TrackingOrderInternal.component';
+import { ReportPrintOrderCancelComponent } from './layout/reports/report-print-ordercancel/report-print-ordercancel.component';
+import {OutboundSignatureOrderCancelComponent} from './layout/outbound-signature-ordercancel/outbound-signature-ordercancel.component';
+import {TsuruhaOrderdetailComponent} from './layout/TSURUHA/tsuruha-orderdetail/tsuruha-orderdetail.component'
+import {TsuruhaMapInvoiceComponent} from './layout/TSURUHA/tsuruha-mapping-invoice/tsuruha-mapping-invoice.component';
+import {ReportPackingListComponent} from './layout/reports/report-packinglist/report-packinglist.component';
+import {ReportPrintWaveOrderComponent} from './layout/reports/report-print-waveorder/report-print-waveorder.component';
 
 @NgModule({
   declarations: [
@@ -55,7 +61,14 @@ import { AWBComponent } from './layout/AWB/AWB.component';
     ReportSorterComponent,
     MoniterStatusRTSComponent,
     MoniterInterfaceErrorManHComponent,
-    AWBComponent
+    AWBComponent,
+    MoniterTrackingOrderInternalComponent,
+    ReportPrintOrderCancelComponent,
+    OutboundSignatureOrderCancelComponent,
+    TsuruhaOrderdetailComponent,
+    TsuruhaMapInvoiceComponent,
+    ReportPackingListComponent,
+    ReportPrintWaveOrderComponent
   
   ],
   imports: [
@@ -67,7 +80,8 @@ import { AWBComponent } from './layout/AWB/AWB.component';
     NgxBarcode6Module,
     QRCodeModule ,
     DataTablesModule,
- 
+    NgSelectModule,
+    SignaturePadModule
 
   ],
   providers: [

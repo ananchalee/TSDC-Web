@@ -91,20 +91,28 @@ export class AWBComponent implements OnInit {
       setTimeout(() => {
         this.inputPin.nativeElement.focus();
       });
-    }else if(!this.input.REF_INDEX && this.inputTrackP){
+    } else if (!this.input.REF_INDEX && this.inputTrackP) {
       setTimeout(() => {
         this.inputTrackP.nativeElement.focus();
       });
-    }else if(!this.input.shipment_id && this.inputOrder){
+    } else if (!this.input.shipment_id && this.inputOrder) {
       setTimeout(() => {
         this.inputOrder.nativeElement.focus();
       });
-    }else if(!this.input.TRACK_CODE && this.inputTrack){
+    } else if (!this.input.TRACK_CODE && this.inputTrack) {
       setTimeout(() => {
         this.inputTrack.nativeElement.focus();
       });
     }
+  
+    // เพิ่มเงื่อนไขใหม่: ถ้า inputTrack มีค่าแล้ว ให้กลับไปโฟกัสที่ inputTrackP
+    if (this.input.TRACK_CODE && this.inputTrackP) {
+      setTimeout(() => {
+        this.inputTrackP.nativeElement.focus();
+      });
+    }
   }
+  
 
   check_user() {
 
@@ -190,6 +198,7 @@ export class AWBComponent implements OnInit {
         });
         this.playAudioError();
         this.input.REF_INDEX = ''
+        this.focusInput();
       } else if (this.CheckTrack.status === 'success') {
 
         console.log(this.input)
@@ -210,6 +219,8 @@ export class AWBComponent implements OnInit {
   }
 
   checkOrderRTS(){
+    this.input.TRACK_CODE = '';
+    
     if(!this.input.REF_INDEX){
       this.input.REF_INDEX = ''
       this.input.shipment_id = ''
@@ -240,6 +251,12 @@ export class AWBComponent implements OnInit {
         });
         this.playAudioError();
         this.input.shipment_id = ''
+        this.input.ORDER_NO = ''
+          this.input.ORDER_DATE = ''
+          this.input.TRACKING = ''
+          this.input.RTS_DATE = ''
+          this.input.STATUS_RTS = ''
+        this.focusInput();
       } else if (this.CheckORDER.status === 'success') {
 
         if(this.CheckORDER.data[0].ORDER_NUMBER_OOS != this.input.PO_NO){
@@ -253,6 +270,14 @@ export class AWBComponent implements OnInit {
           this.playAudioError();
           this.input.shipment_id = ''
 
+          this.input.ORDER_NO = ''
+          this.input.ORDER_DATE = ''
+          this.input.TRACKING = ''
+          this.input.RTS_DATE = ''
+          this.input.STATUS_RTS = ''
+          
+          this.input.TRACK_CODE = '';
+
         }else{
           console.log(this.CheckORDER.data[0]);
           this.input.ORDER_NO = this.CheckORDER.data[0].ORDER_NUMBER_OOS
@@ -262,17 +287,21 @@ export class AWBComponent implements OnInit {
           this.input.STATUS_RTS = this.CheckORDER.data[0].INF_STATUS_OOS
         }
       } 
-
+      this.focusInput();
     })
     
-    this.focusInput();
+    
   }
 
   Check_RTS(){
-    if(!this.input.REF_INDEX){
-      this.input.REF_INDEX = ''
-      this.input.shipment_id = ''
-      this.input.TRACK_CODE = '';
+
+    if(!this.input.REF_INDEX || !this.input.shipment_id){
+      Swal.fire({
+        icon: 'warning',
+        title: 'กรุณาระบุเลข ใบ P หรือ Order ให้ครบ!',
+        showConfirmButton: false,
+        timer: 2500
+      });
       
     this.focusInput();
       return;

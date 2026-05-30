@@ -43,7 +43,8 @@ export class MenuComponent implements OnInit {
           this.menu_User = false;
         break;
         default:
-          throw Error('Invalid Menu');
+          this.menu_User = true;
+          //throw Error('Invalid Menu');
        }
 
        if(this.USER.CATEGORY == 'SuperAdmin' || this.USER.CATEGORY == 'Admin'){
@@ -105,6 +106,12 @@ export class MenuComponent implements OnInit {
           switch (this.Pageactive[0].pagename){
             case 'Report Sorter' : this.page.report_sorter = true;
               break;
+              case 'Reports Print Order Cancel' : this.page.report_printordercancel = true;
+              break;
+              case 'Report Packing List' :this.page.report_packinglist = true;
+              break;
+              case 'Report Print Wave Order' :this.page.report_printwave = true;
+              break;
           }
         break;
         case 'Moniter':
@@ -114,9 +121,19 @@ export class MenuComponent implements OnInit {
               break;
             case 'Moniter-InterfaceError' : this.page.monit_InterfaceError = true;
               break;
+              case 'Moniter-TrackOrderInternal' : this.page.monit_TrackorderInternal = true;
+              break;
           }
           break; 
-
+        case 'Tsuruha' :
+          this.page.tsuruha = true;
+          switch (this.Pageactive[0].pagename){
+            case 'Tsuruha-Orderdetail' : this.page.Tsuruha_Orderdetail = true;
+            break;
+            case 'Tsuruha-MappingInvoice' : this.page.Tsuruha_MappingInvoice = true;
+            break;
+          }
+        break
         default:
           throw Error('Invalid Menu');
       }
@@ -162,12 +179,30 @@ export class MenuComponent implements OnInit {
       case 'report_sorter':
         this.router.navigate(["/report-sorter"]);
         break;
+      case 'report_printwave':
+        this.router.navigate(["/report-printWaveOrder"]);
+        break;
+      case 'report_printordercancel':
+        this.router.navigate(["/report-printordercancel"]);
+        break;
+      case 'report_packinglist':
+        this.router.navigate(["/report-packinglist"]);
+        break;
       case 'monit_statusRTS':
         this.router.navigate(["/monit-statusRTS"]);
         break;
       case 'monit_InterfaceError':
         this.router.navigate(["/monit-InterfaceError-ManH"]);
         break;
+      case 'monit_TrackOrderInternal':
+        this.router.navigate(["/monit-Trackorderinternal"]);
+        break;
+      case 'tsuruha_Orderdetail':
+        this.router.navigate(["/tsuruha-orderdetail"])
+        break
+      case 'tsuruha_MappingInvoice':
+        this.router.navigate(["/tsuruha-mappinginvoice"])
+        break
     }
   }
 

@@ -31,15 +31,18 @@
               "src/assets"
             ],
             "styles": [
-      
+              "src/assets/flatpickr/flatpickr.min.css",
               "node_modules/datatables.net-dt/css/jquery.dataTables.css",
-             
+              "node_modules/@ng-select/ng-select/themes/default.theme.css",
               "src/styles.scss"
             ],
             "scripts": [
             "node_modules/jquery/dist/jquery.js",
             "node_modules/datatables.net/js/jquery.dataTables.js",
-            "node_modules/bootstrap/dist/js/bootstrap.js"
+            "node_modules/bootstrap/dist/js/bootstrap.js",
+            "src/assets/flatpickr/flatpickr.min.js",
+            "src/assets/js/xlsx.full.min.js",
+            "src/assets/js/xlsx.bundle.js"
             ]
           },
           "configurations": {
@@ -60,8 +63,8 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "2mb",
-                  "maximumError": "3mb"
+                  "maximumWarning": "5mb",
+                  "maximumError": "10mb"
                 },
                 {
                   "type": "anyComponentStyle",
@@ -101,16 +104,18 @@
               "src/assets"
             ],
            "styles": [
-      
+            "src/assets/flatpickr/flatpickr.min.css",
             "node_modules/datatables.net-dt/css/jquery.dataTables.css",
-            
-              
+            "node_modules/@ng-select/ng-select/themes/default.theme.css",
               "src/styles.scss"
             ],
             "scripts": [
             "node_modules/jquery/dist/jquery.js",
             "node_modules/datatables.net/js/jquery.dataTables.js",
-            "node_modules/bootstrap/dist/js/bootstrap.js"
+            "node_modules/bootstrap/dist/js/bootstrap.js",
+            "src/assets/flatpickr/flatpickr.min.js",
+            "src/assets/js/xlsx.full.min.js",
+            "src/assets/js/xlsx.bundle.js"
             ] 
             
           }

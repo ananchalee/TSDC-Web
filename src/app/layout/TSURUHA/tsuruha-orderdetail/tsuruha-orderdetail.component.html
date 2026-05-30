@@ -1,0 +1,561 @@
+<!-- ส่งค่ายัง Component อื่นๆ  -->
+
+<body class="hold-transition sidebar-mini layout-navbar">
+  <div class="wrapper full-page">
+
+    <app-header id="page" [Pageactive]="pageactive"></app-header>
+    <app-menu id="page" [Pageactive]="pageactive"></app-menu>
+
+    <div class="content-wrapper flex-content">
+      <section class="content h-100">
+        <div class="container-fluid h-100 d-flex flex-column">
+    
+          <div class="screen-wrapper"> 
+            <!-- ===== MAIN CARD ===== -->
+            <div class="card main-card">
+
+              <!-- Card Header -->
+              <div class="card-header main-card-header">
+                <h5 class="card-title mb-0">
+                  <i class="fas fa-search mr-2"></i> ค้นหาข้อมูล TSURUHA
+                </h5>
+              </div>
+
+              <div class="card-body">
+
+                <!-- ─── ZONE 1: FILTER ─── -->
+                <form class="form">
+                  <div class="row align-items-end">
+
+                    <!-- Channel -->
+                    <div class="col-md-3">
+                      <label class="field-label">Channel</label>
+                      <ng-select
+                        [items]="channel_list"
+                        bindLabel="channel_list"
+                        bindValue="channel_list"
+                        [(ngModel)]="input.channel"
+                        name="channel"
+                        placeholder="-- All Channel --"
+                        [searchable]="true"
+                        [clearable]="true">
+                      </ng-select>
+                    </div>
+
+                    <!-- Date From -->
+                    <div class="col-md-2">
+                      <label class="field-label">Process Date From</label>
+                      <input type="date"
+                            class="form-control field-input"
+                            [(ngModel)]="input.datef"
+                            name="datef">
+                    </div>
+
+                    <!-- Date To -->
+                    <div class="col-md-2">
+                      <label class="field-label">Process Date To</label>
+                      <input type="date"
+                            class="form-control field-input"
+                            [(ngModel)]="input.datet"
+                            name="datet">
+                    </div>
+
+                    <!-- Period -->
+                    <div class="col-md-3">
+                      <label class="field-label">Period</label>
+                      <ng-select
+                        [items]="period_list"
+                        bindLabel="period_list"
+                        bindValue="period_list"
+                        [(ngModel)]="input.period"
+                        name="period"
+                        placeholder="-- All Work Period --"
+                        [searchable]="true"
+                        [clearable]="true">
+                      </ng-select>
+                    </div>
+
+                    <!-- Search Button -->
+                    <div class="col-md-2 d-flex align-items-end">
+                      <button type="button"
+                              class="btn btn-primary btn-block"
+                              (click)="getdata()">
+                        <i class="fas fa-search mr-1"></i> ค้นหา
+                      </button>
+                    </div>
+
+                  </div>
+                </form>
+
+                <hr class="section-divider">
+
+                <!-- ─── ZONE 2: RUN PROCESS ─── -->
+                <div class="run-process-zone">
+
+                  <!-- Stat chips -->
+                  <div class="stat-chips">
+                    <div class="stat-chip">
+                      <span class="stat-chip-label">
+                        <i class="fas fa-clock mr-1"></i> Last Run Process
+                      </span>
+                      <span class="stat-chip-value">{{ input.lastprocess || '—' }}</span>
+                    </div>
+                    <div class="stat-chip">
+                      <span class="stat-chip-label">
+                        <i class="fas fa-calendar mr-1"></i> Period
+                      </span>
+                      <span class="stat-chip-value">{{ input.workperiod || '—' }}</span>
+                    </div>
+                    <div class="stat-chip">
+                      <span class="stat-chip-label">
+                        <i class="fas fa-list mr-1"></i> Order count
+                      </span>
+                      <span class="stat-chip-value">{{ input.ordercount || '0' }}</span>
+                    </div>
+                  </div>
+
+                  <!-- Run Process Button -->
+                  <button type="button"
+                          class="btn btn-danger run-btn"
+                          (click)="RunProcress()">
+                    <i class="fas fa-play mr-1"></i> Run Process
+                  </button>
+
+                </div>
+
+                <hr class="section-divider">
+
+                <!-- ─── ZONE 3: PRINT / EXPORT ─── -->
+                <div class="print-zone">
+                  <span class="zone-label mb-0 mr-3">พิมพ์ :</span>
+                  <div class="btn-group-print">
+                    <button type="button"
+                            class="btn btn-success"
+                            (click)="print('A5')">
+                      <i class="fas fa-print mr-1"></i> Print A5
+                    </button>
+                    <button type="button"
+                            class="btn btn-success"
+                            (click)="print('A4')">
+                      <i class="fas fa-print mr-1"></i> Print Summary
+                    </button>
+                    <button type="button"
+                            class="btn btn-success"
+                            (click)="print('A4_Inv')">
+                      <i class="fas fa-print mr-1"></i> Print Invoice
+                    </button>
+                  </div>
+                  <div class="btn-export">
+                    <button type="button"
+                            class="btn btn-warning"
+                            (click)="openExportDialog()">
+                      <i class="fas fa-file-excel mr-1"></i> Export to Excel
+                    </button>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+    
+            <div class="card mt-3 full-height-card">
+
+              <!-- Loading -->
+              <div *ngIf="isLoading" class="loading-overlay">
+                <i class="fas fa-sync-alt fa-spin fa-2x"></i>
+                <span class="ml-2">กำลังโหลดข้อมูล...</span>
+              </div>
+
+              <!-- Table header -->
+              <div *ngIf="!isLoading" class="card-header table-card-header">
+                <h6 class="mb-0">
+                  <i class="fas fa-table mr-2"></i> ผลการค้นหา
+                </h6>
+                <span class="result-count ml-auto" *ngIf="groupedData.length > 0">
+                  ทั้งหมด {{ groupedData.length | number }} orders
+                </span>
+              </div>
+
+              <div *ngIf="!isLoading" class="card-body p-0 table-scroll">
+                <table class="table fixed-header-table mb-0">
+                  <thead class="thead-dark text-center">
+                    <tr>
+                      <th>#</th>
+                      <th>ORDER DATE</th>
+                      <th>ORDER</th>
+                      <th>SKU</th>
+                      <th>SKU NAME</th>
+                      <th>SKU BARCODE</th>
+                      <th>QTY</th>
+                      <th>NET PRICE</th>
+                      <th>INVOICE</th>
+                      <th>TRACKING NO</th>
+                      <th>STATUS</th>
+                      <th>VOID NO</th>
+                      <th>WORK PERIOD</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <ng-container *ngFor="let order of groupedData; index as i">
+
+                      <!-- Group Header Row -->
+                      <tr class="row-group-header">
+                        <td class="text-center">{{ i + 1 }}</td>
+                        <td>{{ order.orderDate | date:'dd/MM/yyyy' }}</td>
+                        <td class="font-weight-bold">{{ order.orderNumber }}</td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td class="text-center">{{ order.totalQty | number:'1.0-0' }}</td>
+                        <td class="text-right">{{ order.totalAmt | number:'1.2-2' }}</td>
+                        <td>{{ order.invNo }}</td>
+                        <td>{{ order.trackingNo }}</td>
+                        <td class="text-center">
+                          <span class="badge-status">{{ order.RTSstatus }}</span>
+                        </td>
+                        <td>{{ order.voidno }}</td>
+                        <td class="text-center">{{ order.WORK_PERIOD }}</td>
+                      </tr>
+
+                      <!-- Detail Rows -->
+                      <tr *ngFor="let item of order.items" class="row-detail">
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td>{{ item.ITEM }}</td>
+                        <td>{{ item.ITEM_NAME }}</td>
+                        <td>{{ item.ITEM_BARCODE }}</td>
+                        <td class="text-center">{{ item.TOTAL_QTY | number:'1.0-0' }}</td>
+                        <td class="text-right">{{ item.TSRH_SKU_AMT | number:'1.2-2' }}</td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                      </tr>
+
+                    </ng-container>
+
+                    <!-- Empty State -->
+                    <tr *ngIf="groupedData.length === 0">
+                      <td colspan="13" class="empty-state">
+                        <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
+                        ไม่พบข้อมูล
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+            </div>
+
+          </div> 
+        </div>
+
+
+        <!-- PRINT AREA -->
+        <div class="print-wrapper">
+
+          <!-- A4 summary -->
+          <div *ngIf="printType === 'A4'" class="print-area a4-layout">
+          <div class="print-header fw-bold"style="font-size: 14px;">
+            <div class="row">
+              <div class="col-6 fs-4">LAZADA</div>
+              <div class="col-4">
+                วันที่จัดสินค้า {{ input.datet | date:'dd/MM/yyyy' }}
+              </div>
+              <div class="col-2 text-end">
+                รอบ : {{ input.period }}
+              </div>
+            </div>
+          </div>
+<br>
+          <table class="table">
+            <colgroup>
+              <col style="width:5%">
+              <col style="width:10%">
+              <col style="width:15%">
+              <col style="width:25%">
+              <col style="width:13%">
+              <col style="width:15%">
+              <!-- <col style="width:20%"> -->
+              <col style="width:5%">
+              <col style="width:7%">
+            </colgroup>
+
+            <thead class="table-dark text-center fw-bold">
+              <tr>
+                <th>#</th>
+                 <th>ORDER DATE</th>
+                <th>ORDER</th>
+                <th>BARCODE</th>
+                <th>SKU</th>
+                <th>SKU NAME</th>
+                <!-- <th>SKU BARCODE</th> -->
+                <th>QTY</th>
+                <th>NET PRICE</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <ng-container *ngFor="let order of groupedData; index as i">
+
+                <tr class="table-secondary fw-bold">
+                  <td class="text-center">{{ i + 1 }}</td>
+                  <td>{{ order.orderDate | date: 'dd/MM/yyyy'}}</td>
+                  <td>{{ order.orderNumber }}</td>
+                  <td>
+                    <ngx-barcode6
+                    [bc-format]="'CODE128'"
+                    [bc-value]="order.orderNumber"
+                    [bc-display-value]="false"
+                    [bc-width]="0.9"
+                    [bc-height]="25">
+                  </ngx-barcode6>
+                  </td>
+                  <td></td>
+                  <td></td>
+                  <!-- <td></td> -->
+                  <td class="text-center">{{ order.totalQty | number:'1.0-0'}}</td>
+                  <td class="text-center">{{ order.totalAmt | number:'1.2-2'}}</td>
+                </tr>
+
+                <tr *ngFor="let item of order.items">
+                  <td></td>
+                  <td></td>
+                  <td></td>
+                  <td><ngx-barcode6
+                    [bc-format]="'CODE128'"
+                    [bc-value]="item.ITEM_BARCODE"
+                    [bc-display-value]="false"
+                    [bc-width]="0.9"
+                    [bc-height]="25">
+                  </ngx-barcode6></td>
+                  <td>{{ item.ITEM }}</td>
+                  <td>{{ item.ITEM_NAME }}</td>
+                  <!-- <td><ngx-barcode6
+                    [bc-format]="'CODE128'"
+                    [bc-value]="item.ITEM_BARCODE"
+                    [bc-display-value]="false"
+                    [bc-width]="0.9"
+                    [bc-height]="25">
+                  </ngx-barcode6></td> -->
+                  <td class="text-center">{{ item.TOTAL_QTY | number:'1.0-0'}}</td>
+                  <td class="text-center">{{ item.TSRH_SKU_AMT | number:'1.2-2'}}</td>
+                </tr>
+
+              </ng-container>
+            </tbody>
+          </table>
+
+          <div class="summary-box" style="font-size: 14px;">
+
+            <div class="summary-row">
+              <span class="label">จำนวน Order :</span>
+              <span class="value"> {{ totalOrderCount | number:'1.0-0' }}</span>
+            </div>
+          
+            <div class="summary-row">
+              <span class="label">Total Net Price :</span>
+              <span class="value">
+                {{ grandTotalAmt | number:'1.2-2' }}
+              </span>
+            </div>
+          
+          </div>
+          
+          
+
+          </div>
+       
+          <!-- A5 -->
+          <ng-container *ngIf="printType === 'A5'">
+            <div *ngFor="let order of groupedData" class="print-area a5-layout">
+
+              <div class="print-header fw-bold" style="font-size: 14px;">
+                <div class="row">
+                  <div class="col-4 fs-4">{{order.CHANNEL}}</div>
+                  <div class="col-5 text-center">
+                    วันที่จัดสินค้า {{ order.Manht_process_date | date:'dd/MM/yyyy' }}
+                  </div>
+                  <div class="col-3 text-end">
+                    รอบ : {{ order.WORK_PERIOD }}
+                  </div>
+                </div>
+              </div>
+  <br>
+              <table class="table">
+                <colgroup>
+                  <col style="width:10%">
+                  <col style="width:15%">
+                  <!-- <col style="width:30%"> -->
+                  <col style="width:15%">
+                  <col style="width:17%">
+                  <col style="width:30%">
+                  <col style="width:5%">
+                  <col style="width:8%">
+                </colgroup>
+
+                <thead class="table-dark text-center fw-bold">
+                  <tr>
+                    <th>ORDER DATE</th>
+                    <th>ORDER</th>
+                    <th>SKU</th>
+                    <th>SKU NAME</th>
+                    <th>BARCODE</th>
+                    <th>QTY</th>
+                    <th>NET PRICE</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+
+                  <tr class="table-secondary fw-bold">
+                    <td class="text-center">{{ order.orderDate | date: 'dd/MM/yyyy'}}</td>
+                    <td>{{ order.orderNumber }}</td>
+                    <td></td>
+                    <td></td>
+                    <td>
+                      <ngx-barcode6
+                      [bc-format]="'CODE128'"
+                      [bc-value]="order.orderNumber"
+                      [bc-display-value]="false"
+                      [bc-width]="0.9"
+                      [bc-height]="20">
+                    </ngx-barcode6>
+                    </td>
+                    <td class="text-center">{{ order.totalQty | number:'1.0-0'}}</td>
+                    <td class="text-center">{{ order.totalAmt | number:'1.2-2'}}</td>
+                  </tr>
+
+                  <tr *ngFor="let item of order.items">
+                    <td></td>
+                    <td></td>
+                    <td>{{ item.ITEM }}</td>
+                    <td>{{ item.ITEM_NAME }}</td>
+                    <td><ngx-barcode6
+                      [bc-format]="'CODE128'"
+                      [bc-value]="item.ITEM_BARCODE"
+                      [bc-display-value]="false"
+                      [bc-width]="0.9"
+                      [bc-height]="20">
+                    </ngx-barcode6></td>
+                    <!-- <td><ngx-barcode6
+                      [bc-format]="'CODE128'"
+                      [bc-value]="item.ITEM_BARCODE"
+                      [bc-display-value]="false"
+                      [bc-width]="0.9"
+                      [bc-height]="20">
+                    </ngx-barcode6></td> -->
+                    <td class="text-center">{{ item.TOTAL_QTY | number:'1.0-0'}}</td>
+                    <td class="text-center">{{ item.TSRH_SKU_AMT | number:'1.2-2'}}</td>
+                  </tr>
+
+                </tbody>
+              </table>
+            
+                <div class="summary-box">
+
+                  <div class="summary-row">
+                    <span class="label">จำนวน Order :</span>
+                    <span class="value">1</span>
+                  </div>
+                
+                  <div class="summary-row">
+                    <span class="label">Total Net Price :</span>
+                    <span class="value">
+                      {{ order.totalAmt | number:'1.2-2' }}
+                    </span>
+                  </div>
+                
+                </div>
+                
+              
+
+            </div>
+          </ng-container>
+      
+          <!--A4 Invoice-->
+          <div *ngIf="printType === 'A4_Inv'" class="print-area a4-layout">
+            <div class="print-header fw-bold"style="font-size: 14px;">
+              <div class="row">
+                <div class="col-6 fs-4">LAZADA</div>
+                <div class="col-4">
+                  วันที่จัดสินค้า {{ input.datet | date:'dd/MM/yyyy' }}
+                </div>
+                <div class="col-2 text-end">
+                  รอบ : {{ input.period }}
+                </div>
+              </div>
+            </div>
+  <br>
+            <table class="table">
+              <colgroup>
+                <col style="width:5%">
+                <col style="width:10%">
+                <col style="width:20%">
+                <col style="width:15%">
+                <col style="width:20%">
+                <col style="width:20%">
+                <col style="width:10%">
+              </colgroup>
+
+              <thead class="table-dark text-center fw-bold">
+                <tr>
+                  <th>#</th>
+                  <th>ORDER_DATE</th>
+                  <th>ORDER</th>
+                  <th>NET PRICE</th>
+                  <th>INVOICE</th>
+                  <th>TRACKING NO</th>
+                  <th>STATUS</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                <ng-container *ngFor="let order of groupedData; index as i">
+
+                  <tr class="table-secondary fw-bold">
+                    <td class="text-center">{{ i + 1 }}</td>
+                     <td class="text-center">{{ order.orderDate |date:'dd/MM/yyyy'}}</td>
+                    <td>{{ order.orderNumber }}</td>
+                    <td class="text-center">{{ order.totalAmt | number:'1.2-2'}}</td>
+                    <td>{{ order.invNo}}</td>
+                    <td>{{ order.trackingNo}}</td>
+                    <td class="text-center">{{ order.RTSstatus}}</td>
+                  </tr>
+
+                </ng-container>
+              </tbody>
+            </table>
+
+            <div class="summary-box" style="font-size: 14px;">
+
+              <div class="summary-row">
+                <span class="label">จำนวน Order :</span>
+                <span class="value"> {{ totalOrderCount | number:'1.0-0' }}</span>
+              </div>
+            
+              <div class="summary-row">
+                <span class="label">Total Net Price :</span>
+                <span class="value">
+                  {{ grandTotalAmt | number:'1.2-2' }}
+                </span>
+              </div>
+            
+            </div>
+            
+            
+
+          </div>
+
+        </div>
+
+
+      </section>
+    </div>
+    
+    
+
+
+  </div>
+</body>

@@ -1,0 +1,264 @@
+<!-- ส่งค่ายัง Component อื่นๆ  -->
+
+<body class="hold-transition sidebar-mini layout-navbar">
+  <div class="wrapper">
+
+    <app-header id="page" [Pageactive]="pageactive"></app-header>
+    <app-menu id="page" [Pageactive]="pageactive"></app-menu>
+
+    <div class="content-wrapper " >
+      
+      <div class="row justify-content-md-center">
+        <div *ngIf="isLoading" class="loading-spinner">
+          <!-- You can style this div or add a spinner image/icon here -->
+          Loading... <i class="fas fa-3x fa-sync-alt fa-spin"></i>
+        </div>
+      </div>
+
+      <section [hidden]="isLoading" class="content">
+        <div class="container-fluid">
+
+          <section class="content">
+            <div class="row justify-content-center mt-2">
+              <div class="col-sm-2">
+                <div class="input-group input-group-sm">
+                  <div class="input-group-prepend">
+                    <span class="input-group-text">Order</span>
+                  </div>
+                  <input type="text" class="form-control form-control-sm"
+                        name="order" placeholder="Order No"
+                        [(ngModel)]="input.order" maxlength="50">
+                </div>
+              </div>
+
+              <div class="col-sm-2">
+                <div class="input-group input-group-sm">
+                  <div class="input-group-prepend">
+                    <span class="input-group-text">Company</span>
+                  </div>
+                  <input type="text" class="form-control form-control-sm"
+                        name="company" placeholder="Company"
+                        [(ngModel)]="input.company" maxlength="50">
+                </div>
+              </div>
+
+              <div class="col-sm-2">
+                <div class="input-group input-group-sm">
+                  <div class="input-group-prepend">
+                    <span class="input-group-text">Odate-F</span>
+                  </div>
+                  <input type="date" class="form-control form-control-sm"
+                        [(ngModel)]="input.dateFrom"
+                        (change)="updateMaxDate()">
+                </div>
+              </div>
+
+              <div class="col-sm-2">
+                <div class="input-group input-group-sm">
+                  <div class="input-group-prepend">
+                    <span class="input-group-text">Odate-T</span>
+                  </div>
+                  <input type="date" class="form-control form-control-sm"
+                        [(ngModel)]="input.dateTo"
+                        [attr.min]="input.dateFrom">
+                </div>
+              </div>
+
+              <div class="col-sm-2">
+                <div class="input-group input-group-sm">
+                  <div class="input-group-prepend">
+                    <span class="input-group-text">Pdate-F</span>
+                  </div>
+                  <input type="date" class="form-control form-control-sm"
+                        [(ngModel)]="input.PCdateFrom"
+                        (change)="updateMaxDate()">
+                </div>
+              </div>
+
+              <div class="col-sm-2">
+                <div class="input-group input-group-sm">
+                  <div class="input-group-prepend">
+                    <span class="input-group-text">Pdate-T</span>
+                  </div>
+                  <input type="date" class="form-control form-control-sm"
+                        [(ngModel)]="input.PCdateTo"
+                        [attr.min]="input.PCdateFrom">
+                </div>
+              </div>
+
+            </div>
+            <div class="row justify-content-center mt-2">
+              <div class="col-sm-2">
+                <button type="button"
+                        class="btn btn-info btn-sm w-100"
+                        (click)="getdata()">
+                  Search &nbsp;<i class="fas fa-search"></i>
+                </button>
+              </div>
+            </div>
+
+                    
+          </section>
+<br>
+
+          <div class="row">
+            <div class="col-md-12">
+              <div class="card ">
+                <div class="card-body table-responsive p-0">
+                  <table class="table table-bordered table-striped table-hover table-sm table-data-small">
+                    <colgroup>
+                      <col style="width: 12%">
+                      <col style="width: 12%">
+                      <col style="width: 6%">
+                      <col style="width: 10%">
+                      <col style="width: 8%">
+                      <col style="width: 8%">
+                      <col style="width: 10%">
+                      <col style="width: 8%">
+                      <col style="width: 8%">
+                      <col style="width: 8%">
+                      <col style="width: 8%">
+                    </colgroup>
+                    <thead class="thead-dark text-center">
+                      <tr>
+                        <th rowspan="2">Procress Date</th>
+                        <th rowspan="2">Order Date</th>
+                        <th rowspan="2">COMPANY</th>
+                        <th rowspan="2">Work Period</th>
+                        <th rowspan="2">ALL Order</th>
+                        <th colspan="2">Order รอนำเข้า Man</th>
+                        <th colspan="6">Order ค้าง</th>
+                        <th rowspan="2">ส่งสำเร็จ</th>
+                        <th rowspan="2">Cancel</th>
+                      </tr>
+                      <tr>
+                        <th>ไม่ติด Shortage</th>
+                        <th>ติด Shortage</th>
+                        <th>PLAN Manht</th>
+                        <th>Close Pick Manht</th>
+                        <th>Audit & Check</th>
+                        <th>RTS</th>
+                        <th>Outbound</th>
+                        <th>รอขนส่ง</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let data of data_list">
+                        <td class="text-center">{{ data.PROCESS_DATE | date: 'dd-MM-yyyy' }}</td>
+                        <td class="text-center">{{ data.ORDER_DATE | date: 'dd-MM-yyyy' }}</td>
+                        <td class="text-center">{{ data.COMPANY }}</td>
+                        <td class="text-center">{{ data.WORK_TYPE }}</td>
+                        <td class="text-center">{{ data.ORDER_ALL | number }}</td>
+                        <td class="text-center"
+                            [ngClass]="{'clickable': data.ORDER_WAIT_PROCESS_MANHT > 0}"
+                            (click)="data.ORDER_WAIT_PROCESS_MANHT > 0 && onCellClickDetail('ORDER_WAIT_PROCESS_MANHT', data)">
+                          {{ data.ORDER_WAIT_PROCESS_MANHT | number }}
+                        </td>
+                        <td class="text-center"
+                            [ngClass]="{'clickable': data.ORDER_WAIT_PROCESS_SHORT > 0}"
+                            (click)="data.ORDER_WAIT_PROCESS_SHORT > 0 && onCellClickDetail('ORDER_WAIT_PROCESS_SHORT', data)">
+                          {{ data.ORDER_WAIT_PROCESS_SHORT | number }}
+                        </td>
+                        <td class="text-center"
+                            [ngClass]="{'clickable': data.ORDER_WAIT_PLAN > 0}"
+                            (click)="data.ORDER_WAIT_PLAN > 0 && onCellClickDetail('ORDER_WAIT_PLAN', data)">
+                          {{ data.ORDER_WAIT_PLAN | number }}
+                        </td>
+                        <td class="text-center"
+                            [ngClass]="{'clickable': data.ORDER_WAIT_CLOSEPICK > 0}"
+                            (click)="data.ORDER_WAIT_CLOSEPICK > 0 && onCellClickDetail('ORDER_WAIT_CLOSEPICK', data)">
+                          {{ data.ORDER_WAIT_CLOSEPICK | number }}
+                        </td>
+                        <td class="text-center"
+                            [ngClass]="{'clickable': data.ORDER_WAIT_CHECK > 0}"
+                            (click)="data.ORDER_WAIT_CHECK > 0 && onCellClickDetail('ORDER_WAIT_CHECK', data)">
+                          {{ data.ORDER_WAIT_CHECK | number }}
+                        </td>
+                        <td class="text-center"
+                            [ngClass]="{'clickable': data.ORDER_WAIT_RTS > 0}"
+                            (click)="data.ORDER_WAIT_RTS > 0 && onCellClickDetail('ORDER_WAIT_RTS', data)">
+                          {{ data.ORDER_WAIT_RTS | number }}
+                        </td>
+                        <td class="text-center"
+                            [ngClass]="{'clickable': data.ORDER_WAIT_OB > 0}"
+                            (click)="data.ORDER_WAIT_OB > 0 && onCellClickDetail('ORDER_WAIT_OUTBOUND', data)">
+                          {{ data.ORDER_WAIT_OB | number }}
+                        </td>
+                        <td class="text-center"
+                            [ngClass]="{'clickable': data.ORDER_WAIT_COURIER > 0}"
+                            (click)="data.ORDER_WAIT_COURIER > 0 && onCellClickDetail('ORDER_WAIT_COURIER', data)">
+                          {{ data.ORDER_WAIT_COURIER | number }}
+                        </td>
+                        <td class="text-center"
+                            [ngClass]="{'clickable': data.ORDER_COURIER_RECEIVE > 0}"
+                            (click)="data.ORDER_COURIER_RECEIVE > 0 && onCellClickDetail('ORDER_COURIER_RECEIVE', data)">
+                          {{ data.ORDER_COURIER_RECEIVE | number }}
+                        </td>
+                        <td class="text-center"
+                            [ngClass]="{'clickable': data.ORDER_CANCEL > 0}"
+                            (click)="data.ORDER_CANCEL > 0 && onCellClickDetail('ORDER_CANCEL', data)">
+                          {{ data.ORDER_CANCEL | number }}
+                        </td>
+
+                      </tr>
+
+                      <tr *ngIf="data_list.length === 0">
+                        <td colspan="13" class="text-center text-muted">No data</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+
+          <!-- Modal สำหรับ selectedDetail -->
+          <div class="modal fade" id="detailModal" tabindex="-1" role="dialog" aria-labelledby="detailModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="detailModalLabel">Detail :
+                    <span class="text-primary">
+                      {{ filter.company }} / {{ filter.date | date: 'dd-MM-yyyy' }} / {{ filter.worktype }}
+                    </span>
+                  </h5>
+                  <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                  </button>
+                </div>
+                <div class="modal-body">
+                  <!-- scrollable table -->
+                  <div class="table-responsive" style="max-height:500px; overflow-y:auto;">
+                  <table class="table table-bordered table-striped table-sm custom-table">
+                    <thead>
+                      <tr>
+                        <th>No</th>
+                        <th *ngFor="let col of dynamicColumns">{{ col }}</th>
+                      </tr>
+                    </thead>
+
+                    <tbody>
+                      <tr *ngFor="let item of selectedDetail; let i = index">
+                        <td>{{ i + 1 }}</td>
+                        <td *ngFor="let col of dynamicColumns">{{ item[col] }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+    </div>
+    
+  </div>
+</body>
+

@@ -13,7 +13,7 @@
             <div class="col-sm-6">
               <a class="m-0">
                 <ol class="breadcrumb">
-                  <li class="breadcrumb-item">AWB</li>
+                  <!-- <li class="breadcrumb-item">AWB</li> -->
                 </ol>
               </a>
             </div>
@@ -23,6 +23,7 @@
 
                 <div class="card card-info">
                   <div class="card-header">
+                    <h1>Scan ใบ P</h1>
                   </div>
                   <div class="card-body">
                     <form >
@@ -65,6 +66,42 @@
                             </div>
                           </div>
                           
+                        </div>
+                        
+                      </div>
+                    </form>
+                  </div>
+                </div> 
+
+                <div class="card card-Warning">
+                  <div class="card-header">
+                    <h1>Scan เอกสารลูกค้า</h1>
+                  </div>
+                  <div class="card-body">
+                    <form >
+                      <div class="row">
+          
+                        <div class="col-12">
+                          <!-- <div class="form-group row" > -->
+                            <!-- <div class="col-6">
+                              <label for="PIN_CODE" class="form-label">PIN CODE</label>
+                              <input
+                                type="text"
+                                id="PIN_CODE"
+                                class="form-control"
+                                name="PIN_CODE"
+                                placeholder="SCAN เลข Order number"
+                                [(ngModel)]="input.PIN_CODE"
+                                (keyup.enter)="check_user();"
+                                minlength="3"
+                                maxlength="30"
+                                required
+                                #inputPin
+                              />
+                            </div> -->
+  
+                          <!-- </div> -->
+                          
           
                           <div class="form-group row">
                             <div class="col-6">
@@ -74,7 +111,7 @@
                                 id="ORDER_NO"
                                 class="form-control"
                                 name="ORDER_NO"
-                                placeholder="SCAN เลข Order number"
+                                placeholder="SCAN เลข Order number จากใบปะ"
                                 [(ngModel)]="input.shipment_id"
                                 (keyup.enter)="checkOrderRTS();"
                                 minlength="5"
@@ -91,7 +128,7 @@
                                 id="TRACK_CODE"
                                 class="form-control"
                                 name="TRACK_CODE"
-                                placeholder="SCAN เลข Tracking"
+                                placeholder="SCAN เลข Tracking จากใบปะ"
                                 [(ngModel)]="input.TRACK_CODE"
                                 (keyup.enter)="Check_RTS();"
                                 minlength="5"
@@ -107,7 +144,8 @@
                       </div>
                     </form>
                   </div>
-                </div>    
+                </div> 
+
                 <div class="card card-outline card-info">
                   <div class="card-header">
                     <h3 class="card-title">Detail</h3>
