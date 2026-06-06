@@ -515,6 +515,9 @@ tsuruha_process_job_TSRH_A5(){
 tsuruha_get_orderdetail(data:any){
   return this.http.post('http://10.26.1.21:1661/api/tsuruha_get_orderdetail',data)
 }
+tsuruha_get_orderdetail_invhistory(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/tsuruha_get_orderdetail_invhistory',data)
+}
 tsuruha_check_order(data:any){
   return this.http.post('http://10.26.1.21:1661/api/tsuruha_check_order',data)
 }
@@ -530,16 +533,13 @@ tsuruha_check_void(data:any){
 }
 tsuruha_update_void(data:any){
   return this.http.post('http://10.26.1.21:1661/api/tsuruha_update_void',data)
-}
+  }
 
 tsuruha_history_invoice(data:any){
   return this.http.post('http://10.26.1.21:1661/api/tsuruha_history_invoice',data)
 }
 tsuruha_get_history_invoice(data:any){
   return this.http.post('http://10.26.1.21:1661/api/tsuruha_get_history_invoice',data)
-}
-tsuruha_get_orderdetail_invhistory(data:any){
-  return this.http.post('http://10.26.1.21:1661/api/tsuruha_get_orderdetail_invhistory',data)
 }
 tsuruha_cancel_invoice(data:any){
   return this.http.post('http://10.26.1.21:1661/api/tsuruha_cancel_invoice',data)
@@ -645,12 +645,14 @@ updateCoverSheettrack(data:any){
 
 summary_ITEM_LACK_Track(data:any) {
   return this.http.post('http://10.26.1.21:1661/api/summary_ITEM_LACK_Track', data)
-   
 }
 
 Rescan_checkitem_Track(data:any){
   return this.http.post('http://10.26.1.21:1661/api/Rescan_checkitem_track',data)
+}
 
+Get_OrderCountConfirmMan_PICK_PAPER(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/Get_OrderCountConfirmMan_PICK_PAPER',data)
 }
 
 }

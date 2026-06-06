@@ -7,13 +7,12 @@ import { DataTableDirective } from 'angular-datatables';
 declare var $: any;
 
 interface PrintRow {
-  LAUNCH_NUM:     string;   // แทน CONTAINER_NO
-  REFERENCE_ID:   string;   // แทน SHIPMENT_ID
-  Total_QTY:      number;   // แทน QTY_PICK
-  TYPE_PICK:      string;   // แทน PRINT_TYPE
+  LAUNCH_NUM:     string;   
+  REFERENCE_ID:   string;   
+  Total_QTY:      number;   
+  TYPE_PICK:      string;   
   TYPE_PICK_DESC: string;
-  STATUS_PRINT:   string;   // แทน PRINT_STATUS
-  PROCRESS_DATE:  Date;
+  STATUS_PRINT:   string;   
   GETDATEDATE: Date;
 }
 
@@ -68,57 +67,81 @@ export class ReportPrintWaveOrderComponent implements OnInit {
     if (!this.input.waveno.trim()) return;
     this.isLoading = true;
 
-    this.dataService.Get_MANHT_PICK_PAPER(this.input).subscribe((res: any) => {
-      this.res       = res;
-      this.isLoading = false;
-
-      if (this.res.status === 'error') {
+     this.dataService.Get_OrderCountConfirmMan_PICK_PAPER(this.input).subscribe((res: any) => {
+        this.isLoading = false;
+      if (res.status === 'error') {
         Swal.fire({ icon: 'error', title: 'Error! can not get data',
                     showConfirmButton: false, timer: 2500 });
-
-      } else if (this.res.status === 'null') {
+        return;
+      }else if (res.status === 'null') {
         Swal.fire({ icon: 'warning', title: 'ไม่พบข้อมูล',
-                    showConfirmButton: false, timer: 2500 });
+                        showConfirmButton: false, timer: 2500 });
 
-          this.data_list = [];
-
+              this.data_list = [];
       } else {
-        this.data_list  = this.res.data as PrintRow[];
-        this.activeType = '';
-        //this.isSearched = true;
+        this.res       = res;
+        if(this.res && this.res.data[0] && this.res.data[0].order_count_confirm != this.res.data[0].order_count){
+          Swal.fire({ icon: 'warning', title: 'Processing', text: 'กำลัง Process Wave นี้อยู่ กรุณารอซักครู่...',
+                        showConfirmButton: false, timer: 2500 });
 
-        // สร้าง typeList จาก API
-        const fromData: TypeItem[] = [
-          ...new Map(
-            this.data_list.map((r: PrintRow) => [
-              r.TYPE_PICK,
-              {
-                key:        r.TYPE_PICK,
-                label:      r.TYPE_PICK_DESC
-              } as TypeItem
-            ])
-          ).values()
-        ];
-
-        console.log(fromData)
-        if(fromData[0].key != "SORTER"){
-          // เพิ่ม ORDER ไว้ลำดับแรก
-          this.typeList = [
-            {
-              key:        'Order',
-              label:      'เรียงลำดับ ORDER ทั้งหมด'
-            },
-            ...fromData
-          ];
+              this.data_list = [];
         }else{
-          this.typeList = [
-            ...fromData
-          ];
-        }
-        
+          this.isLoading = true;
+          this.dataService.Get_MANHT_PICK_PAPER(this.input).subscribe((res: any) => {
+            this.res       = res;
+            this.isLoading = false;
 
+            if (this.res.status === 'error') {
+              Swal.fire({ icon: 'error', title: 'Error! can not get data',
+                          showConfirmButton: false, timer: 2500 });
+
+            } else if (this.res.status === 'null') {
+              Swal.fire({ icon: 'warning', title: 'ไม่พบข้อมูล',
+                          showConfirmButton: false, timer: 2500 });
+
+                this.data_list = [];
+
+            } else {
+              this.data_list  = this.res.data as PrintRow[];
+              this.activeType = '';
+              //this.isSearched = true;
+
+              // สร้าง typeList จาก API
+              const fromData: TypeItem[] = [
+                ...new Map(
+                  this.data_list.map((r: PrintRow) => [
+                    r.TYPE_PICK,
+                    {
+                      key:        r.TYPE_PICK,
+                      label:      r.TYPE_PICK_DESC
+                    } as TypeItem
+                  ])
+                ).values()
+              ];
+
+              console.log(fromData)
+              if(fromData[0].key != "SORTER"){
+                // เพิ่ม ORDER ไว้ลำดับแรก
+                this.typeList = [
+                  {
+                    key:        'Order',
+                    label:      'เรียงลำดับ ORDER ทั้งหมด'
+                  },
+                  ...fromData
+                ];
+              }else{
+                this.typeList = [
+                  ...fromData
+                ];
+              }
+              
+
+            }
+          });
+        }
       }
-    });
+      });
+
   }
 
   // ── map SSRS report path ────────────────────────────────────

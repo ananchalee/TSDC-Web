@@ -12,7 +12,7 @@
             <a class="m-0">
               <ol class="breadcrumb">
                 <li class="breadcrumb-item">Audit&Check</li>
-                <li class="breadcrumb-item active" type="button" (click)="scanCon();">Check Order Tracking<i
+                <li class="breadcrumb-item active" type="button" (click)="scanCon();">Check Order Print Tracking<i
                     class="fas fa-shopping-cart nav-icon"></i></li>
               </ol>
             </a>
@@ -41,7 +41,7 @@
 
     <div class="container-fluid" [hidden]="!pagePrint">
       <div class="container-fluid barbar">
-        <div class="alert bg-maroon color-palette align-items-center" role="alert">
+        <div class="alert bg-warning color-palette align-items-center" role="alert">
           <strong>{{input.USER_NAME}} : </strong> {{input.WORKER_NAME}}
           {{input.WORKER_SURNAME}}
         </div>

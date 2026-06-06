@@ -729,7 +729,6 @@ ngOnDestroy(): void {
 
 
   scanCon() {
-    this.isLoading = false;
     this.view = true;
     this.scanConPage = false;
     this.scanItemPage = true;
@@ -747,6 +746,7 @@ ngOnDestroy(): void {
     this.pagePrintCoverSheet = true;
     this.pagePrintShear = true;
     this.pagePrintCancel = true;
+    this.isLoading = false;
     this.LOAD_USERTABLECHECK();
     setTimeout(() => { this.focusInput_item() }, 3000);
     setTimeout(() => { this.focusInput_con() }, 1000);
@@ -819,7 +819,7 @@ ngOnDestroy(): void {
   async WorkType(){
     
     var status_ = await this.checkorder_notclose();
-
+    this.isLoading = false;
     if(status_){
     this.alertcancel = false;
     this.ButtonprintCancel = false;

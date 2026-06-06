@@ -68,7 +68,7 @@
                         <div class="card-body py-2 px-3">
                           <div class="d-flex align-items-center justify-content-between">
                             <div>
-                              <div style="font-size:11px;opacity:0.75">{{ t.label }}</div>
+                              <div style="font-size:15px;opacity:0.75">{{ t.label }}</div>
                               <div style="font-size:22px;font-weight:500;line-height:1.2">
                                 {{ getTypeCount(t.key) }}
                               </div>
@@ -84,7 +84,7 @@
                 </div>
 
                 <!-- Type Tabs -->
-                <div class="d-flex align-items-center flex-wrap mb-3" style="gap:8px">
+                <!-- <div class="d-flex align-items-center flex-wrap mb-3" style="gap:8px">
                   <span class="text-muted mr-1" style="font-size:13px">
                     เลือกประเภทพิมพ์ :
                   </span>
@@ -99,7 +99,7 @@
                       {{ getTypeCount(t.key) }}
                     </span>
                   </button>
-                </div>
+                </div> -->
 
                 <!-- Info Bar -->
                 <div class="d-flex justify-content-between align-items-center mb-2">
@@ -140,7 +140,7 @@
                           style="position: sticky; top: 0; z-index: 1;">
                       <tr>
                         <th style="width:50px">No</th>
-                        <th>ORDER No</th>
+                        <th>Order No</th>
                         <th style="width:120px">Total QTY</th>
                         <th style="width:110px">สถานะ Print</th>
                         <th style="width:160px">ประเภท</th>
@@ -317,10 +317,10 @@
       <span class="cover-val">{{ activeLabel }}</span>
     </div>
 
-    <div class="cover-row">
+    <!-- <div class="cover-row">
       <span class="cover-lbl">วันที่ปล่อย Man</span>
       <span class="cover-val">{{ firstRow?.PROCRESS_DATE }}</span>
-    </div>
+    </div> -->
 
     <div class="cover-row">
       <span class="cover-lbl">วันที่พิมพ์</span>
