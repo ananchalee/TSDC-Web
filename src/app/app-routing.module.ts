@@ -24,6 +24,7 @@ import { TsuruhaOrderdetailComponent }from './layout/TSURUHA/tsuruha-orderdetail
 import {TsuruhaMapInvoiceComponent} from './layout/TSURUHA/tsuruha-mapping-invoice/tsuruha-mapping-invoice.component';
 import {ReportPackingListComponent} from './layout/reports/report-packinglist/report-packinglist.component';
 import {ReportPrintWaveOrderComponent} from './layout/reports/report-print-waveorder/report-print-waveorder.component';
+import {MonitorWaveOrdeComponent} from './layout/monitor-waveorde/monitor-waveorde.component';
 
 const routes: Routes = [
 
@@ -51,6 +52,7 @@ const routes: Routes = [
   { path:'tsuruha-mappinginvoice',component:TsuruhaMapInvoiceComponent},
   { path: 'report-packinglist',component:ReportPackingListComponent},
   { path: 'report-printWaveOrder',component:ReportPrintWaveOrderComponent},
+  { path: 'monitor-waveorde',component:MonitorWaveOrdeComponent},
   { path: '**', redirectTo: 'login' } ,
 
 ];

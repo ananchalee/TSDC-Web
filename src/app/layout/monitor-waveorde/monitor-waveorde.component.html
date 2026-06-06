@@ -1,0 +1,242 @@
+<body class="hold-transition sidebar-mini layout-navbar-fixed">
+  <div class="wrapper">
+
+    <app-header id="page" [Pageactive]="pageactive"></app-header>
+    <app-menu   id="page" [Pageactive]="pageactive"></app-menu>
+
+    <div class="content-wrapper">
+      <section class="content">
+        <div class="container-fluid">
+
+          <!-- ── Row 1 : Donut Chart Card ──────────────────────── -->
+          <div class="row">
+            <div class="col-12">
+              <div class="card card-warning">
+
+                <div class="card-header">
+                  <h4 class="card-title">
+                    <i class="fas fa-print mr-2"></i>Monitor Wave Order ค้างพิมพ์
+                    <i *ngIf="isLoading" class="fas fa-spinner fa-spin ml-2 text-white" style="font-size:14px;"></i>
+                  </h4>
+                  <div class="card-tools d-flex align-items-center">
+                    <span class="text-white small mr-3">
+                      <i class="fas fa-clock mr-1"></i>รีเฟรชใน {{ countdown | number:'1.0-0' }} วิ
+                    </span>
+                    <button class="btn btn-sm btn-outline-light mr-1" (click)="getdata()" [disabled]="isLoading">
+                      <i class="fas fa-sync-alt"></i>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-tool" data-card-widget="collapse">
+                      <i class="fas fa-minus"></i>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="card-body">
+                  <div class="row align-items-center">
+
+                    <!-- Donut Chart -->
+                    <div class="col-lg-4 text-center">
+                      <svg viewBox="0 0 200 200" width="200" height="200">
+                        <!-- Track -->
+                        <circle cx="100" cy="100" r="80"
+                                fill="none" stroke="#e9ecef" stroke-width="26"/>
+
+                        <!-- Unprinted segment (red) -->
+                        <circle *ngIf="totalOrders > 0"
+                                cx="100" cy="100" r="80"
+                                fill="none" stroke="#dc3545" stroke-width="26"
+                                [attr.stroke-dasharray]="unprintedArc + ' ' + circumference"
+                                stroke-dashoffset="0"
+                                transform="rotate(-90 100 100)"/>
+
+                        <!-- Printed segment (green) -->
+                        <circle *ngIf="totalOrders > 0"
+                                cx="100" cy="100" r="80"
+                                fill="none" stroke="#28a745" stroke-width="26"
+                                [attr.stroke-dasharray]="printedArc + ' ' + circumference"
+                                [attr.stroke-dashoffset]="printedOffset"
+                                transform="rotate(-90 100 100)"/>
+
+                        <!-- Center: มีข้อมูล -->
+                        <ng-container *ngIf="totalOrders > 0">
+                          <text x="100" y="90" text-anchor="middle"
+                                font-size="32" font-weight="bold" fill="#333">{{ totalOrders }}</text>
+                          <text x="100" y="112" text-anchor="middle"
+                                font-size="12" fill="#666">Orders รวม</text>
+                          <text x="100" y="130" text-anchor="middle"
+                                font-size="11" fill="#888">{{ printedPercent }}% พิมพ์แล้ว</text>
+                        </ng-container>
+
+                        <!-- Center: ไม่มีข้อมูล -->
+                        <ng-container *ngIf="totalOrders === 0">
+                          <text x="100" y="95" text-anchor="middle"
+                                font-size="14" fill="#aaa">No Data</text>
+                          <text x="100" y="115" text-anchor="middle"
+                                font-size="11" fill="#ccc">ไม่มี Wave ค้างพิมพ์</text>
+                        </ng-container>
+                      </svg>
+
+                      <!-- Legend -->
+                      <div class="mt-2">
+                        <span class="badge mr-2" style="background:#28a745; font-size:12px; padding:5px 10px;">
+                          <i class="fas fa-circle mr-1"></i>พิมพ์แล้ว
+                        </span>
+                        <span class="badge" style="background:#dc3545; font-size:12px; padding:5px 10px;">
+                          <i class="fas fa-circle mr-1"></i>ยังไม่พิมพ์
+                        </span>
+                      </div>
+                    </div>
+
+                    <!-- Stats -->
+                    <div class="col-lg-8">
+                      <div class="row">
+
+                        <!-- 1. Wave ค้างพิมพ์ → แดง (อันแรก) -->
+                        <div class="col-sm-6 col-6">
+                          <div class="small-box bg-danger">
+                            <div class="inner">
+                              <h3>{{ totalWaves }}</h3>
+                              <p>Wave ค้างพิมพ์</p>
+                            </div>
+                            <div class="icon"><i class="fas fa-layer-group"></i></div>
+                            <a class="small-box-footer">รายการทั้งหมด</a>
+                          </div>
+                        </div>
+
+                        <!-- 2. Order ยังไม่พิมพ์ → ส้ม -->
+                        <div class="col-sm-6 col-6">
+                          <div class="small-box bg-orange">
+                            <div class="inner">
+                              <h3>{{ totalUnprinted | number }}</h3>
+                              <p>Order ยังไม่พิมพ์</p>
+                            </div>
+                            <div class="icon"><i class="fas fa-clock"></i></div>
+                            <a class="small-box-footer">{{ 100 - printedPercent }}% ของทั้งหมด</a>
+                          </div>
+                        </div>
+
+                        <!-- 3. Order พิมพ์แล้ว → เขียว -->
+                        <div class="col-sm-6 col-6">
+                          <div class="small-box bg-success">
+                            <div class="inner">
+                              <h3>{{ totalPrinted | number }}</h3>
+                              <p>Order พิมพ์แล้ว</p>
+                            </div>
+                            <div class="icon"><i class="fas fa-check-circle"></i></div>
+                            <a class="small-box-footer">{{ printedPercent }}% ของทั้งหมด</a>
+                          </div>
+                        </div>
+
+                        <!-- 4. Qty รวม → น้ำเงิน -->
+                        <div class="col-sm-6 col-6">
+                          <div class="small-box bg-info">
+                            <div class="inner">
+                              <h3>{{ totalQty | number }}</h3>
+                              <p>Qty รวมทั้งหมด</p>
+                            </div>
+                            <div class="icon"><i class="fas fa-cubes"></i></div>
+                            <a class="small-box-footer">จำนวนชิ้นรวม</a>
+                          </div>
+                        </div>
+
+                      </div>
+                    </div>
+
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+          <!-- ── Row 2 : Table ─────────────────────────────────── -->
+          <div class="row">
+            <div class="col-12">
+              <div class="card">
+
+                <div class="card-header">
+                  <h4 class="card-title">
+                    <i class="fas fa-list mr-2"></i>รายการ Wave
+                  </h4>
+                  <div class="card-tools">
+                    <button type="button" class="btn btn-sm btn-tool" data-card-widget="collapse">
+                      <i class="fas fa-minus"></i>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="card-body p-0">
+                  <div class="table-responsive">
+                    <table class="table table-bordered table-hover mb-0">
+                      <thead class="thead-dark">
+                        <tr class="text-center">
+                          <th style="width:50px">#</th>
+                          <th>Wave No</th>
+                          <th>Order ทั้งหมด</th>
+                          <th>ยังไม่พิมพ์</th>
+                          <th>พิมพ์แล้ว</th>
+                          <th>จำนวน Qty</th>
+                          <th style="width:170px">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+
+                        <!-- No data -->
+                        <tr *ngIf="data_list.length === 0 && !isLoading">
+                          <td colspan="7" class="text-center text-muted py-4">
+                            <i class="fas fa-inbox mr-2" style="font-size:1.4rem"></i>
+                            No Data — ไม่มี Wave ค้างพิมพ์
+                          </td>
+                        </tr>
+
+                        <!-- Loading -->
+                        <tr *ngIf="isLoading">
+                          <td colspan="7" class="text-center text-muted py-3">
+                            <i class="fas fa-spinner fa-spin mr-2"></i>กำลังโหลด...
+                          </td>
+                        </tr>
+
+                        <!-- Data rows -->
+                        <tr *ngFor="let row of data_list; let i = index">
+                          <td class="text-center">{{ i + 1 }}</td>
+                          <td class="text-center font-weight-bold">{{ row.LAUNCH_NUM }}</td>
+                          <td class="text-center">{{ row.ORDER_COUNT | number }}</td>
+                          <td class="text-center">
+                            <span class="badge badge-warning" style="font-size:13px; padding:4px 8px;">
+                              {{ row.UNPRINT_COUNT | number }}
+                            </span>
+                          </td>
+                          <td class="text-center">
+                            <span class="badge badge-success" style="font-size:13px; padding:4px 8px;">
+                              {{ row.PRINTED_COUNT | number }}
+                            </span>
+                          </td>
+                          <td class="text-center">{{ row.TOTAL_QTY | number }}</td>
+                          <td class="text-center">
+                            <button class="btn btn-danger btn-xs mr-1"
+                                    (click)="cancelPrint(row)"
+                                    title="ยกเลิกพิมพ์">
+                              <i class="fas fa-times"></i> ยกเลิก
+                            </button>
+                            <button class="btn btn-success btn-xs"
+                                    (click)="goToPrint(row)"
+                                    title="ไปพิมพ์">
+                              <i class="fas fa-print"></i> พิมพ์
+                            </button>
+                          </td>
+                        </tr>
+
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+    </div>
+  </div>
+</body>

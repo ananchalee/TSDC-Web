@@ -655,6 +655,15 @@ Get_OrderCountConfirmMan_PICK_PAPER(data:any){
   return this.http.post('http://10.26.1.21:1661/api/Get_OrderCountConfirmMan_PICK_PAPER',data)
 }
 
+//////// monitor wave order
+Get_PendingPrint_WaveOrderList(){
+  return this.http.get('http://10.26.1.21:1661/api/Get_PendingPrint_WaveOrderList')
+}
+
+Cancel_PendingPrint_WaveOrder(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/Cancel_PendingPrint_WaveOrder',data)
+}
+
 }
 
 

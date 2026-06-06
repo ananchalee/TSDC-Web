@@ -4,6 +4,7 @@ import { DataService } from '../../../services/index';
 import { Subscription } from 'rxjs';
 import Swal from 'sweetalert2';
 import { DataTableDirective } from 'angular-datatables';
+import { ActivatedRoute, Router } from '@angular/router';
 declare var $: any;
 
 interface PrintRow {
@@ -54,12 +55,30 @@ export class ReportPrintWaveOrderComponent implements OnInit {
   typeList:    TypeItem[] = [];
   itemLocationList: ItemLocationRow[] = [];
 
-  constructor(private dataService: DataService) {}
+  fromMonitor = false;
+
+  constructor(
+    private dataService: DataService,
+    private route: ActivatedRoute,
+    private router: Router
+  ) {}
 
   ngOnInit(): void {
     const page: any[] = [];
     page.push({ pagename: 'Report Print Wave Order', active: 'Reports' });
     this.pageactive = page;
+
+    this.route.queryParams.subscribe(params => {
+      if (params['waveno']) {
+        this.input.waveno = params['waveno'];
+        this.fromMonitor = true;
+        this.getdata();
+      }
+    });
+  }
+
+  goBackToMonitor(): void {
+    this.router.navigate(['/monitor-waveorde']);
   }
 
   // ── ค้นหา ──────────────────────────────────────────────────

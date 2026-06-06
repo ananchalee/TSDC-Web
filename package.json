@@ -3,8 +3,10 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve",
-    "build": "ng build",
+    "start": "set NODE_OPTIONS=--openssl-legacy-provider && ng serve",
+    "build": "set NODE_OPTIONS=--openssl-legacy-provider && ng build",
+    "build:tsdc": "set NODE_OPTIONS=--openssl-legacy-provider && ng build --prod --deploy-url /TSDC/ --base-href /TSDC/",
+    "build:beta": "set NODE_OPTIONS=--openssl-legacy-provider && ng build --prod --deploy-url /beta/ --base-href /beta/",
     "test": "ng test",
     "lint": "ng lint",
     "e2e": "ng e2e"

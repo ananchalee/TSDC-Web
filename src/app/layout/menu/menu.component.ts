@@ -123,7 +123,9 @@ export class MenuComponent implements OnInit {
               break;
             case 'Moniter-InterfaceError' : this.page.monit_InterfaceError = true;
               break;
-              case 'Moniter-TrackOrderInternal' : this.page.monit_TrackorderInternal = true;
+            case 'Moniter-TrackOrderInternal' : this.page.monit_TrackorderInternal = true;
+              break;
+            case 'Monitor-WaveOrder' : this.page.monitor_waveorde = true;
               break;
           }
           break; 
@@ -207,6 +209,9 @@ export class MenuComponent implements OnInit {
         break
       case 'tsuruha_MappingInvoice':
         this.router.navigate(["/tsuruha-mappinginvoice"])
+        break
+      case 'monitor_waveorde':
+        this.router.navigate(["/monitor-waveorde"])
         break
     }
   }
