@@ -12,7 +12,7 @@
             <a class="m-0">
               <ol class="breadcrumb">
                 <li class="breadcrumb-item">Audit&Check</li>
-                <li class="breadcrumb-item active" type="button" (click)="scanCon();">Check Order <i
+                <li class="breadcrumb-item active" type="button" (click)="scanCon();">Check Order Tracking<i
                     class="fas fa-shopping-cart nav-icon"></i></li>
               </ol>
             </a>
@@ -41,7 +41,7 @@
 
     <div class="container-fluid" [hidden]="!pagePrint">
       <div class="container-fluid barbar">
-        <div class="alert bg-lightblue color-palette align-items-center" role="alert">
+        <div class="alert bg-maroon color-palette align-items-center" role="alert">
           <strong>{{input.USER_NAME}} : </strong> {{input.WORKER_NAME}}
           {{input.WORKER_SURNAME}}
         </div>
@@ -165,7 +165,7 @@
                     <div class="col-md-3">
                       <div class="card">
                         <div class="card-header">
-                          <strong>รายระเอียด Order </strong>
+                          <strong>รายละเอียด Order </strong>
                           <br>
                           <span style="font-size:13px" type="button" class="badge badge-pill badge-success" 
                           (click)="Excel()">
@@ -173,7 +173,7 @@
                           </span> 
                           <span [hidden]='!ButtonprintCancel' style="color: #ccc; padding: 0 10px;">|</span>
                           <span [hidden]='!ButtonprintCancel' style="font-size:13px" type="button" class="badge badge-pill badge-warning" 
-                          (click)="selectZone()">
+                          (click)="printcancel()">
                             &emsp; Print Cancel &emsp;    
                           </span> 
                        
@@ -204,17 +204,18 @@
                             <div class="col-md-6">{{input.SHIPPING_NAME}}</div>
                           </div>
 
-                          <div class="row">
+                          <!-- <div class="row">
                             <p style="color:rgb(18, 132, 193)"><b> จำนวนกล่อง : </b> </p>
                             <div class="col-md-7">{{input.MaxBox_NO}} 
-                              <span type="button" class="badge badge-pill badge-warning" (click)="ReprintTrackingALL()">
-                                Print All</span> </div>
-                          </div>
+                               <span type="button" class="badge badge-pill badge-warning" (click)="ReprintTrackingALL()">
+                                Print All</span> 
+                              </div> 
+                          </div> -->
 
                           <div class="row" *ngFor="let data of trackall; let i = index">
                             <p style="color:rgb(18, 132, 193)"><b> Track {{i+1}}: </b> </p>
                             <div class="col-md-7">
-                              {{data.REF_INDEX}} 
+                              {{data.REF_INDEX}} / {{data.TRACKING}}
                               <span type="button" class="badge badge-pill badge-primary" (click)="ReprintTracking(i)">
                                 Print {{i+1}}</span>
                                 <br> ({{data.QTY}} ชิ้น) 
@@ -248,6 +249,7 @@
                                 <th>หน่วย</th>
                                 <th style="width: 10px">TOTAL </th>
                                 <th style="width: 10px">CHECK</th>
+                                <th style="width: 10px">TRACK</th>
                                 <th style="width: 10px">STATUS</th>
                               </tr>
                             </thead>
@@ -264,6 +266,9 @@
                                 <td class="text-center">{{data.QTY_PICK}}</td>
                                 <td class="text-center" [ngClass]="{'text_red':data.QTY_CHECK !=data.QTY_PICK}">
                                   {{data.QTY_CHECK}}
+                                </td>
+                                <td class="text-center" >
+                                  {{data.TRACKING}}
                                 </td>
                                 <td class="text-center" >
                                   {{data.ITME_CANCEL}}
@@ -350,6 +355,101 @@
             </div>
           </div>
         </form>
+
+        <form [hidden]='selecttrackPage'>
+          <div class="row">
+            <div class="col-md-12">
+              <div class="card">
+                <!-- /.card-header -->
+                <div class="card-body">
+
+                  <div [hidden]='!alertcancel' class="alert alert-danger color-palette align-items-center" role="alert">
+                   <h5><i class="icon fas fa-ban"> </i> ORDER CANCEL !</h5>
+                  </div>
+
+                  <div class="text-center">
+                    <h1 style="font-size:600%;" class="col-md-12"><b>
+                       {{input.shipment_id}} </b></h1>
+                  </div>
+
+                  <div class="row justify-content-between ">
+                    <div class="col-4">
+                      
+                        <a class="btn btn-app bg-danger" (click)="scanCon();"  >
+                          <i class="fas fa-shopping-cart"></i> Scan Order ใหม่
+                        </a>
+                    </div>
+
+                  </div>
+
+                  <div class="d-flex justify-content-center align-items-center">
+                    <div class="col-md-8">
+                      <div class="card">
+                        <div class="card-header">
+                          <strong>เลือก TRACKING</strong>
+                        </div>
+                        <div class="card-body">
+                          <div *ngFor="let tracking of distinctTrackingList" class="form-check mb-2">
+                            <input
+                              type="radio"
+                              class="form-check-input"
+                              name="trackingRadio"
+                              [value]="tracking.id"
+                              [(ngModel)]="input.TRACKING"
+                              
+                              [id]="'radio-' + tracking.id"
+                            />
+                            <label 
+                              class="form-check-label" 
+                              [for]="'radio-' + tracking.id"
+                              [ngClass]="{'text-success': tracking.status_closebox === 'Y'}"
+                              style="font-size: 1.25rem; font-weight: 500;"
+                            >
+                              {{ tracking.name }} {{tracking.status_closebox_des}}
+                            </label>
+                            <div>
+                              <small>
+                                
+                                <div [ngClass]="{'text_red': tracking.sumQTY_CHECK !=
+                                tracking.sumQTY_PICK}">
+                                จำนวนชิ้น: {{tracking.sumQTY_CHECK}}/{{tracking.sumQTY_PICK}} </div>
+                              </small>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="card-footer text-muted">
+                          <div class="text-center mt-3">
+
+                            <div class="mt-3" *ngIf="input.TRACKING">
+                              
+                            <span >
+                              คุณเลือก: <strong>{{ input.TRACKING || 'รอ tracking' }}</strong>
+                              
+                            </span> <br>
+
+                              <button class="btn btn-primary" (click)="startWork()">
+                                เริ่มงาน
+                              </button>
+                            </div>
+
+                          
+                          </div>
+                          
+                          <span *ngIf="!input.TRACKING">กรุณาเลือก Tracking</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  
+
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </form>
+
       </div>
 
       <!-- /.card-body -->
@@ -501,22 +601,6 @@
             </ngx-barcode6>
           </div>
         </div>
-
-        <div class="row ">
-
-          <div class="col-3">
-            <font size="4">
-              BILL_NO_REF :
-            </font>
-          </div>
-          <div class="col-2">
-            <font size="4"><b>
-                {{list.BILL_NO_REF}}</b>
-            </font>
-          </div>
-
-      </div>
-      
   
       </div>
     </div>
@@ -966,37 +1050,7 @@
             <font size="4"><b> {{ list.ORDER_DATE }}</b></font>
           </div>
         </div>
-
-        <div class="row">
-          <div class="col-3">
-            <font size="4">
-              Zone:
-            </font>
-          </div>
-          <div class="col-2">
-            <font size="4"><b>{{ list.Zone }}</b></font>
-          </div>
     
-          <div class="col-3">
-            <font size="4">
-              Table:
-            </font>
-          </div>
-          <div>
-            <font size="4"><b> {{ list.Table }}</b></font>
-          </div>
-        </div>
-        <div class="row mt-1">
-          <div class="col-4"></div>
-          <div class="col-8 text-left">
-            <font size="4">
-              Print Date :
-              <b>
-                {{ list.PRINT_DATE | date:'dd/MM/yyyy HH:mm' }}
-              </b>
-            </font>
-          </div>
-        </div>
         <div class="row">
           <div class="col-5"></div>
           <div class="col-7">
@@ -1011,63 +1065,13 @@
         <div class="row">
           <div class="col-4"></div>
           <div class="col-8">
-            <font size="8"><span>CANCEL</span></font>
+            <font size="9"><span>CANCEL</span></font>
           </div>
           </div>
     
       </div>
     </div>
     
-    <div #myModalZonePrint class="modal fade" id="myModalZonePrint" role="dialog">
-      <div class="modal-dialog modal-md"> <br> <br> <br> <br> <br> <br>
-        <div class="modal-content">
-          <div class="modal-header">
-            &emsp; <h5 class="modal-title" style="color:rgb(8, 83, 110)"><i class="fa fa-box"></i>
-              &emsp; <b> Zone</b> </h5>
-          </div>
-          <div class="card-body">
-
-            <form>
-              
-              <div class="row justify-content-md-center">
-                <div class="col-md-6">
-                  <label><b>Select Zone</b></label>
-              
-                  <ng-select
-                  [items]="zones"
-                  [(ngModel)]="input.Zone"
-                  name="zone"
-                  [searchable]="true"
-                  [clearable]="false"
-                  (change)="onZoneSelected()">
-                </ng-select>
-
-                <div class="row justify-content-md-center mt-3">
-                  <div class="col-md-6 text-center">
-                
-                    <button
-                      #okBtn
-                      type="button"
-                      class="btn btn-primary"
-                      (click)="printcancel()"
-                      [disabled]="!input.Zone">
-                      OK
-                    </button>
-                
-                  </div>
-                </div>
-                
-              
-                </div>
-              </div>
-              
-              
-
-            </form>
-          </div>
-        </div>
-      </div>
-    </div>
 
   </div>
 

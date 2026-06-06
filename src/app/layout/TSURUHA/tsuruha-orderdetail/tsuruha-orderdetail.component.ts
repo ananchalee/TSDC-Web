@@ -4,7 +4,6 @@ import { Subscription,Subject } from 'rxjs';
 import Swal from 'sweetalert2';
 import { DataTableDirective } from 'angular-datatables';
 import { Router, ActivatedRoute } from '@angular/router';
-import { last } from 'rxjs/operators';
 declare var flatpickr: any;
 declare var XLSX: any;
 
@@ -254,7 +253,29 @@ export class TsuruhaOrderdetailComponent implements OnInit {
       });
   }
 
-  
+  formatDate(date: any){
+    const d = new Date(date);
+
+    if (isNaN(d.getTime())) return ''; 
+
+    const pad = (n: number) => n.toString().padStart(2, '0');
+
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  };
+
+
+  formatDateTime(date: Date){
+    const d = new Date(date);
+
+    if (isNaN(d.getTime())) return '';
+
+    const pad = (n: number) => n.toString().padStart(2, '0');
+
+    return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())} `
+          + `${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:${pad(d.getUTCSeconds())}`;
+  };
+ 
+
   getlastprocess(){
     this.dataService.tsuruha_get_lastprocess().subscribe(res => {
             this.res = res;
@@ -265,7 +286,6 @@ export class TsuruhaOrderdetailComponent implements OnInit {
             this.input.period = this.res.data[0].WORK_PERIOD;
             this.input.datef = this.formatDate(new Date(this.res.data[0].MANHT_PROCESS_DATE));
             this.input.datet = this.formatDate(new Date(this.res.data[0].MANHT_PROCESS_DATE));
-
             this.getdata();
           })
   }
@@ -285,11 +305,11 @@ export class TsuruhaOrderdetailComponent implements OnInit {
               .then((result) => {
                 if (result.value) {
                   
-                this.isLoading = true;
+                  this.isLoading = true;
                   this.dataService.tsuruha_process_job_TSRH_A5().subscribe(res => {
                       this.res = res;
                        if (this.res.status === 'error') {
-                          this.isLoading = false;
+                        this.isLoading = false;
                         console.log(this.res)
                         Swal.fire({
                           icon: 'error',
@@ -315,35 +335,9 @@ export class TsuruhaOrderdetailComponent implements OnInit {
 
   }
 
- formatDate(date: any) {
-      const d = new Date(date);
-
-      if (isNaN(d.getTime())) return ''; 
-
-      const pad = (n: number) => n.toString().padStart(2, '0');
-
-      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-    };
-
-
-formatDateTime(date: Date) {
-      const d = new Date(date);
-
-      if (isNaN(d.getTime())) return '';
-
-      const pad = (n: number) => n.toString().padStart(2, '0');
-
-      return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())} `
-            + `${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:${pad(d.getUTCSeconds())}`;
-    };
-
   exportExcel() {
     
     if (this.groupedData.length === 0) return;
-
-    
-   
-
     //#region  sheet 1
 
     const wb = XLSX.utils.book_new();

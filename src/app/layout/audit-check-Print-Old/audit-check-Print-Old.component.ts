@@ -1953,7 +1953,7 @@ coverSheet2() { //// ใบปะกล่อง
 
   getLineWidth(value: string): number {
     if (value.length <= 13) return 2.3;
-    else return 2.4;
+    else return 2;
   }
   
 

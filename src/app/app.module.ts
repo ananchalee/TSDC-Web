@@ -18,6 +18,7 @@ import { HttpClientModule } from '@angular/common/http';
 import { FormsModule,ReactiveFormsModule } from '@angular/forms';
 import { DashboardComponent } from './layout/dashboard/dashboard.component';
 import { AuditCheckComponent } from './layout/audit-check/audit-check.component';
+import { AuditCheckTrackingComponent } from './layout/audit-check-tracking/audit-check-tracking.component';
 import { EditBoxComponent } from './layout/edit-box/edit-box.component';
 import { AuditCheckPrintOldComponent } from './layout/audit-check-Print-Old/audit-check-Print-Old.component';
 import { AuditCheckPrintOldFullComponent } from './layout/audit-check-Print-Old-fullcarton/audit-check-Print-Old-fullcarton.component';
@@ -42,6 +43,7 @@ import {TsuruhaMapInvoiceComponent} from './layout/TSURUHA/tsuruha-mapping-invoi
 import {ReportPackingListComponent} from './layout/reports/report-packinglist/report-packinglist.component';
 import {ReportPrintWaveOrderComponent} from './layout/reports/report-print-waveorder/report-print-waveorder.component';
 
+
 @NgModule({
   declarations: [
     AppComponent,
@@ -51,6 +53,7 @@ import {ReportPrintWaveOrderComponent} from './layout/reports/report-print-waveo
  
     DashboardComponent,
     AuditCheckComponent,
+    AuditCheckTrackingComponent,
     EditBoxComponent,
     AuditCheckFullcartonComponent,
     AuditCheckPrintOldComponent,

@@ -62,6 +62,8 @@ export class MenuComponent implements OnInit {
           switch (this.Pageactive[0].pagename){
             case 'Check Order' : this.page.audit_CheckOrder = true;
               break;
+            case 'Check Order Print Track': this.page.audit_CheckOrderTrack = true;
+              break;
             case 'Check fullcarton' : this.page.audit_fullcarton = true;
               break;
           }
@@ -149,6 +151,9 @@ export class MenuComponent implements OnInit {
       case 'checkorder':
           this.router.navigate(["/audit-check"]);
         break;
+      case 'checkordertrack':
+          this.router.navigate(["/audit-check-tracking"]);
+      break;
       case 'checkfullcarton':
           this.router.navigate(["/audit-check-fullcarton"]);
         break;
@@ -186,8 +191,8 @@ export class MenuComponent implements OnInit {
         this.router.navigate(["/report-printordercancel"]);
         break;
       case 'report_packinglist':
-        this.router.navigate(["/report-packinglist"]);
-        break;
+          this.router.navigate(["/report-packinglist"]);
+      break;
       case 'monit_statusRTS':
         this.router.navigate(["/monit-statusRTS"]);
         break;

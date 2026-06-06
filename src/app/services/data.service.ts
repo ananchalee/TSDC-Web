@@ -6,6 +6,7 @@ import { Injectable, ErrorHandler } from '@angular/core';
 import { HttpClient,HttpHeaders,HttpErrorResponse } from '@angular/common/http';
 //import { errorHandler } from '@angular/platform-browser/src/browser';
 //import { error } from 'util';
+import { HttpParams } from '@angular/common/http';
 
 
 @Injectable()
@@ -511,12 +512,8 @@ tsuruha_get_lastprocess(){
 tsuruha_process_job_TSRH_A5(){
   return this.http.get('http://10.26.1.21:1661/api/tsuruha_process_job_TSRH_A5')
 }
-
 tsuruha_get_orderdetail(data:any){
   return this.http.post('http://10.26.1.21:1661/api/tsuruha_get_orderdetail',data)
-}
-tsuruha_get_orderdetail_invhistory(data:any){
-  return this.http.post('http://10.26.1.21:1661/api/tsuruha_get_orderdetail_invhistory',data)
 }
 tsuruha_check_order(data:any){
   return this.http.post('http://10.26.1.21:1661/api/tsuruha_check_order',data)
@@ -534,11 +531,15 @@ tsuruha_check_void(data:any){
 tsuruha_update_void(data:any){
   return this.http.post('http://10.26.1.21:1661/api/tsuruha_update_void',data)
 }
+
 tsuruha_history_invoice(data:any){
   return this.http.post('http://10.26.1.21:1661/api/tsuruha_history_invoice',data)
 }
 tsuruha_get_history_invoice(data:any){
   return this.http.post('http://10.26.1.21:1661/api/tsuruha_get_history_invoice',data)
+}
+tsuruha_get_orderdetail_invhistory(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/tsuruha_get_orderdetail_invhistory',data)
 }
 tsuruha_cancel_invoice(data:any){
   return this.http.post('http://10.26.1.21:1661/api/tsuruha_cancel_invoice',data)
@@ -566,6 +567,90 @@ Get_ITEM_LOCATION_MANHT_PICK_PAPER(data:any){
 }
 Update_MANHT_PICK_PAPER(data:any){
   return this.http.post('http://10.26.1.21:1661/api/Update_MANHT_PICK_PAPER',data)
+}
+
+////// DownloadFile
+DownloadFileFromNetwork(data: { networkKey: string, path: string }) {
+  const params = new HttpParams()
+    .set('networkKey', data.networkKey)
+    .set('path', encodeURIComponent(data.path)); // encode path เพื่อความปลอดภัย
+
+  return this.http.get('http://10.26.1.21:1661/api/downloadfile_NetworkPath', {
+    params,
+    responseType: 'blob'
+  }).pipe(
+    catchError(err => {
+      console.error('Download error:', err);
+      return throwError(() => err);
+    })
+  );
+}
+checkpathfile_labeltrack(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/checkpathfile_labeltrack',data)
+}
+
+//////////// check tracking
+check_order_notclose(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/check_order_notclose',data)
+}
+
+CheckWork_track(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/CheckWorktrack',data)
+   
+}
+
+CheckConOnline_track(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/CheckConOnlinetrack',data)
+}
+
+
+summaryContrack(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/summaryContrack',data)
+
+}
+matchItemInContrack(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/matchItemInContrack',data)
+}
+
+checktracking_Inshipment(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/checktracking_Inshipment',data)
+}
+
+
+checkEqualContrack(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/checkEqualContrack',data)
+    
+}
+
+// trackBOX_CONTROL_DETAIL(data:any){
+//   return this.http.post('http://10.26.1.21:1661/api/trackBOX_CONTROL_DETAIL)',data)
+// }
+
+updateConQtyChecktrack(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/updateConQtyChecktrack',data)
+}
+
+UpdateChecktrackdate(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/UpdateChecktrackdate',data)
+
+}
+
+checkpathfile_labeltracking(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/checkpathfile_labeltracking',data)
+}
+
+updateCoverSheettrack(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/updateCoverSheettrack',data)
+}
+
+summary_ITEM_LACK_Track(data:any) {
+  return this.http.post('http://10.26.1.21:1661/api/summary_ITEM_LACK_Track', data)
+   
+}
+
+Rescan_checkitem_Track(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/Rescan_checkitem_track',data)
+
 }
 
 }

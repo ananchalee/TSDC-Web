@@ -116,6 +116,12 @@
                   <p>Check Order</p>
                 </a>
               </li>
+              <li class="nav-item" (click)="Onclick_menu('checkordertrack')" >
+                <a class="nav-link" [ngClass]='{active:page.audit_CheckOrderTrack}' >
+                  <i class="fas fa-archive nav-icon"></i>
+                  <p>Check Order Print Track</p>
+                </a>
+              </li>
               <li class="nav-item" (click)="Onclick_menu('checkfullcarton')" >
                 <a class="nav-link" [ngClass]='{active:page.audit_fullcarton}' >
                   <i class="fas fa-archive nav-icon"></i>
@@ -213,22 +219,21 @@
                 <i class="fas fa-angle-left right"></i>
               </p>
             </a>
-
             <ul class="nav nav-treeview">
-              <li class="nav-item"  (click)="Onclick_menu('report_packinglist') ">
-                <a class="nav-link"  [ngClass]='{active:page.report_packinglist}'>
+              <li class="nav-item"  (click)="Onclick_menu('report_printordercancel') ">
+                <a class="nav-link"  [ngClass]='{active:page.report_printordercancel}'>
                   <i class="nav-icon fas fa-file-contract"></i>
-                  <p>Report Packing List</p>
+                  <p>Report Print OrderCancel</p>
                 </a>
               </li>
               
             </ul>
 
             <ul class="nav nav-treeview">
-              <li class="nav-item"  (click)="Onclick_menu('report_printordercancel') ">
-                <a class="nav-link"  [ngClass]='{active:page.report_printordercancel}'>
+              <li class="nav-item"  (click)="Onclick_menu('report_packinglist') ">
+                <a class="nav-link"  [ngClass]='{active:page.report_packinglist}'>
                   <i class="nav-icon fas fa-file-contract"></i>
-                  <p>Report Print OrderCancel</p>
+                  <p>Report Packing List</p>
                 </a>
               </li>
               
@@ -253,7 +258,7 @@
               </li>
               
             </ul>
-
+            
           </li>
 
           <li class="nav-header" >Outbound</li>
