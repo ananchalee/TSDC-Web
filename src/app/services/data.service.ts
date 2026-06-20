@@ -592,7 +592,15 @@ checkpathfile_labeltrack(data:any){
 //////////// check tracking
 check_order_notclose(data:any){
   return this.http.post('http://10.26.1.21:1661/api/check_order_notclose',data)
-}
+ }
+
+ check_order_closed(data: any) {
+    return this.http.post('http://10.26.1.21:1661/api/check_order_closed', data)
+  }
+
+  Insert_PICK_CHECK_LOG_NEW(data: any) {
+    return this.http.post('http://10.26.1.21:1661/api/Insert_PICK_CHECK_LOG_NEW', data)
+  }
 
 CheckWork_track(data:any){
   return this.http.post('http://10.26.1.21:1661/api/CheckWorktrack',data)

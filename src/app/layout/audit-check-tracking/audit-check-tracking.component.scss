@@ -65,4 +65,15 @@ hr.style19 {
     opacity: 0.2;
     pointer-events: none; /* ไม่ให้สามารถคลิกได้ */
 }
+
+@media print {
+  ngx-barcode6 {
+    display: block;
+    text-align: left;
+  }
+  ngx-barcode6 svg {
+    display: block;
+    margin: 0;
+  }
+}
  

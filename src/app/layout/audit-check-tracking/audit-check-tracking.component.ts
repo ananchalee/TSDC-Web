@@ -1,9 +1,10 @@
 import { Component, OnInit, ElementRef, ViewChild ,OnDestroy } from '@angular/core';
-import { DataService } from '../../services/index'
+import { DataService,TimeService } from '../../services/index'
 import Swal from 'sweetalert2';
 import { Subscription } from 'rxjs';
 import { Router, ActivatedRoute } from '@angular/router';
-import { HttpClient } from '@angular/common/http'; 
+import { HttpClient } from '@angular/common/http';
+import { NgSelectComponent } from '@ng-select/ng-select';
 //import { VideoRecordingService } from '../../services/video-recording.service';
 
 declare var jQuery: any;
@@ -26,15 +27,19 @@ export class AuditCheckTrackingComponent implements OnInit {
   busy!: Subscription;
   @ViewChild('myModalBOX') myModalBOX!: ElementRef;
   @ViewChild('myModalSt') myModalSt!: ElementRef;
+  @ViewChild('myModalZonePrint') myModalZonePrint!: ElementRef;
 
   @ViewChild('inputcontainer') inputcontainer!: ElementRef;
   @ViewChild('inputItem') inputItem!: ElementRef;
   @ViewChild('inputbox') inputbox!: ElementRef;
   @ViewChild('inputITEMBARCODE') inputITEMBARCODE!: ElementRef;
 
-  @ViewChild('Btn_printTrack') Btn_printTrack!: ElementRef; 
+  @ViewChild('Btn_printTrack') Btn_printTrack!: ElementRef;
+  @ViewChild('okBtn') okBtn!: ElementRef<HTMLButtonElement>;
+  @ViewChild('zoneSelect') zoneSelect!: NgSelectComponent;
 
-  
+  zones = ['Zone F1A', 'Zone F1B', 'Zone 2 CoolRoom', 'Zone 3A', 'Zone 3B', 'Zone 3C'];
+
   isLoading = false;
   pageactive: any;
 
@@ -164,6 +169,7 @@ showRecordingFinished(fileName: string) {
 
   constructor(
     private dataService: DataService,
+    private timeService: TimeService,
     private router: Router,
     private http: HttpClient, // Inject HttpClient
     //private videoRecordingService: VideoRecordingService,
@@ -816,7 +822,7 @@ ngOnDestroy(): void {
     })
   }
 
-  async WorkType(){
+  async WorkType_old(){
     
     var status_ = await this.checkorder_notclose();
     this.isLoading = false;
@@ -999,7 +1005,8 @@ ngOnDestroy(): void {
               }
                 
               })
-            } else if (this.input.ORDER_TYPE == 'OFFLINE') {
+            }
+            else if (this.input.ORDER_TYPE == 'OFFLINE') {
               
       
 
@@ -1069,7 +1076,8 @@ ngOnDestroy(): void {
                   })
                 }
               })
-            } else if (this.input.ORDER_TYPE == 'SORTER') {
+            }
+            else if (this.input.ORDER_TYPE == 'SORTER') {
               //console.log('SORTER');
               this.dataService.CheckConSorter(this.input).subscribe(res => {
                 var data: any = res
@@ -1123,7 +1131,8 @@ ngOnDestroy(): void {
                   })
                 }
               })
-            } else if (this.input.ORDER_TYPE == 'CF_ORDER') {
+            }
+            else if (this.input.ORDER_TYPE == 'CF_ORDER') {
               
               this.dataService.CheckCon_Orderconfirm(this.input).subscribe(res => {
                 var data: any = res
@@ -1203,7 +1212,8 @@ ngOnDestroy(): void {
                   })
                 }
               })
-            } else if (this.input.ORDER_TYPE == 'DHL'){
+            }
+            else if (this.input.ORDER_TYPE == 'DHL') {
               Swal.fire({
                 icon: 'warning',
                 title: 'เป็นงาน Order ช่องทาง DHL ให้นำส่งคืนผู้รับผิดชอบ"',
@@ -1260,7 +1270,520 @@ ngOnDestroy(): void {
     }
     return status;
   }
-  
+
+  insert_log() {
+    this.dataService.Insert_PICK_CHECK_LOG_NEW(this.input).subscribe(res => {
+      this.CheckWork = res;
+      if (this.CheckWork.status == 'error') {
+        console.log('Error Insert_PICK_CHECK_LOG_NEW');
+      } else {
+        console.log('Insert_PICK_CHECK_LOG_NEW success');
+      }
+    });
+  }
+
+  async checkorder_closed() {
+    let status = false;
+    try {
+      const res = await this.dataService.check_order_closed(this.input).toPromise();
+      this.CheckWork = res;
+
+      if (this.CheckWork.status === 'error') {
+        Swal.fire({
+          icon: 'error',
+          title: 'เกิดข้อผิดพลาด กรุณาติดต่อ ADMIN!',
+          html: this.CheckWork.data,
+          showConfirmButton: false,
+          timer: 2500
+        });
+      } else if (this.CheckWork.status === 'success') {
+        status = true;
+        this.input.shipment_id = this.CheckWork.data[0].SHIPMENT_ID;
+      } else if (this.CheckWork.status === 'null') {
+        this.input.WARNING = 'ยังไม่ถูกปิดงาน'
+        this.insert_log();
+        Swal.fire({
+          icon: 'warning',
+          title: 'ยังไม่ถูกปิดงาน',
+          html: 'กรุณาปิดงานบนระบบ Man!!',
+          showConfirmButton: false,
+          timer: 4000
+        });
+        this, this.input.CONTAINER_ID = '';
+      }
+    } catch (error) {
+      console.error('Error during check_order_notclose:', error);
+    }
+    return status;
+  }
+
+  async checkorder_cancel_RTS() {
+    let status = false;
+    try {
+
+      const res = await this.dataService.CheckOrder_Cancel(this.input).toPromise();
+        var ordercancel: any = res
+      if (ordercancel.status === 'error') {
+        Swal.fire({
+          icon: 'error',
+          title: 'Get ONLINE_ORDER_CANCEL Error!',
+          showConfirmButton: false,
+          timer: 2500
+        });
+        this.playAudioError();
+      }
+      else if (ordercancel.status === 'success') {
+        this.alertcancel = true;
+        this.ButtonprintCancel = true;
+        this.input.WARNING = 'ORDER CANCEL'
+        this.insert_log();
+        Swal.fire({
+          icon: 'warning',
+          title: 'ORDER CANCEL !',
+          html: 'Order ถูกยกเลิก !',
+          showConfirmButton: true,
+          backdrop: false,
+          confirmButtonText: 'พิมพ์ใบ Cancel',
+        }).then((result) => {
+          if (result.isConfirmed) {
+            this.selectZone();
+          }
+        });
+        this, this.input.CONTAINER_ID = '';
+
+      } else {
+
+        const res = await this.dataService.Get_ONLINE_ORDER_SHIPPING(this.input).toPromise();
+        var checkRTS: any = res
+        if (checkRTS.status === 'error') {
+          Swal.fire({
+            icon: 'error',
+            title: 'Get ONLINE_ORDER_SHIPPING Error!',
+            showConfirmButton: false,
+            timer: 2500
+          });
+          this.playAudioError();
+          this.input.CONTAINER_ID = ''
+        } else if (checkRTS.status === 'null') {
+          this.input.WARNING = 'ไม่พบข้อมูล ONLINE ORDER SHIPPING'
+          this.insert_log();
+          Swal.fire({
+            icon: 'warning',
+            title: 'ไม่พบข้อมูล ONLINE ORDER SHIPPING',
+            showConfirmButton: false,
+            timer: 2500
+          });
+          this.playAudioError();
+          this.input.CONTAINER_ID = ''
+        } else {
+          if (checkRTS.data[0].RTS_STATUS_OOS != 'S') {
+            this.input.WARNING = 'Order ยังไม่ได้ทำการ RTS'
+            this.insert_log();
+            Swal.fire({
+              icon: 'warning',
+              title: 'Order ยังไม่ได้ทำการ RTS',
+              showConfirmButton: false,
+              timer: 2500
+            });
+            this.playAudioError();
+            this.input.CONTAINER_ID = ''
+          } else {
+            status = true;
+          }
+        }
+
+      }
+      
+      //this.summaryConCheck();
+    } catch (error) {
+      console.error('Error during check_order_notclose:', error);
+    }
+    return status;
+  }
+
+  async check_warning_Order() {
+
+    this.alertcancel = false;
+    this.ButtonprintCancel = false;
+
+    this.tablecheck_user();
+
+    var status_closed = await this.checkorder_closed();
+    this.isLoading = false;
+    if (status_closed) {
+      this.alertcancel = false;
+      this.ButtonprintCancel = false;
+
+      this.dataService.Checkorder_block(this.input).subscribe(async res => {
+        this.Block_order = res;
+        if (this.Block_order.status == 'error') {
+          Swal.fire({
+            icon: 'error',
+            title: 'เกิดข้อผิดพลาด Check รายการ block order ไม่ได้ ',
+            showConfirmButton: false,
+            timer: 2500
+          });
+
+          return;
+        } else {
+
+          if (this.Block_order.status === 'success' && this.Block_order.data[0].FNBlock_type == 1) {
+            Swal.fire({
+              title: 'Block : ' + this.Block_order.data[0].FTBlock_title,
+              html: 'รายละเอียด : ' + this.Block_order.data[0].FTBlock_desc,
+              icon: 'warning',
+              showCancelButton: false,
+              confirmButtonColor: '#d33',
+              backdrop: false,
+              confirmButtonText: 'ตกลง',
+            }).then((result) => {
+              if (result.value) {
+                this.CheckWork.status = 'Block order',
+                  this.scanCon();
+              }
+            })
+
+          }
+          else if (this.Block_order.status === 'success' && this.Block_order.data[0].FNBlock_type == 2) {
+            Swal.fire({
+              title: 'แจ้งเตือน : ' + this.Block_order.data[0].FTBlock_title,
+              html: 'รายละเอียด : ' + this.Block_order.data[0].FTBlock_desc,
+              icon: 'warning',
+              showCancelButton: false,
+              confirmButtonColor: '#d33',
+              backdrop: false,
+              confirmButtonText: 'ตกลง',
+            }).then(async (result) => {
+              if (result.value) {
+                var status_cancel = await this.checkorder_cancel_RTS();
+                if (status_cancel) {
+                  this.WorkType();
+                }
+              }
+            })
+          }
+          else {
+            var status_cancel = await this.checkorder_cancel_RTS();
+            if (status_cancel) {
+              this.WorkType();
+            }
+          }
+
+        }
+      })
+    }
+  }
+
+  async WorkType() {
+    this.dataService.CheckWork_track(this.input).subscribe(res => {
+      this.CheckWork = res;
+
+      if (this.CheckWork.status === 'error') {
+        Swal.fire({
+          icon: 'error',
+          title: 'เกิดข้อผิดพลาด กรุณาติดต่อ ADMIN!',
+          showConfirmButton: false,
+          timer: 2500
+        });
+      } else if (this.CheckWork.status === 'null') {
+        Swal.fire({
+          icon: 'warning',
+          title: 'ไม่พบข้อมูล CONTAINER นี้ หรือ PIN CODE ไม่ถูกต้อง',
+          showConfirmButton: false,
+          timer: 2500
+        });
+        this.input.CONTAINER_ID = ''
+      } else if (this.CheckWork.status === 'success') {
+        this.input.ORDER_TYPE = this.CheckWork.data[0].ORDER_TYPE;
+        this.input.shipment_id = this.CheckWork.data[0].SHIPMENT_ID;
+        this.input.COMPANY = this.CheckWork.data[0].COMPANY;
+        this.input.ORDER_DATE = this.CheckWork.data[0].ORDER_DATE;
+        this.input.SELLER_NO = this.CheckWork.data[0].SELLER_NO;
+
+        if (this.input.ORDER_TYPE == 'ONLINE' || this.input.ORDER_TYPE == 'CANCEL') {
+          console.log('ONLINE');
+          this.input.conditiontracking = ''
+          this.dataService.CheckConOnline_track(this.input).subscribe(res => {
+            var data: any = res
+            this.sumqty = data.data
+            if (data.status === 'error') {
+              console.log(data);
+              Swal.fire({
+                icon: 'error',
+                title: 'เกิดข้อผิดพลาด กรุณาติดต่อ ADMIN!',
+                showConfirmButton: false,
+                timer: 2500
+              });
+            } else if (data.status === 'null') {
+              console.log(data);
+              Swal.fire({
+                icon: 'warning',
+                title: 'ไม่พบข้อมูล CONTAINER นี้ หรือ PIN CODE ไม่ถูกต้อง',
+                showConfirmButton: false,
+                timer: 2500
+              });
+              this.input.CONTAINER_ID = ''
+            } else if (data.status === 'success') {
+              this.Status_Print_Track = this.sumqty[0].Print_Tracking
+              this.input.shipment_id = this.sumqty[0].shipment_id
+              this.input.SELLER_NO = this.sumqty[0].SELLER_NO
+              this.input.BRAND = this.sumqty[0].USER_DEF5
+              this.input.SHIPPING_NAME = this.sumqty[0].SHIPPING_NAME
+              this.input.TCHANNEL = this.sumqty[0].TCHANNEL
+              this.input.SUMCHECK = this.sumqty[0].SUMCHECK
+              this.input.b = this.sumqty[0].USER_DEF5.substring(0, 1);
+              this.input.d = this.sumqty[0].USER_DEF5.substring(1, 2);
+              this.input.p = this.sumqty[0].USER_DEF5.substring(2, 3);
+
+              Swal.fire({
+                title: 'คุณต้องการเริ่มงานนี้หรือไม่ ?',
+                html: 'SHIPMENT: ' + '<font color="blue">' + this.input.shipment_id + '</font>',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                backdrop: false,
+                confirmButtonText: 'ยืนยัน',
+                cancelButtonText: 'ยกเลิก'
+              }).then((result) => {
+                if (result.value) {
+                  this.summaryConCheck();
+                } else {
+                  this.input.CONTAINER_ID = ''
+                }
+              })
+            }
+
+          })
+        }
+        else if (this.input.ORDER_TYPE == 'OFFLINE') {
+
+          this.dataService.CheckConOffline(this.input).subscribe(res => {
+            var data: any = res
+            this.sumqty = data.data
+            console.log(data);
+            if (data.status === 'error') {
+              console.log(data);
+              Swal.fire({
+                icon: 'error',
+                title: 'เกิดข้อผิดพลาด กรุณาติดต่อ ADMIN!',
+                showConfirmButton: false,
+                timer: 2500
+              });
+            } else if (data.status === 'null') {
+
+              Swal.fire({
+                icon: 'warning',
+                title: 'ไม่พบข้อมูล CONTAINER นี้ หรือ PIN CODE ไม่ถูกต้อง',
+                showConfirmButton: false,
+                timer: 2500
+              });
+              this.input.CONTAINER_ID = ''
+            } else if (data.status === 'success') {
+
+              this.input.shipment_id = this.sumqty[0].shipment_id
+              this.input.SELLER_NO = this.sumqty[0].SELLER_NO
+              this.input.BILL_N8_BLH = this.sumqty[0].BILL_N8_BLH
+              this.input.BILL_NO = this.sumqty[0].BILL_NO
+              this.input.STORE_ADDRESS = this.sumqty[0].STORE_ADDRESS
+              this.input.CORNER_ID_BLH = this.sumqty[0].CORNER_ID_BLH
+              this.input.BILL_DATE = this.sumqty[0].BILL_DATE
+              this.input.SITE_ID_BLH = this.sumqty[0].SITE_ID_BLH
+              this.input.BATCH_CODE = this.sumqty[0].BATCH_CODE
+              this.input.TRANSPORT_ID = this.sumqty[0].TRANSPORT_ID
+              this.input.TRANSPORT_NAME = this.sumqty[0].TRANSPORT_NAME
+              this.input.BRAND = this.sumqty[0].USER_DEF5
+              this.input.BRAND_NAME = this.sumqty[0].BRAND_NAME
+              this.input.SHIPPING_NAME = this.sumqty[0].STORE_NAME
+              this.input.SUMCHECK = this.sumqty[0].SUMCHECK
+              this.input.TCHANNEL = 'Offline'
+              this.input.b = this.sumqty[0].USER_DEF5.substring(0, 1);
+              this.input.d = this.sumqty[0].USER_DEF5.substring(1, 2);
+              this.input.p = this.sumqty[0].USER_DEF5.substring(2, 3);
+
+              Swal.fire({
+                title: 'คุณต้องการเริ่มงานนี้หรือไม่ ?',
+                html: 'SHIPMENT: ' + '<font color="blue">' + this.input.shipment_id + '</font>',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                backdrop: false,
+                confirmButtonText: 'ยืนยัน',
+                cancelButtonText: 'ยกเลิก'
+              }).then((result) => {
+                if (result.value) {
+                  this.summaryConCheck();
+                  this.CHECK_tracksum_qty();
+                  this.scanConPage = true;
+                  this.scanItemPage = false;
+                  this.summaryPage = true;
+                } else {
+                  this.input.CONTAINER_ID = ''
+                }
+              })
+            }
+          })
+        }
+        else if (this.input.ORDER_TYPE == 'SORTER') {
+          //console.log('SORTER');
+          this.dataService.CheckConSorter(this.input).subscribe(res => {
+            var data: any = res
+            this.sumqty = data.data
+            if (data.status === 'error') {
+              console.log(data)
+              Swal.fire({
+                icon: 'error',
+                title: 'เกิดข้อผิดพลาด กรุณาติดต่อ ADMIN!',
+                showConfirmButton: false,
+                timer: 2500
+              });
+            } else if (data.status === 'null') {
+
+              Swal.fire({
+                icon: 'warning',
+                title: 'ไม่พบข้อมูล CONTAINER นี้ หรือ PIN CODE ไม่ถูกต้อง',
+                showConfirmButton: false,
+                timer: 2500
+              });
+              this.input.CONTAINER_ID = ''
+            } else if (data.status === 'success') {
+              this.input.shipment_id = this.sumqty[0].BATCH_CODE
+              this.input.SELLER_NO = 'SORTER'
+              this.input.BRAND = this.sumqty[0].BRAND
+              this.input.SUMCHECK = this.sumqty[0].SUMCHECK
+              this.input.b = this.sumqty[0].PRODUCT_BHS.substring(0, 1);
+              this.input.d = this.sumqty[0].PRODUCT_BHS.substring(1, 2);
+              this.input.p = this.sumqty[0].PRODUCT_BHS.substring(2, 3);
+
+              Swal.fire({
+                title: 'คุณต้องการเริ่มงานนี้หรือไม่ ?',
+                html: 'CONTAINER_ID: ' + '<font color="blue">' + this.input.CONTAINER_ID + '</font>',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                backdrop: false,
+                confirmButtonText: 'ยืนยัน',
+                cancelButtonText: 'ยกเลิก'
+              }).then((result) => {
+                if (result.isConfirmed) {
+
+                  this.summaryConCheck();
+                  this.scanConPage = true;
+                  this.scanItemPage = false;
+                  this.summaryPage = true;
+                } else {
+                  this.input.CONTAINER_ID = ''
+                }
+              })
+            }
+          })
+        }
+        else if (this.input.ORDER_TYPE == 'CF_ORDER') {
+
+          this.dataService.CheckCon_Orderconfirm(this.input).subscribe(res => {
+            var data: any = res
+            this.sumqty = data.data
+            if (data.status === 'error') {
+              console.log(data);
+              Swal.fire({
+                icon: 'error',
+                title: 'เกิดข้อผิดพลาด กรุณาติดต่อ ADMIN!',
+                showConfirmButton: false,
+                timer: 2500
+              });
+            } else if (data.status === 'null') {
+
+              Swal.fire({
+                icon: 'warning',
+                title: 'ไม่พบข้อมูล CONTAINER นี้ หรือ PIN CODE ไม่ถูกต้อง',
+                showConfirmButton: false,
+                timer: 2500
+              });
+              this.input.CONTAINER_ID = ''
+            } else if (data.status === 'success') {
+
+              this.input.shipment_id = this.sumqty[0].shipment_id
+              this.input.SELLER_NO = this.sumqty[0].SELLER_NO
+              this.input.BILL_N8_BLH = this.sumqty[0].BILL_N8_BLH
+              this.input.BILL_NO = this.sumqty[0].BILL_NO
+              this.input.STORE_ADDRESS = this.sumqty[0].STORE_ADDRESS
+              this.input.CORNER_ID_BLH = this.sumqty[0].CORNER_ID_BLH
+              this.input.BILL_DATE = this.sumqty[0].BILL_DATE
+              this.input.SITE_ID_BLH = this.sumqty[0].SITE_ID_BLH
+              this.input.BATCH_CODE = this.sumqty[0].BATCH_CODE
+              this.input.TRANSPORT_ID = this.sumqty[0].TRANSPORT_ID
+              this.input.TRANSPORT_NAME = this.sumqty[0].TRANSPORT_NAME
+              this.input.BRAND = this.sumqty[0].USER_DEF5
+              this.input.BRAND_NAME = this.sumqty[0].BRAND_NAME
+              this.input.SHIPPING_NAME = this.sumqty[0].STORE_NAME
+              this.input.TCHANNEL = 'CF_ORDER'
+              this.input.STATUS_DATA = this.sumqty[0].STATUS_DATA
+              this.input.SUMCHECK = this.sumqty[0].SUMCHECK
+              this.input.b = this.sumqty[0].USER_DEF5.substring(0, 1);
+              this.input.d = this.sumqty[0].USER_DEF5.substring(1, 2);
+              this.input.p = this.sumqty[0].USER_DEF5.substring(2, 3);
+
+              Swal.fire({
+                title: 'คุณต้องการเริ่มงานนี้หรือไม่ ?',
+                html: 'SHIPMENT: ' + '<font color="blue">' + this.input.shipment_id + '</font>',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                backdrop: false,
+                confirmButtonText: 'ยืนยัน',
+                cancelButtonText: 'ยกเลิก'
+              }).then((result) => {
+                if (result.value) {
+                  this.summaryConCheck();
+                  this.CHECK_tracksum_qty();
+                  this.scanConPage = true;
+                  this.scanItemPage = false;
+                  this.summaryPage = true;
+
+                  if (this.input.STATUS_DATA == 'N' && this.btn.Box == true) {
+                    this.btn.CFOrder = false;
+                  } else if (this.input.STATUS_DATA == 'N' && this.btn.Box == false) {
+                    this.btn.CFOrder = true;
+                  } else if (this.input.STATUS_DATA == 'S') {
+                    this.btn.CFOrder = true;
+                    this.btn.CoverSheet = false;
+                    this.btn.Printbill = false;
+                  }
+
+                  setTimeout(() => { this.focusInput_item() }, 300)
+                } else {
+                  this.input.CONTAINER_ID = ''
+                }
+              })
+            }
+          })
+        }
+        else if (this.input.ORDER_TYPE == 'DHL') {
+          Swal.fire({
+            icon: 'warning',
+            title: 'เป็นงาน Order ช่องทาง DHL ให้นำส่งคืนผู้รับผิดชอบ"',
+            showConfirmButton: false,
+            timer: 3000
+          });
+          this.input.CONTAINER_ID = ''
+        }
+        else {
+          Swal.fire({
+            icon: 'warning',
+            title: 'Work type ไม่ถูกต้อง',
+            showConfirmButton: false,
+            timer: 2500
+          });
+          this.input.CONTAINER_ID = ''
+        }
+
+      }
+    })
+  }
+
   summaryConCheck() {
 
     if (this.input.ORDER_TYPE != 'SORTER') {
@@ -2263,24 +2786,81 @@ ngOnDestroy(): void {
   
   }
 
-  printcancel(){
+  selectZone() {
+    jQuery(this.myModalZonePrint.nativeElement).one('shown.bs.modal', () => {
+      if (this.zoneSelect) {
+        this.zoneSelect.focus();
+      }
+    });
+    jQuery(this.myModalZonePrint.nativeElement).modal('show');
+  }
+
+  onZoneSelected() {
+    setTimeout(() => {
+      if (this.okBtn) {
+        this.okBtn.nativeElement.focus();
+      }
+    });
+  }
+
+  printcancel() {
     var a = Array();
-    for (var i = 0;i < 1; i++) {
-      let array = {
-        SHIPMENT_ID: this.input.shipment_id,
-        SHIPPING_NAME: this.input.SHIPPING_NAME,
-        TCHANNEL: this.input.TCHANNEL,
-        SELLER_NO: this.input.SELLER_NO,
-        COMPANY : this.input.COMPANY,
-        ORDER_DATE : this.input.ORDER_DATE
+    if (this.input.TABLE_CHECK == null || this.input.TABLE_CHECK == undefined) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'ระบุหมายเลขโต๊ะเช็คไม่ได้ กรุณา login ใหม่อีกครั้ง',
+        showConfirmButton: false,
+        timer: 2500
+      });
+      return;
+    }
+
+    this.busy = this.dataService.pickcheck_print_ordercancel(this.input).subscribe(res => {
+      var data: any = res
+      if (data.status == "success") {
+        jQuery(this.myModalZonePrint.nativeElement).modal('hide');
+
+        for (var i = 0; i < 1; i++) {
+          let array = {
+            SHIPMENT_ID: this.input.shipment_id,
+            SHIPPING_NAME: this.input.SHIPPING_NAME,
+            TCHANNEL: this.input.TCHANNEL,
+            SELLER_NO: this.input.SELLER_NO,
+            COMPANY: this.input.COMPANY,
+            ORDER_DATE: this.input.ORDER_DATE,
+            Zone: this.input.Zone,
+            Table: this.input.TABLE_CHECK,
+            PRINT_DATE: this.timeService.getNow()
+
+          }
+          a.push(array)
+        }
+        this.dataprintcancel = a
+        this.pagePrint = false
+        this.pagePrintCancel = false;
 
       }
-      a.push(array)
-    }
-    this.dataprintcancel = a
-    this.pagePrint = false
-    this.pagePrintCancel = false;
+    });
   }
+
+  //printcancel(){
+  //  var a = Array();
+  //  for (var i = 0;i < 1; i++) {
+  //    let array = {
+  //      SHIPMENT_ID: this.input.shipment_id,
+  //      SHIPPING_NAME: this.input.SHIPPING_NAME,
+  //      TCHANNEL: this.input.TCHANNEL,
+  //      SELLER_NO: this.input.SELLER_NO,
+  //      COMPANY : this.input.COMPANY,
+  //      ORDER_DATE : this.input.ORDER_DATE
+
+  //    }
+  //    a.push(array)
+  //  }
+  //  this.dataprintcancel = a
+  //  this.pagePrint = false
+  //  this.pagePrintCancel = false;
+  //}
 
   backScanitem() {
     this.pagePrint = true;
