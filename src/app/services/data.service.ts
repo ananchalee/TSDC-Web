@@ -426,6 +426,12 @@ DeleteAndBackup_Track_Outbound(data:any){
 deleteTracking_outbount(data:any){
   return this.http.post('http://10.26.1.21:1661/api/deleteTracking_outbount',data)
 }
+report_pallet_outbound(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/report_pallet_outbound',data)
+}
+delete_report_pallet_outbound(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/delete_report_pallet_outbound',data)
+}
 
 check_ordercancel_online(data:any){
   return this.http.post('http://10.26.1.13:1665/api99/check_ordercancel_online', data);

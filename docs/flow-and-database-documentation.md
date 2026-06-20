@@ -385,9 +385,9 @@
 
 ## 9. Tracking Order (Outbound)
 
-ระบบ scan tracking สำหรับ outbound ไปยัง courier แบบ pallet
+ระบบ scan tracking สำหรับ outbound ไปยัง courier แบบ pallet มี 2 แถบเมนู: **Scan Tracking** และ **Report สรุปรายการ**
 
-### Flow การทำงาน
+### Flow การทำงาน — Tab: Scan Tracking
 1. ผู้ใช้เลือก Pallet No → POST /check_Pallet_confirm_outbound (ดึง list ที่ scan แล้ววันนี้)
 2. ตรวจสอบ pallet ว่ามี driver ผูกแล้วหรือยัง → POST /check_Pallet_confirm_outbound11
 3. scan tracking code → POST /check_Tracking_Order_Cancel (ตรวจสอบ cancel)
@@ -400,6 +400,22 @@
 7. ลบ tracking ที่ scan ผิด → POST /deleteTracking_outbount
 8. ลบและ backup → POST /DeleteAndBackup_Track_Outbound
 
+### Flow การทำงาน — Tab: Report สรุปรายการ
+1. ผู้ใช้ระบุ Pallet NO และวันที่ → POST /report_pallet_outbound
+   - JOIN local + remote เพื่อให้ STATUS_DELIVERY = 'S' ถ้าฝั่งใดฝั่งหนึ่งเป็น 'S'
+   - แสดงคอลัมน์: PALLET_NO, BILL_NO, ORDER_NO, SHIP_PROVIDER_OOD, scandate, PIN_ID, DELIVERY_NO, DRIVER_NAME, DRIVER_SIGNATURE, STATUS_DELIVERY
+   - DELIVERY_NO / DRIVER_NAME / DRIVER_SIGNATURE ใช้ `COALESCE(local, remote)` — ดูค่า local ก่อน ถ้า NULL ใช้ remote
+2. ถ้า STATUS_DELIVERY ≠ 'S' → แสดงปุ่ม "ลบ" ต่อ row
+3. กด "ลบ" → Confirm dialog → POST /delete_report_pallet_outbound
+   - ลบ local: `DELETE FROM TSDC_CONFIRM_OUTBOUND WHERE ... AND ISNULL(STATUS_DELIVERY,'') != 'S'`
+   - ลบ remote: `EXEC('DELETE ...') AT [10.26.1.11]` (push query ไปรันบน remote โดยตรง ป้องกัน timeout)
+4. กด "Export Excel" → download CSV (UTF-8 BOM รองรับภาษาไทย) ชื่อไฟล์ `report_pallet_[PALLET_NO]_[วันที่].csv`
+
+### หมายเหตุเงื่อนไขการลบ
+- ลบได้เฉพาะ `STATUS_DELIVERY IS NULL หรือ ≠ 'S'` ทั้งใน local และ remote
+- `STATUS_DELIVERY = 'S'` หมายถึงขนส่งเซ็นรับแล้ว → ห้ามลบทั้งในระดับ UI และ SQL
+- Linked server remote ใช้ `EXEC ... AT [10.26.1.11]` แทน `DELETE [10.26.1.11].[...]` โดยตรง เพื่อป้องกัน timeout (ต้องเปิด RPC Out = True บน linked server)
+
 ### API Endpoints
 | Method | Endpoint | คำอธิบาย |
 |--------|----------|-----------|
@@ -411,15 +427,17 @@
 | POST | /update_Tracking_confirm_outbound | update qty (แบบเก่า) |
 | POST | /update_Tracking_confirm_outbound2 | MERGE (insert หรือ update) |
 | POST | /interface_Tracking_confirm_outbound | sync insert ไป conveyor |
-| POST | /deleteTracking_outbount | ลบ tracking ออกจาก pallet |
+| POST | /deleteTracking_outbount | ลบ tracking ออกจาก pallet (Scan tab) |
 | POST | /DeleteAndBackup_Track_Outbound | backup แล้วลบ tracking (local + conveyor) |
 | GET | /Get_TRANSPORTATION_NAME | ดึง master ชื่อขนส่งและ prefix code |
+| POST | /report_pallet_outbound | **[Report tab]** ดึงรายการที่ scan ขึ้น pallet ตาม Pallet NO + วันที่ (JOIN local+remote) |
+| POST | /delete_report_pallet_outbound | **[Report tab]** ลบรายการออกจากทั้ง local และ remote (EXEC AT) |
 
 ### ตาราง Database
 | ตาราง | Operation | คอลัมน์สำคัญ | หมายเหตุ |
 |-------|-----------|--------------|---------|
-| TSDC_CONFIRM_OUTBOUND | SELECT, INSERT, UPDATE, DELETE | BILL_NO, PALLET_NO, QTY_BOX, CREATE_DATE, PIN_ID, INTERNAL_ID, SHIP_PROVIDER_OOD, ORDER_NO, TCHANNEL, STATUS_DELIVERY | ตารางหลัก outbound tracking |
-| [10.26.1.11].[TSDC_CONVEYOR].[DBO].TSDC_CONFIRM_OUTBOUND | SELECT, INSERT, DELETE | เหมือนกัน | สำเนาใน conveyor server |
+| TSDC_CONFIRM_OUTBOUND | SELECT, INSERT, UPDATE, DELETE | BILL_NO, PALLET_NO, QTY_BOX, CREATE_DATE, PIN_ID, INTERNAL_ID, SHIP_PROVIDER_OOD, ORDER_NO, TCHANNEL, STATUS_DELIVERY, DELIVERY_NO, DRIVER_NAME, DRIVER_SIGNATURE | ตารางหลัก outbound tracking |
+| [10.26.1.11].[TSDC_CONVEYOR].[DBO].TSDC_CONFIRM_OUTBOUND | SELECT, INSERT, DELETE | เหมือนกัน | สำเนาใน conveyor server; ใช้ EXEC AT สำหรับ DELETE |
 | TSDC_CONFIRM_OUTBOUND_CancelLog | INSERT | ทุก field จาก TSDC_CONFIRM_OUTBOUND + PIN_ID ผู้ cancel | backup ก่อนลบ |
 | TSDC_OUTBOUND_ORDER_CANCEL | SELECT | TRACK_NO | รายการ tracking ที่ cancel |
 | [10.26.1.11].[TSDC_CONVEYOR].[DBO].TSDC_CHECK_ORDERONLINE_OUTBOUNT | SELECT | PO_NO | ตรวจสอบ online order |

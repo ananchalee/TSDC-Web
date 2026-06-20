@@ -26,6 +26,22 @@
             <div class="container-fluid" >
               <div class="container-fluid barbar">
 
+                <!-- Tab Navigation -->
+                <ul class="nav nav-tabs mb-3">
+                  <li class="nav-item">
+                    <a class="nav-link" [class.active]="activeTab === 'scan'" (click)="switchTab('scan')" style="cursor:pointer;">
+                      <i class="fas fa-barcode"></i> Scan Tracking
+                    </a>
+                  </li>
+                  <li class="nav-item">
+                    <a class="nav-link" [class.active]="activeTab === 'report'" (click)="switchTab('report')" style="cursor:pointer;">
+                      <i class="fas fa-list-alt"></i> Report สรุปรายการ
+                    </a>
+                  </li>
+                </ul>
+
+                <!-- Tab: Scan (เดิม) -->
+                <div [hidden]="activeTab !== 'scan'">
                 <div class="card card-secondary">
                   <div class="card-header">
                     <h5 class="card-title"><strong>{{input.USER_NAME}} : </strong> {{input.WORKER_NAME}}
@@ -247,11 +263,110 @@
                 </div>
 
 
+                </div><!-- end tab scan -->
+
+                <!-- Tab: Report -->
+                <div [hidden]="activeTab !== 'report'">
+                  <div class="card card-secondary">
+                    <div class="card-header">
+                      <h5 class="card-title">สรุปรายการที่ยิงขึ้น Pallet</h5>
+                    </div>
+                    <div class="card-body">
+                      <div class="row">
+                        <div class="col-md-3">
+                          <div class="form-group">
+                            <label>Pallet NO</label>
+                            <input type="text" class="form-control" placeholder="เลข Pallet"
+                              [(ngModel)]="report_input.Pallet_NO" maxlength="4">
+                          </div>
+                        </div>
+                        <div class="col-md-3">
+                          <div class="form-group">
+                            <label>วันที่</label>
+                            <input type="date" class="form-control" [(ngModel)]="report_input.report_date">
+                          </div>
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                          <button type="button" class="btn btn-primary mb-3" (click)="loadReport()">
+                            <i class="fas fa-search"></i> ค้นหา
+                          </button>
+                        </div>
+                      </div>
+
+                      <div class="row justify-content-center" *ngIf="report_isLoading">
+                        <div class="col-12 text-center">Loading... <i class="fas fa-sync-alt fa-spin"></i></div>
+                      </div>
+
+                      <div *ngIf="!report_isLoading && report_list.length > 0">
+                        <div class="mb-2 d-flex justify-content-between align-items-center">
+                          <div>
+                            <strong>Pallet: {{report_input.Pallet_NO}}</strong> &nbsp;|&nbsp;
+                            วันที่: {{report_input.report_date}} &nbsp;|&nbsp;
+                            รวม: <strong>{{report_list.length}}</strong> รายการ
+                          </div>
+                          <button type="button" class="btn btn-success btn-sm" (click)="exportToExcel()">
+                            <i class="fas fa-file-excel"></i> Export Excel
+                          </button>
+                        </div>
+                        <div class="table-responsive" style="max-height:500px; overflow-y:auto;">
+                          <table class="table table-bordered table-sm table-hover" style="font-size:14px;">
+                            <thead class="thead-sticky">
+                              <tr class="table-primary text-center">
+                                <th>ลำดับ</th>
+                                <th>Pallet</th>
+                                <th>Tracking</th>
+                                <th>Order</th>
+                                <th>ขนส่ง</th>
+                                <th>เวลาที่ Scan</th>
+                                <th>User</th>
+                                <th>Delivery No</th>
+                                <th>Driver</th>
+                                <th>ลายเซ็น</th>
+                                <th>สถานะ</th>
+                                <th>ลบ</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <tr *ngFor="let item of report_list" [class.table-success]="item.STATUS_DELIVERY === 'S'">
+                                <td class="text-center">{{item.ID}}</td>
+                                <td class="text-center">{{item.PALLET_NO}}</td>
+                                <td class="text-center">{{item.BILL_NO}}</td>
+                                <td class="text-center">{{item.ORDER_NO}}</td>
+                                <td class="text-center">{{item.SHIP_PROVIDER_OOD}}</td>
+                                <td class="text-center">{{item.scandate}}</td>
+                                <td class="text-center">{{item.PIN_ID}}</td>
+                                <td class="text-center">{{item.DELIVERY_NO || '-'}}</td>
+                                <td class="text-center">{{item.DRIVER_NAME || '-'}}</td>
+                                <td class="text-center">
+                                  <img *ngIf="item.DRIVER_SIGNATURE" [src]="item.DRIVER_SIGNATURE"
+                                    style="max-height:40px; max-width:80px;" alt="sig">
+                                  <span *ngIf="!item.DRIVER_SIGNATURE">-</span>
+                                </td>
+                                <td class="text-center">
+                                  <span *ngIf="item.STATUS_DELIVERY === 'S'" class="badge badge-success">ขนส่งเซ็นรับแล้ว</span>
+                                  <span *ngIf="item.STATUS_DELIVERY !== 'S'" class="badge badge-warning">ขนส่งยังไม่รับ</span>
+                                </td>
+                                <td class="text-center">
+                                  <span *ngIf="item.STATUS_DELIVERY !== 'S'" type="button"
+                                    class="badge badge-pill badge-danger"
+                                    (click)="deleteReportItem(item)">&emsp;ลบ&emsp;</span>
+                                  <span *ngIf="item.STATUS_DELIVERY === 'S'" class="text-muted" style="font-size:11px;">ไม่สามารถลบได้</span>
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+
+                      <div *ngIf="!report_isLoading && report_list.length === 0 && report_input.Pallet_NO" class="text-center text-muted mt-3">
+                        ไม่พบข้อมูล
+                      </div>
+                    </div>
+                  </div>
+                </div><!-- end tab report -->
+
               </div>
             </div>
-
-
-          
 
 
           </div><!-- /.row -->

@@ -58,6 +58,11 @@ export class OutboundScantrackingComponent implements OnInit {
 
   tracking_page = false;
 
+  activeTab = 'scan';
+  report_list: any[] = [];
+  report_input: any = {};
+  report_isLoading = false;
+
   constructor(
     private dataService: DataService,
     private router: Router,
@@ -239,18 +244,102 @@ export class OutboundScantrackingComponent implements OnInit {
   }
 
   getserverdate(){
-     
+
     this.dataService.getServerDate().subscribe(resp => {
       if (resp && resp.date) {
-        const currentDate = new Date(resp.date);//เวลาserver
+        const currentDate = new Date(resp.date);
         this.input.currentDateString = currentDate.toISOString().split('T')[0];
         this.input.currentDateString_status = "server"
+        this.report_input.report_date = this.input.currentDateString;
       }else{
-        const currentDate = new Date();//เวลาเครื่อง
+        const currentDate = new Date();
         this.input.currentDateString = currentDate.toISOString().split('T')[0];
         this.input.currentDateString_status = "client"
+        this.report_input.report_date = this.input.currentDateString;
       }
     });
+  }
+
+  switchTab(tab: string) {
+    this.activeTab = tab;
+  }
+
+  loadReport() {
+    if (!this.report_input.Pallet_NO) {
+      Swal.fire({ icon: 'warning', title: 'กรุณาระบุเลข Pallet', showConfirmButton: false, timer: 2000 });
+      return;
+    }
+    this.report_isLoading = true;
+    this.report_list = [];
+    this.dataService.report_pallet_outbound(this.report_input).subscribe(res => {
+      const data: any = res;
+      this.report_isLoading = false;
+      if (data.status === 'error') {
+        Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', showConfirmButton: false, timer: 2500 });
+      } else if (data.status === 'null') {
+        this.report_list = [];
+        Swal.fire({ icon: 'warning', title: 'ไม่พบข้อมูล', showConfirmButton: false, timer: 2000 });
+      } else {
+        this.report_list = data.data;
+      }
+    });
+  }
+
+  deleteReportItem(item: any) {
+    Swal.fire({
+      title: 'ต้องการลบ ' + item.BILL_NO + ' ใช่หรือไม่?',
+      html: 'Pallet: ' + item.PALLET_NO + ' | วันที่: ' + this.report_input.report_date,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'ลบ',
+      cancelButtonText: 'ยกเลิก'
+    }).then(result => {
+      if (result.value) {
+        const payload = {
+          Pallet_NO: item.PALLET_NO,
+          BILL_NO: item.BILL_NO,
+          report_date: this.report_input.report_date
+        };
+        this.dataService.delete_report_pallet_outbound(payload).subscribe(res => {
+          const data: any = res;
+          if (data.status === 'error') {
+            Swal.fire({ icon: 'error', title: 'ลบไม่สำเร็จ', showConfirmButton: false, timer: 2500 });
+          } else {
+            Swal.fire({ icon: 'success', title: 'ลบสำเร็จ', showConfirmButton: false, timer: 1500 }).then(() => {
+              this.loadReport();
+            });
+          }
+        });
+      }
+    });
+  }
+
+  exportToExcel() {
+    const headers = ['ลำดับ', 'Pallet', 'Tracking', 'Order', 'ขนส่ง', 'เวลาที่ Scan', 'User', 'Delivery No', 'Driver', 'สถานะ'];
+    const rows = this.report_list.map(item => [
+      item.ID,
+      `="${item.PALLET_NO}"`,
+      item.BILL_NO,
+      item.ORDER_NO,
+      item.SHIP_PROVIDER_OOD,
+      item.scandate,
+      item.PIN_ID,
+      item.DELIVERY_NO || '',
+      item.DRIVER_NAME || '',
+      item.STATUS_DELIVERY === 'S' ? 'ขนส่งเซ็นรับแล้ว' : 'ขนส่งยังไม่รับ'
+    ]);
+    const csvContent = [headers, ...rows]
+      .map(row => row.map(cell => `"${String(cell == null ? '' : cell).replace(/"/g, '""')}"`).join(','))
+      .join('\n');
+    const blob = new Blob(['﻿' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `report_pallet_${this.report_input.Pallet_NO}_${this.report_input.report_date}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   model_1(){
