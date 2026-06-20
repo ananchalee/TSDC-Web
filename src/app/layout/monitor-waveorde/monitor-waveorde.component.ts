@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { DataService } from '../../services/index';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import Swal from 'sweetalert2';
 
 interface WavePendingRow {
@@ -31,12 +31,14 @@ export class MonitorWaveOrdeComponent implements OnInit, OnDestroy {
 
   constructor(
     private dataService: DataService,
-    private router: Router
+    private router: Router,
+    private route: ActivatedRoute,
   ) {}
 
   ngOnInit(): void {
+    const d = this.route.snapshot.data;
     const page: any[] = [];
-    page.push({ pagename: 'Monitor-WaveOrder', active: 'Moniter' });
+    page.push({ pagename: 'Monitor-WaveOrder', active: 'Moniter', menubar: d['menubar'], version: d['version'], lastupdate: d['lastupdate'] });
     this.pageactive = page;
 
     this.getdata();

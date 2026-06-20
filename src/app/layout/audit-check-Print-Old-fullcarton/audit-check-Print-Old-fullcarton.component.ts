@@ -105,15 +105,19 @@ export class AuditCheckPrintOldFullComponent implements OnInit {
   constructor(
     private dataService: DataService,
     private router: Router,
+    private route: ActivatedRoute,
     //private busy: Subscription,
   ) { }
 
   ngOnInit(): void {
-    
+    const d = this.route.snapshot.data;
     var a = Array();
     let array = {
       pagename: 'เช็คสินค้ายกลัง',
       active: 'Audit_Offline',
+      menubar: d['menubar'],
+      version: d['version'],
+      lastupdate: d['lastupdate'],
     }
     a.push(array)
     this.pageactive = a

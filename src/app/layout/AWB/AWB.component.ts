@@ -60,13 +60,18 @@ export class AWBComponent implements OnInit {
   constructor(
     private dataService: DataService,
     private router: Router,
+    private route: ActivatedRoute,
   ) { }
 
   ngOnInit(): void {
+    const d = this.route.snapshot.data;
     var page = Array();
     let array = {
       pagename: 'AWB',
       active: 'AWB',
+      menubar: d['menubar'],
+      version: d['version'],
+      lastupdate: d['lastupdate'],
     }
     page.push(array)
     this.pageactive = page;

@@ -64,8 +64,9 @@ export class ReportPrintWaveOrderComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    const d = this.route.snapshot.data;
     const page: any[] = [];
-    page.push({ pagename: 'Report Print Wave Order', active: 'Reports' });
+    page.push({ pagename: 'Report Print Wave Order', active: 'Reports', menubar: d['menubar'], version: d['version'], lastupdate: d['lastupdate'] });
     this.pageactive = page;
 
     this.route.queryParams.subscribe(params => {

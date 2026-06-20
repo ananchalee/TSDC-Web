@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, ViewChild ,ElementRef} from '@angular/cor
 import { DataService } from '../../services/index'
 import { Subscription, Subject } from 'rxjs';
 import { DataTableDirective } from 'angular-datatables';
-
+import { ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 
 
@@ -32,7 +32,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   dtTrigger5: Subject<any> = new Subject<any>();
 
   constructor(
-    private dataService: DataService, private http: HttpClient
+    private dataService: DataService, private http: HttpClient, private route: ActivatedRoute
   ) { }
 
 
@@ -61,10 +61,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.interval = setInterval(() =>  location.reload(), 300000); /// รีเฟส5นาที(300 วิ) *1000 = 1วิ
    
 
+    const d = this.route.snapshot.data;
     var a = Array();
     let array = {
       pagename: 'Dashboard',
       active: 'true',
+      menubar: d['menubar'],
+      version: d['version'],
+      lastupdate: d['lastupdate'],
     }
     a.push(array)
     this.pageactive = a

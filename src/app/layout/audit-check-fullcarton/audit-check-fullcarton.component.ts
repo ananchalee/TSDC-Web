@@ -87,15 +87,19 @@ export class AuditCheckFullcartonComponent implements OnInit {
   constructor(
     private dataService: DataService,
     private router: Router,
+    private route: ActivatedRoute,
     //private busy: Subscription,
   ) { }
 
   ngOnInit(): void {
-
+    const d = this.route.snapshot.data;
     var page = Array();
     let array = {
       pagename: 'Check fullcarton',
       active: 'Audit&Check',
+      menubar: d['menubar'],
+      version: d['version'],
+      lastupdate: d['lastupdate'],
     }
     page.push(array)
     this.pageactive = page;

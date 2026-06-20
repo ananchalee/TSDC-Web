@@ -12,8 +12,10 @@
             <a class="m-0">
               <ol class="breadcrumb">
                 <li class="breadcrumb-item">Audit&Check</li>
-                <li class="breadcrumb-item active" type="button" (click)="scanCon();">Check Order <i
-                    class="fas fa-shopping-cart nav-icon"></i></li>
+                <li class="breadcrumb-item active" type="button" (click)="scanCon();">
+                  {{pageactive && pageactive[0]?.menubar || 'Check Order'}}
+                  <small *ngIf="pageactive && pageactive[0]?.version" style="font-size:0.7rem; opacity:0.75;">v{{pageactive[0].version}} | {{pageactive[0].lastupdate}}</small>
+                </li>
               </ol>
             </a>
           </div>

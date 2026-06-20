@@ -172,15 +172,19 @@ showRecordingFinished(fileName: string) {
     private timeService: TimeService,
     private router: Router,
     private http: HttpClient, // Inject HttpClient
+    private route: ActivatedRoute,
     //private videoRecordingService: VideoRecordingService,
   ) { }
 
   ngOnInit(): void {
-
+    const d = this.route.snapshot.data;
     var page = Array();
     let array = {
       pagename: 'Check Order Print Track',
       active: 'Audit&Check',
+      menubar: d['menubar'],
+      version: d['version'],
+      lastupdate: d['lastupdate'],
     }
     page.push(array)
     this.pageactive = page;

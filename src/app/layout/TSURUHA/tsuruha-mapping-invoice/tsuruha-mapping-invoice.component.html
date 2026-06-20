@@ -13,7 +13,11 @@
             <div class="col-sm-6">
               <a class="m-0">
                 <ol class="breadcrumb">
-                  <!-- <li class="breadcrumb-item">AWB</li> -->
+                  <li class="breadcrumb-item">TSURUHA</li>
+                  <li class="breadcrumb-item active">
+                    {{pageactive && pageactive[0]?.menubar || 'Map Invoice'}}
+                    <small *ngIf="pageactive && pageactive[0]?.version" style="font-size:0.7rem; opacity:0.75;">v{{pageactive[0].version}} | {{pageactive[0].lastupdate}}</small>
+                  </li>
                 </ol>
               </a>
             </div>

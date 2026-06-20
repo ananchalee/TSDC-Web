@@ -3,6 +3,7 @@ import { DataService } from '../../services/index';
 import { Subscription } from 'rxjs';
 import Swal from 'sweetalert2';
 import { DataTableDirective } from 'angular-datatables';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-register-pack',
@@ -40,13 +41,18 @@ export class RegisterPackComponent implements OnInit {
 
   constructor(
     private dataService: DataService,
+    private route: ActivatedRoute,
   ) { }
 
   ngOnInit(): void {
+    const d = this.route.snapshot.data;
     var page = Array();
     let array = {
       pagename: 'ลงทะเบียนแพคสินค้า',
       active: 'RegistPack',
+      menubar: d['menubar'],
+      version: d['version'],
+      lastupdate: d['lastupdate'],
     }
     page.push(array)
     this.pageactive = page;

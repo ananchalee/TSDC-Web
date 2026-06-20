@@ -2,6 +2,7 @@ import { Component, OnInit ,ElementRef, ViewChild} from '@angular/core';
 import { DataService } from '../../services/index';
 import { Subscription } from 'rxjs';
 import Swal from 'sweetalert2';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-edit-box',
@@ -35,13 +36,18 @@ export class EditBoxComponent implements OnInit {
 
   constructor(
     private dataService: DataService,
+    private route: ActivatedRoute,
   ) { }
 
   ngOnInit(): void {
+    const d = this.route.snapshot.data;
     var page = Array();
     let array = {
       pagename: 'แก้ไขขนาดกล่อง',
       active: 'EditBox',
+      menubar: d['menubar'],
+      version: d['version'],
+      lastupdate: d['lastupdate'],
     }
     page.push(array)
     this.pageactive = page;

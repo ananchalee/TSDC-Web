@@ -42,13 +42,18 @@ export class MoniterTrackingOrderInternalComponent implements OnInit {
   constructor(
     private dataService: DataService,
     private router: Router,
+    private activatedRoute: ActivatedRoute,
   ) { }
 
   ngOnInit(): void {
+    const d = this.activatedRoute.snapshot.data;
     var page = Array();
     let array = {
       pagename: 'Moniter-TrackorderInternal',
       active: 'Moniter',
+      menubar: d['menubar'],
+      version: d['version'],
+      lastupdate: d['lastupdate'],
     }
     page.push(array)
     this.pageactive = page;

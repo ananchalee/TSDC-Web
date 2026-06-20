@@ -61,13 +61,18 @@ export class OutboundScantrackingComponent implements OnInit {
   constructor(
     private dataService: DataService,
     private router: Router,
+    private route: ActivatedRoute,
   ) { }
 
   ngOnInit(): void {
+    const d = this.route.snapshot.data;
     var page = Array();
     let array = {
       pagename: 'Outbound-Sacn-Tracking',
       active: 'Outbound',
+      menubar: d['menubar'],
+      version: d['version'],
+      lastupdate: d['lastupdate'],
     }
     page.push(array)
     this.pageactive = page;

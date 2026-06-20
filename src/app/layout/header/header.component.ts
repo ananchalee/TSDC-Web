@@ -32,6 +32,9 @@ export class HeaderComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     if (this.Pageactive && this.Pageactive[0]) {
       this.page = this.Pageactive[0].pagename;
+      this.input.menubar = this.Pageactive[0].menubar;
+      this.input.version = this.Pageactive[0].version;
+      this.input.lastupdate = this.Pageactive[0].lastupdate;
       this.input.PageDashboard = this.page === 'Dashboard';
     } else {
       this.input.PageDashboard = false;

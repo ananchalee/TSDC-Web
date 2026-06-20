@@ -94,15 +94,19 @@ export class AuditCheckComponent implements OnInit {
     private dataService: DataService,
     private timeService:TimeService,
     private router: Router,
-    //private busy: Subscription,
+    private route: ActivatedRoute,
   ) { }
 
   ngOnInit(): void {
 
+    const d = this.route.snapshot.data;
     var page = Array();
     let array = {
       pagename: 'Check Order',
       active: 'Audit&Check',
+      menubar: d['menubar'],
+      version: d['version'],
+      lastupdate: d['lastupdate']
     }
     page.push(array)
     this.pageactive = page;

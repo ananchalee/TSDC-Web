@@ -68,25 +68,41 @@
               <li class="nav-item"  (click)="Onclick_menu('monit_statusRTS') ">
                 <a class="nav-link"  [ngClass]='{active:page.Moniter_StatusRTS}'>
                   <i class="fas fa-paper-plane nav-icon"></i>
-                  <p>RTS</p>
+                  <p>
+                    {{routeData['monit-statusRTS']?.menubar || 'RTS'}}
+                    <br>
+                    <small *ngIf="routeData['monit-statusRTS']?.version" style="font-size:0.65rem; opacity:0.75; display:block; text-align:center;">v{{routeData['monit-statusRTS'].version}} | {{routeData['monit-statusRTS'].lastupdate}}</small>
+                  </p>
                 </a>
               </li>
               <li class="nav-item"  (click)="Onclick_menu('monit_InterfaceError') ">
                 <a class="nav-link"  [ngClass]='{active:page.monit_InterfaceError}'>
                   <i class="fas fa-paper-plane nav-icon"></i>
-                  <p>Interface Error</p>
+                  <p>
+                    {{routeData['monit-InterfaceError-ManH']?.menubar || 'Interface Error'}}
+                    <br>
+                    <small *ngIf="routeData['monit-InterfaceError-ManH']?.version" style="font-size:0.65rem; opacity:0.75; display:block; text-align:center;">v{{routeData['monit-InterfaceError-ManH'].version}} | {{routeData['monit-InterfaceError-ManH'].lastupdate}}</small>
+                  </p>
                 </a>
               </li>
               <li class="nav-item"  (click)="Onclick_menu('monit_TrackOrderInternal') ">
                 <a class="nav-link"  [ngClass]='{active:page.monit_TrackOrderInternal}'>
                   <i class="fas fa-paper-plane nav-icon"></i>
-                  <p>Track Order Internal</p>
+                  <p>
+                    {{routeData['monit-Trackorderinternal']?.menubar || 'Track Order Internal'}}
+                    <br>
+                    <small *ngIf="routeData['monit-Trackorderinternal']?.version" style="font-size:0.65rem; opacity:0.75; display:block; text-align:center;">v{{routeData['monit-Trackorderinternal'].version}} | {{routeData['monit-Trackorderinternal'].lastupdate}}</small>
+                  </p>
                 </a>
               </li>
               <li class="nav-item" (click)="Onclick_menu('monitor_waveorde')">
                 <a class="nav-link" [ngClass]='{active:page.monitor_waveorde}'>
                   <i class="fas fa-print nav-icon"></i>
-                  <p>Monitor Wave Order</p>
+                  <p>
+                    {{routeData['monitor-waveorde']?.menubar || 'Monitor Wave Order'}}
+                    <br>
+                    <small *ngIf="routeData['monitor-waveorde']?.version" style="font-size:0.65rem; opacity:0.75; display:block; text-align:center;">v{{routeData['monitor-waveorde'].version}} | {{routeData['monitor-waveorde'].lastupdate}}</small>
+                  </p>
                 </a>
               </li>
             </ul>
@@ -100,7 +116,9 @@
 
               <i class="nav-icon fas fa-edit nav-icon"></i>
               <p>
-                ลงทะเบียนแพคสินค้า
+                {{routeData['register-pack']?.menubar || 'ลงทะเบียนแพคสินค้า'}}
+                <br>
+                <small *ngIf="routeData['register-pack']?.version" style="font-size:0.65rem; opacity:0.75; display:block; text-align:center;">v{{routeData['register-pack'].version}} | {{routeData['register-pack'].lastupdate}}</small>
               </p>
             </a>
           </li>
@@ -119,19 +137,31 @@
               <li class="nav-item"  (click)="Onclick_menu('checkorder')" >
                 <a class="nav-link" [ngClass]='{active:page.audit_CheckOrder}'>
                   <i class="fas fa-shopping-cart nav-icon"></i>
-                  <p>Check Order</p>
+                  <p>
+                    {{menubar || 'Check Order'}}
+                    <br>
+                    <small *ngIf="version" style="font-size:0.65rem; opacity:0.75; display:block; text-align:center;">v{{version}} | {{lastupdate}}</small>
+                  </p>
                 </a>
               </li>
               <li class="nav-item" (click)="Onclick_menu('checkordertrack')" >
                 <a class="nav-link" [ngClass]='{active:page.audit_CheckOrderTrack}' >
                   <i class="fas fa-archive nav-icon"></i>
-                  <p>Check Order Print Track</p>
+                  <p>
+                    {{routeData['audit-check-tracking']?.menubar || 'Check Order Print Track'}}
+                    <br>
+                    <small *ngIf="routeData['audit-check-tracking']?.version" style="font-size:0.65rem; opacity:0.75; display:block; text-align:center;">v{{routeData['audit-check-tracking'].version}} | {{routeData['audit-check-tracking'].lastupdate}}</small>
+                  </p>
                 </a>
               </li>
               <li class="nav-item" (click)="Onclick_menu('checkfullcarton')" >
                 <a class="nav-link" [ngClass]='{active:page.audit_fullcarton}' >
                   <i class="fas fa-archive nav-icon"></i>
-                  <p>Check fullcarton</p>
+                  <p>
+                    {{routeData['audit-check-fullcarton']?.menubar || 'Check fullcarton'}}
+                    <br>
+                    <small *ngIf="routeData['audit-check-fullcarton']?.version" style="font-size:0.65rem; opacity:0.75; display:block; text-align:center;">v{{routeData['audit-check-fullcarton'].version}} | {{routeData['audit-check-fullcarton'].lastupdate}}</small>
+                  </p>
                 </a>
               </li>
             </ul>
@@ -142,8 +172,9 @@
 
               <i class="nav-icon fas fa-edit nav-icon"></i>
               <p>
-                AWB
-
+                {{routeData['AWB']?.menubar || 'AWB'}}
+                <br>
+                <small *ngIf="routeData['AWB']?.version" style="font-size:0.65rem; opacity:0.75; display:block; text-align:center;">v{{routeData['AWB'].version}} | {{routeData['AWB'].lastupdate}}</small>
               </p>
             </a>
           </li>
@@ -153,8 +184,9 @@
 
               <i class="nav-icon fas fa-edit nav-icon"></i>
               <p>
-                แก้ไขขนาดกล่อง
-
+                {{routeData['edit-box']?.menubar || 'แก้ไขขนาดกล่อง'}}
+                <br>
+                <small *ngIf="routeData['edit-box']?.version" style="font-size:0.65rem; opacity:0.75; display:block; text-align:center;">v{{routeData['edit-box'].version}} | {{routeData['edit-box'].lastupdate}}</small>
               </p>
             </a>
           </li>
@@ -172,13 +204,21 @@
               <li class="nav-item"  (click)="Onclick_menu('oldcheckorder_print') ">
                 <a class="nav-link" [ngClass]='{active:page.audit_Old}'>
                   <i class="fas fa-shopping-cart nav-icon"></i>
-                  <p>เช็คสินค้า&ปริ้น(แบบเก่า)</p>
+                  <p>
+                    {{routeData['audit-check-Print-Old']?.menubar || 'เช็คสินค้า&ปริ้น(แบบเก่า)'}}
+                    <br>
+                    <small *ngIf="routeData['audit-check-Print-Old']?.version" style="font-size:0.65rem; opacity:0.75; display:block; text-align:center;">v{{routeData['audit-check-Print-Old'].version}} | {{routeData['audit-check-Print-Old'].lastupdate}}</small>
+                  </p>
                 </a>
               </li>
               <li class="nav-item" (click)="Onclick_menu('oldcheckfullcarton')" >
                 <a class="nav-link" [ngClass]='{active:page.audit_Old_fullcarton}' >
                   <i class="fas fa-archive nav-icon"></i>
-                  <p>เช็คสินค้ายกลัง</p>
+                  <p>
+                    {{routeData['audit-check-Print-Old-Full']?.menubar || 'เช็คสินค้ายกลัง'}}
+                    <br>
+                    <small *ngIf="routeData['audit-check-Print-Old-Full']?.version" style="font-size:0.65rem; opacity:0.75; display:block; text-align:center;">v{{routeData['audit-check-Print-Old-Full'].version}} | {{routeData['audit-check-Print-Old-Full'].lastupdate}}</small>
+                  </p>
                 </a>
               </li>
             
@@ -200,14 +240,22 @@
               <li class="nav-item"  (click)="Onclick_menu('tsuruha_MappingInvoice') ">
                 <a class="nav-link"  [ngClass]='{active:page.Tsuruha_MappingInvoice}'>
                   <i class="fa fa-tags nav-icon"></i>
-                  <p>Map Invoice</p>
+                  <p>
+                    {{routeData['tsuruha-mappinginvoice']?.menubar || 'Map Invoice'}}
+                    <br>
+                    <small *ngIf="routeData['tsuruha-mappinginvoice']?.version" style="font-size:0.65rem; opacity:0.75; display:block; text-align:center;">v{{routeData['tsuruha-mappinginvoice'].version}} | {{routeData['tsuruha-mappinginvoice'].lastupdate}}</small>
+                  </p>
                 </a>
               </li>
 
               <li class="nav-item"  (click)="Onclick_menu('tsuruha_Orderdetail') ">
                 <a class="nav-link"  [ngClass]='{active:page.Tsuruha_Orderdetail}'>
                   <i class="fa fa-tags nav-icon"></i>
-                  <p>Report Tsuruha</p>
+                  <p>
+                    {{routeData['tsuruha-orderdetail']?.menubar || 'Report Tsuruha'}}
+                    <br>
+                    <small *ngIf="routeData['tsuruha-orderdetail']?.version" style="font-size:0.65rem; opacity:0.75; display:block; text-align:center;">v{{routeData['tsuruha-orderdetail'].version}} | {{routeData['tsuruha-orderdetail'].lastupdate}}</small>
+                  </p>
                 </a>
               </li>
               
@@ -229,40 +277,56 @@
               <li class="nav-item"  (click)="Onclick_menu('report_printordercancel') ">
                 <a class="nav-link"  [ngClass]='{active:page.report_printordercancel}'>
                   <i class="nav-icon fas fa-file-contract"></i>
-                  <p>Report Print OrderCancel</p>
+                  <p>
+                    {{routeData['report-printordercancel']?.menubar || 'Report Print OrderCancel'}}
+                    <br>
+                    <small *ngIf="routeData['report-printordercancel']?.version" style="font-size:0.65rem; opacity:0.75; display:block; text-align:center;">v{{routeData['report-printordercancel'].version}} | {{routeData['report-printordercancel'].lastupdate}}</small>
+                  </p>
                 </a>
               </li>
-              
+
             </ul>
 
             <ul class="nav nav-treeview">
               <li class="nav-item"  (click)="Onclick_menu('report_packinglist') ">
                 <a class="nav-link"  [ngClass]='{active:page.report_packinglist}'>
                   <i class="nav-icon fas fa-file-contract"></i>
-                  <p>Report Packing List</p>
+                  <p>
+                    {{routeData['report-packinglist']?.menubar || 'Report Packing List'}}
+                    <br>
+                    <small *ngIf="routeData['report-packinglist']?.version" style="font-size:0.65rem; opacity:0.75; display:block; text-align:center;">v{{routeData['report-packinglist'].version}} | {{routeData['report-packinglist'].lastupdate}}</small>
+                  </p>
                 </a>
               </li>
-              
+
             </ul>
 
             <ul class="nav nav-treeview">
               <li class="nav-item"  (click)="Onclick_menu('report_sorter') ">
                 <a class="nav-link"  [ngClass]='{active:page.report_sorter}'>
                   <i class="nav-icon fas fa-file-contract"></i>
-                  <p>Report Sorter</p>
+                  <p>
+                    {{routeData['report-sorter']?.menubar || 'Report Sorter'}}
+                    <br>
+                    <small *ngIf="routeData['report-sorter']?.version" style="font-size:0.65rem; opacity:0.75; display:block; text-align:center;">v{{routeData['report-sorter'].version}} | {{routeData['report-sorter'].lastupdate}}</small>
+                  </p>
                 </a>
               </li>
-              
+
             </ul>
 
             <ul class="nav nav-treeview">
               <li class="nav-item"  (click)="Onclick_menu('report_printwave') ">
                 <a class="nav-link"  [ngClass]='{active:page.report_printwave}'>
                   <i class="nav-icon fas fa-file-contract"></i>
-                  <p>Report Print Wave</p>
+                  <p>
+                    {{routeData['report-printWaveOrder']?.menubar || 'Report Print Wave'}}
+                    <br>
+                    <small *ngIf="routeData['report-printWaveOrder']?.version" style="font-size:0.65rem; opacity:0.75; display:block; text-align:center;">v{{routeData['report-printWaveOrder'].version}} | {{routeData['report-printWaveOrder'].lastupdate}}</small>
+                  </p>
                 </a>
               </li>
-              
+
             </ul>
             
           </li>
@@ -283,13 +347,21 @@
               <li class="nav-item"  (click)="Onclick_menu('scantracking') ">
                 <a class="nav-link"  [ngClass]='{active:page.outbound_Scantracking}'>
                   <i class="fa fa-tags nav-icon"></i>
-                  <p>Tracking Order</p>
+                  <p>
+                    {{routeData['Outbound-Sacn-Tracking']?.menubar || 'Tracking Order'}}
+                    <br>
+                    <small *ngIf="routeData['Outbound-Sacn-Tracking']?.version" style="font-size:0.65rem; opacity:0.75; display:block; text-align:center;">v{{routeData['Outbound-Sacn-Tracking'].version}} | {{routeData['Outbound-Sacn-Tracking'].lastupdate}}</small>
+                  </p>
                 </a>
               </li>
               <li class="nav-item"  (click)="Onclick_menu('routing') ">
                 <a class="nav-link"  [ngClass]='{active:page.outbound_Routing}'>
                   <i class="fas fa-truck-moving nav-icon"></i>
-                  <p>Outbount Routing</p>
+                  <p>
+                    {{routeData['Outbound-Routing']?.menubar || 'Outbound Routing'}}
+                    <br>
+                    <small *ngIf="routeData['Outbound-Routing']?.version" style="font-size:0.65rem; opacity:0.75; display:block; text-align:center;">v{{routeData['Outbound-Routing'].version}} | {{routeData['Outbound-Routing'].lastupdate}}</small>
+                  </p>
                 </a>
               </li>
               

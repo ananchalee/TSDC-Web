@@ -66,14 +66,19 @@ export class OutboundSignatureOrderCancelComponent implements OnInit {
     private dataService: DataService,
     //private timeService:TimeService,
     private router: Router,
-    private http: HttpClient
+    private http: HttpClient,
+    private activatedRoute: ActivatedRoute,
   ) { }
 
   ngOnInit(): void {
+    const d = this.activatedRoute.snapshot.data;
     var page = Array();
     let array = {
       pagename: 'Reports Print Order Cancel',
       active: 'Reports',
+      menubar: d['menubar'],
+      version: d['version'],
+      lastupdate: d['lastupdate'],
     }
     page.push(array)
     this.pageactive = page;

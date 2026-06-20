@@ -48,14 +48,19 @@ export class ReportPackingListComponent implements OnInit {
     private dataService: DataService,
     private timeService:TimeService,
     private router: Router,
+    private activatedRoute: ActivatedRoute,
   ) { }
 
-  
+
   ngOnInit(): void {
+    const d = this.activatedRoute.snapshot.data;
     var page = Array();
     let array = {
       pagename: 'Report Packing List',
       active: 'Reports',
+      menubar: d['menubar'],
+      version: d['version'],
+      lastupdate: d['lastupdate'],
     }
     page.push(array)
     this.pageactive = page;
