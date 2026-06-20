@@ -14,9 +14,6 @@ export class MenuComponent implements OnInit {
   USER: any = {}
   menu_Moniter:boolean = false;
   menu_User:boolean = true;
-  menubar: string = '';
-  version: string = '';
-  lastupdate: string = '';
   routeData: { [key: string]: any } = {};
 
   constructor(private router: Router,) { }
@@ -33,9 +30,6 @@ export class MenuComponent implements OnInit {
         this.routeData[r.path] = r.data;
       }
     });
-    const ac = this.routeData['audit-check'];
-    if (ac) { this.menubar = ac['menubar'] || ''; this.version = ac['version'] || ''; this.lastupdate = ac['lastupdate'] || ''; }
-
     if(!this.Pageactive){
 
     }else{
@@ -63,10 +57,6 @@ export class MenuComponent implements OnInit {
         this.menu_Moniter = true;
        }
       
-
-      this.menubar = this.Pageactive[0].menubar || '';
-      this.version = this.Pageactive[0].version || '';
-      this.lastupdate = this.Pageactive[0].lastupdate || '';
 
       switch (this.Pageactive[0].active ){
         

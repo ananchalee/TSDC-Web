@@ -138,9 +138,9 @@
                 <a class="nav-link" [ngClass]='{active:page.audit_CheckOrder}'>
                   <i class="fas fa-shopping-cart nav-icon"></i>
                   <p>
-                    {{menubar || 'Check Order'}}
+                    {{routeData['audit-check']?.menubar || 'Check Order'}}
                     <br>
-                    <small *ngIf="version" style="font-size:0.65rem; opacity:0.75; display:block; text-align:center;">v{{version}} | {{lastupdate}}</small>
+                    <small *ngIf="routeData['audit-check']?.version" style="font-size:0.65rem; opacity:0.75; display:block; text-align:center;">v{{routeData['audit-check']?.version}} | {{routeData['audit-check']?.lastupdate}}</small>
                   </p>
                 </a>
               </li>
