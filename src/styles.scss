@@ -1,29 +1,29 @@
 /* You can add global styles to this file, and also import other style files */
 
-/* Fixed header + sidebar, scrollable content only */
-.main-header {
-  position: fixed !important;
-  top: 0;
-  right: 0;
-  left: 0;
-  z-index: 1034;
-}
+///* Fixed header + sidebar, scrollable content only */
+//.main-header {
+//  position: fixed !important;
+//  top: 0;
+//  right: 0;
+//  left: 0;
+//  z-index: 1034;
+//}
 
-.main-sidebar {
-  position: fixed !important;
-  top: 0;
-  bottom: 0;
-  height: 100vh;
-  overflow-y: auto;
-}
+//.main-sidebar {
+//  position: fixed !important;
+//  top: 0;
+//  bottom: 0;
+//  height: 100vh;
+//  overflow-y: auto;
+//}
 
-.content-wrapper {
-  margin-top: 57px !important;
-  min-height: calc(100vh - 57px) !important;
-  overflow-y: auto;
-  height: calc(100vh - 57px);
-}
+//.content-wrapper {
+//  margin-top: 57px !important;
+//  min-height: calc(100vh - 57px) !important;
+//  overflow-y: auto;
+//  height: calc(100vh - 57px);
+//}
 
-.wrapper {
-  overflow: hidden;
-}
+//.wrapper {
+//  overflow: hidden;
+//}
