@@ -40,6 +40,12 @@ export class AuditCheckTrackingComponent implements OnInit {
 
   zones = ['Zone F1A', 'Zone F1B', 'Zone 2 CoolRoom', 'Zone 3A', 'Zone 3B', 'Zone 3C'];
 
+  // ธงกันไม่ให้ interval ที่ focus CONTAINER_ID แย่ง focus ตอน zone modal เปิดอยู่
+  isZoneModalOpen = false;
+
+  // อนุญาตให้ปิด modal Zone ได้เฉพาะตอนพิมพ์ใบ Cancel สำเร็จเท่านั้น (บังคับ flow: คลิกพื้นหลัง/ESC ปิดไม่ได้)
+  allowZoneModalClose = false;
+
   isLoading = false;
   pageactive: any;
 
@@ -680,7 +686,7 @@ ngOnDestroy(): void {
             jQuery(this.myModalBOX.nativeElement).modal('show');
           }
           
-          this.interval = setInterval(() => this.inputbox.nativeElement.focus(), 500);   
+          this.interval = setInterval(() => { if (!this.isZoneModalOpen) { this.inputbox.nativeElement.focus(); } }, 500);   
 
           this.check_size();
          
@@ -1341,16 +1347,23 @@ ngOnDestroy(): void {
         this.ButtonprintCancel = true;
         this.input.WARNING = 'ORDER CANCEL'
         this.insert_log();
+        // ล็อกช่อง CONTAINER_ID
+        this.isZoneModalOpen = true;
         Swal.fire({
           icon: 'warning',
           title: 'ORDER CANCEL !',
           html: 'Order ถูกยกเลิก !',
           showConfirmButton: true,
           backdrop: false,
+          allowOutsideClick: false,
+          allowEscapeKey: false,
           confirmButtonText: 'พิมพ์ใบ Cancel',
         }).then((result) => {
           if (result.isConfirmed) {
             this.selectZone();
+          } else {
+            // เผื่อกรณีถูกปิดด้วยวิธีอื่น ปลดล็อกช่อง input คืน
+            this.isZoneModalOpen = false;
           }
         });
         this, this.input.CONTAINER_ID = '';
@@ -2791,12 +2804,35 @@ ngOnDestroy(): void {
   }
 
   selectZone() {
-    jQuery(this.myModalZonePrint.nativeElement).one('shown.bs.modal', () => {
-      if (this.zoneSelect) {
-        this.zoneSelect.focus();
+    // ตั้งธงทันทีเพื่อหยุด interval ไม่ให้แย่ง focus ไปที่ CONTAINER_ID ในช่วง modal กำลังเปิด
+    this.isZoneModalOpen = true;
+    // ล็อก modal ไว้ก่อน ยังปิดไม่ได้จนกว่าจะพิมพ์สำเร็จ
+    this.allowZoneModalClose = false;
+
+    const modalEl = jQuery(this.myModalZonePrint.nativeElement);
+
+    // ใช้ off().one() กันไม่ให้ handler ซ้อนกันเวลาเปิด modal หลายรอบ
+    modalEl.off('shown.bs.modal').one('shown.bs.modal', () => {
+      setTimeout(() => {
+        if (this.zoneSelect) {
+          this.zoneSelect.focus();
+        }
+      });
+    });
+
+    // บังคับ flow: บล็อกการปิด modal ทุกทาง (คลิกพื้นหลัง/ESC/อื่นๆ) จนกว่า allowZoneModalClose = true
+    modalEl.off('hide.bs.modal').on('hide.bs.modal', (e: any) => {
+      if (!this.allowZoneModalClose) {
+        e.preventDefault();
       }
     });
-    jQuery(this.myModalZonePrint.nativeElement).modal('show');
+
+    // เมื่อ modal ปิดจริง (เกิดเฉพาะตอนพิมพ์สำเร็จ) ปลดธงเพื่อให้ interval กลับมาทำงานปกติ
+    modalEl.off('hidden.bs.modal').one('hidden.bs.modal', () => {
+      this.isZoneModalOpen = false;
+    });
+
+    modalEl.modal('show');
   }
 
   onZoneSelected() {
@@ -2822,6 +2858,8 @@ ngOnDestroy(): void {
     this.busy = this.dataService.pickcheck_print_ordercancel(this.input).subscribe(res => {
       var data: any = res
       if (data.status == "success") {
+        // ปลดล็อกก่อน เพื่อให้ modal ปิดได้ (ปกติถูกบล็อกโดย hide.bs.modal guard)
+        this.allowZoneModalClose = true;
         jQuery(this.myModalZonePrint.nativeElement).modal('hide');
 
         for (var i = 0; i < 1; i++) {
@@ -2843,6 +2881,17 @@ ngOnDestroy(): void {
         this.pagePrint = false
         this.pagePrintCancel = false;
 
+      }
+      else {
+        // print ไม่สำเร็จ: modal ยังเปิดค้างเพราะ backdrop static ผู้ใช้ยังกดยกเลิกได้
+        Swal.fire({
+          icon: 'error',
+          title: 'พิมพ์ใบ Cancel ไม่สำเร็จ',
+          html: 'กรุณาลองใหม่อีกครั้ง',
+          showConfirmButton: false,
+          timer: 2500
+        });
+        this.playAudioError();
       }
     });
   }
@@ -2932,7 +2981,7 @@ ngOnDestroy(): void {
             this.input.BOX_SIZE = ''
             jQuery(this.myModalBOX.nativeElement).modal('show');
 
-            this.interval = setInterval(() => this.inputbox.nativeElement.focus(), 500);
+            this.interval = setInterval(() => { if (!this.isZoneModalOpen) { this.inputbox.nativeElement.focus(); } }, 500);
             //this.inputbox.nativeElement.focus()
             //this.interval = setInterval(() => this.inputItem.nativeElement.focus(), 100000000);
 

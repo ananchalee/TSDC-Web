@@ -100,6 +100,7 @@
               <div class="col-10">
                 <input type="text" class="form-control" name="CONTAINER_ID" placeholder="SCAN CONTAINER_ID"
                        [(ngModel)]="input.CONTAINER_ID" (change)="check_warning_Order();" minlength="50" maxlength="50" required
+                       [disabled]="isZoneModalOpen"
                        #inputcontainer>
               </div>
             </div>
@@ -1152,7 +1153,7 @@
     </div>
   </div>
 
-  <div #myModalZonePrint class="modal fade" id="myModalZonePrint" role="dialog">
+  <div #myModalZonePrint class="modal fade" id="myModalZonePrint" role="dialog" data-backdrop="static" data-keyboard="false">
     <div class="modal-dialog modal-md">
       <br> <br> <br> <br> <br> <br>
       <div class="modal-content">
