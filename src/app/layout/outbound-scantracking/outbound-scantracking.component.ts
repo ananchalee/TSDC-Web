@@ -265,12 +265,15 @@ export class OutboundScantrackingComponent implements OnInit {
   }
 
   loadReport() {
-    if (!this.report_input.Pallet_NO) {
-      Swal.fire({ icon: 'warning', title: 'กรุณาระบุเลข Pallet', showConfirmButton: false, timer: 2000 });
+    this.report_list = [];
+    if (!this.report_input.Pallet_NO && !this.report_input.Tracking_No) {
+      Swal.fire({
+        icon: 'warning', title: 'กรุณาระบุ Pallet หรือ Tracking'
+        , showConfirmButton: false, timer: 2000
+      });
       return;
     }
     this.report_isLoading = true;
-    this.report_list = [];
     this.dataService.report_pallet_outbound(this.report_input).subscribe(res => {
       const data: any = res;
       this.report_isLoading = false;
@@ -288,7 +291,7 @@ export class OutboundScantrackingComponent implements OnInit {
   deleteReportItem(item: any) {
     Swal.fire({
       title: 'ต้องการลบ ' + item.BILL_NO + ' ใช่หรือไม่?',
-      html: 'Pallet: ' + item.PALLET_NO + ' | วันที่: ' + this.report_input.report_date,
+      html: 'Pallet: ' + item.PALLET_NO + ' | วันที่: ' + item.scandate,
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#d33',
@@ -300,7 +303,7 @@ export class OutboundScantrackingComponent implements OnInit {
         const payload = {
           Pallet_NO: item.PALLET_NO,
           BILL_NO: item.BILL_NO,
-          report_date: this.report_input.report_date
+          report_date: item.scandate
         };
         this.dataService.delete_report_pallet_outbound(payload).subscribe(res => {
           const data: any = res;

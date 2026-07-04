@@ -41,7 +41,7 @@ const routes: Routes = [
   },
   {
     path: 'audit-check-tracking', component: AuditCheckTrackingComponent,
-    data: { menubar: 'Audit Check Online B', version: '2.0.0', lastupdate: '2026-06-13' }
+    data: { menubar: 'Audit Check Online B', version: '2.0.1', lastupdate: '2026-07-04' }
   },
   {
     path: 'audit-check-fullcarton', component: AuditCheckFullcartonComponent,
@@ -61,7 +61,7 @@ const routes: Routes = [
   },
   {
     path: 'Outbound-Sacn-Tracking', component: OutboundScantrackingComponent,
-    data: { menubar: 'Tracking Order', version: '2.0.0', lastupdate: '2026-06-20' }
+    data: { menubar: 'Tracking Order', version: '2.1.0', lastupdate: '2026-07-04' }
   },
   {
     path: 'register-pack', component: RegisterPackComponent,

@@ -277,13 +277,23 @@
                           <div class="form-group">
                             <label>Pallet NO</label>
                             <input type="text" class="form-control" placeholder="เลข Pallet"
-                              [(ngModel)]="report_input.Pallet_NO" maxlength="4">
+                                   [(ngModel)]="report_input.Pallet_NO" maxlength="4"
+                                   (keyup.enter)="loadReport()">
                           </div>
                         </div>
                         <div class="col-md-3">
                           <div class="form-group">
                             <label>วันที่</label>
-                            <input type="date" class="form-control" [(ngModel)]="report_input.report_date">
+                            <input type="date" class="form-control" [(ngModel)]="report_input.report_date"
+                                   (keyup.enter)="loadReport()">
+                          </div>
+                        </div>
+                        <div class="col-md-3">
+                          <div class="form-group">
+                            <label>Tracking ID</label>
+                            <input type="text" class="form-control" placeholder="เลข Tracking"
+                                   [(ngModel)]="report_input.Tracking_No" 
+                                   (keyup.enter)="loadReport()">
                           </div>
                         </div>
                         <div class="col-md-2 d-flex align-items-end">
