@@ -1,6 +1,7 @@
 import { Component, OnInit ,ElementRef, ViewChild} from '@angular/core';
 import { DataService } from '../../services/index';
-import { Subscription,Subject } from 'rxjs';
+import { Subscription,Subject, forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import Swal from 'sweetalert2';
 import { DataTableDirective } from 'angular-datatables';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -13,7 +14,7 @@ import { Router, ActivatedRoute } from '@angular/router';
 export class OutboundScantrackingComponent implements OnInit {
   @ViewChild('inputTrack') inputTrack!: ElementRef;
   @ViewChild('inputPallet') inputPallet!: ElementRef;
-  @ViewChild('inputPin') inputPin!: ElementRef; 
+  @ViewChild('inputPin') inputPin!: ElementRef;
 
   @ViewChild(DataTableDirective, { static: false })
   dtElement!: DataTableDirective;
@@ -62,6 +63,7 @@ export class OutboundScantrackingComponent implements OnInit {
   report_list: any[] = [];
   report_input: any = {};
   report_isLoading = false;
+  report_allChecked = false;
 
   constructor(
     private dataService: DataService,
@@ -264,8 +266,12 @@ export class OutboundScantrackingComponent implements OnInit {
     this.activeTab = tab;
   }
 
+  // key ที่ใช้กันซ้ำ/อ้างอิงรายการในลิสต์
+  reportKey(item: any): string {
+    return (item?.PALLET_NO ?? '') + '|' + (item?.BILL_NO ?? '');
+  }
+
   loadReport() {
-    this.report_list = [];
     if (!this.report_input.Pallet_NO && !this.report_input.Tracking_No) {
       Swal.fire({
         icon: 'warning', title: 'กรุณาระบุ Pallet หรือ Tracking'
@@ -277,14 +283,141 @@ export class OutboundScantrackingComponent implements OnInit {
     this.dataService.report_pallet_outbound(this.report_input).subscribe(res => {
       const data: any = res;
       this.report_isLoading = false;
+      // ได้ response แล้ว -> เคลียช่อง Tracking เพื่อพร้อมสแกนรายการถัดไป
+      this.report_input.Tracking_No = '';
       if (data.status === 'error') {
         Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', showConfirmButton: false, timer: 2500 });
-      } else if (data.status === 'null') {
-        this.report_list = [];
+        this.playAudioError();
+      } else if (data.status === 'null' || !data.data || data.data.length === 0) {
+        // ไม่พบ -> แจ้งเตือน แต่ไม่ล้างรายการอื่น ๆ ที่สะสมไว้
         Swal.fire({ icon: 'warning', title: 'ไม่พบข้อมูล', showConfirmButton: false, timer: 2000 });
+        this.playAudioError();
       } else {
-        this.report_list = data.data;
+        // สะสมรายการที่ค้นหาได้ (กันซ้ำด้วย key = Pallet|Tracking)
+        let added = 0;
+        let dup = 0;
+        for (const row of data.data) {
+          const exists = this.report_list.some(x => this.reportKey(x) === this.reportKey(row));
+          if (exists) { dup++; continue; }
+          row._checked = false;
+          this.report_list.unshift(row);
+          added++;
+        }
+        this.syncReportAllChecked();
+        if (added === 0 && dup > 0) {
+          Swal.fire({ icon: 'info', title: 'รายการนี้อยู่ในลิสต์แล้ว', showConfirmButton: false, timer: 1800 });
+        }
       }
+    });
+  }
+
+  // จำนวนรายการที่เลือกไว้
+  get reportSelectedCount(): number {
+    return this.report_list.filter(i => i._checked).length;
+  }
+
+  // จำนวนรายการที่ลบได้ (ขนส่งยังไม่เซ็นรับ)
+  get reportDeletableCount(): number {
+    return this.report_list.filter(i => i.STATUS_DELIVERY !== 'S').length;
+  }
+
+  // ติ๊กทั้งหมด / ยกเลิกติ๊กทั้งหมด (เฉพาะรายการที่ลบได้)
+  toggleAllReport() {
+    this.report_list.forEach(i => {
+      if (i.STATUS_DELIVERY !== 'S') { i._checked = this.report_allChecked; }
+    });
+  }
+
+  // ปรับสถานะ check all ให้ตรงกับรายการปัจจุบัน
+  syncReportAllChecked() {
+    const deletable = this.report_list.filter(i => i.STATUS_DELIVERY !== 'S');
+    this.report_allChecked = deletable.length > 0 && deletable.every(i => i._checked);
+  }
+
+  // ปุ่มเคลียรายการที่ค้นหาออกทั้งหมด
+  clearReportList() {
+    if (this.report_list.length === 0) { return; }
+    Swal.fire({
+      title: 'ล้างรายการที่ค้นหาทั้งหมด?',
+      html: 'มีทั้งหมด ' + this.report_list.length + ' รายการ',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#6c757d',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'ล้างรายการ',
+      cancelButtonText: 'ยกเลิก'
+    }).then(result => {
+      if (result.value) {
+        this.report_list = [];
+        this.report_allChecked = false;
+      }
+    });
+  }
+
+  // ลบรายการที่ติ๊กไว้พร้อมกันในครั้งเดียว
+  deleteSelectedReport() {
+    const selected = this.report_list.filter(i => i._checked && i.STATUS_DELIVERY !== 'S');
+    if (selected.length === 0) {
+      Swal.fire({ icon: 'warning', title: 'กรุณาเลือกรายการที่จะลบ', showConfirmButton: false, timer: 1800 });
+      return;
+    }
+
+    const listHtml = selected
+      .slice(0, 10)
+      .map(i => i.BILL_NO + ' (Pallet ' + i.PALLET_NO + ')')
+      .join('<br>') + (selected.length > 10 ? '<br>...' : '');
+
+    Swal.fire({
+      title: 'ยืนยันลบ ' + selected.length + ' รายการ?',
+      html: 'รายการที่จะลบ:<br>' + listHtml,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'ลบ ' + selected.length + ' รายการ',
+      cancelButtonText: 'ยกเลิก'
+    }).then(result => {
+      if (!result.value) { return; }
+
+      this.report_isLoading = true;
+      const calls = selected.map(item =>
+        this.dataService.delete_report_pallet_outbound({
+          Pallet_NO: item.PALLET_NO,
+          BILL_NO: item.BILL_NO,
+          report_date: item.scandate
+        }).pipe(catchError(() => of({ status: 'error' })))
+      );
+
+      forkJoin(calls).subscribe((results: any[]) => {
+        this.report_isLoading = false;
+        let success = 0;
+        let fail = 0;
+        const deletedKeys = new Set<string>();
+
+        results.forEach((r: any, idx: number) => {
+          if (r && r.status !== 'error') {
+            success++;
+            deletedKeys.add(this.reportKey(selected[idx]));
+          } else {
+            fail++;
+          }
+        });
+
+        // เอารายการที่ลบสำเร็จออกจากลิสต์
+        this.report_list = this.report_list.filter(i => !deletedKeys.has(this.reportKey(i)));
+        this.syncReportAllChecked();
+
+        if (fail === 0) {
+          Swal.fire({ icon: 'success', title: 'ลบสำเร็จ ' + success + ' รายการ', showConfirmButton: false, timer: 1800 });
+        } else {
+          Swal.fire({
+            icon: 'warning',
+            title: 'ลบเสร็จสิ้น',
+            html: 'สำเร็จ ' + success + ' รายการ<br>ไม่สำเร็จ ' + fail + ' รายการ',
+            showConfirmButton: true
+          });
+        }
+      });
     });
   }
 
@@ -310,9 +443,10 @@ export class OutboundScantrackingComponent implements OnInit {
           if (data.status === 'error') {
             Swal.fire({ icon: 'error', title: 'ลบไม่สำเร็จ', showConfirmButton: false, timer: 2500 });
           } else {
-            Swal.fire({ icon: 'success', title: 'ลบสำเร็จ', showConfirmButton: false, timer: 1500 }).then(() => {
-              this.loadReport();
-            });
+            // ลบสำเร็จ -> เอาออกจากลิสต์ที่สะสมไว้โดยตรง (ไม่ค้นหาใหม่)
+            this.report_list = this.report_list.filter(i => this.reportKey(i) !== this.reportKey(item));
+            this.syncReportAllChecked();
+            Swal.fire({ icon: 'success', title: 'ลบสำเร็จ', showConfirmButton: false, timer: 1500 });
           }
         });
       }
