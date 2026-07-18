@@ -46,7 +46,9 @@ export class OutboundScantrackingComponent implements OnInit {
   item_id: any = {};
 
   transport: any = {};
-  
+  transportNames: string[] = [];
+  selectedTransport: string | null = null;
+
   checkscan: any = [];
   
   public pagePrint = true;
@@ -143,8 +145,8 @@ export class OutboundScantrackingComponent implements OnInit {
 
   Get_TRANSPORTATION_NAME(){
     var resp = false;
-    this.dataService.Get_TRANSPORTATION_NAME().subscribe(res => {
-      if (this.user.status === 'error') {
+    this.dataService.Get_TRANSPORTATION_NAME().subscribe((res: any) => {
+      if (res && res.status === 'error') {
         console.log(res)
         Swal.fire({
           icon: 'error',
@@ -153,7 +155,7 @@ export class OutboundScantrackingComponent implements OnInit {
           showConfirmButton: false,
           timer: 2500
         });
-      }else if (this.user.status === 'NULL') {
+      }else if (res && res.status === 'NULL') {
         Swal.fire({
           icon: 'warning',
           title: 'ไม่พบข้อมูล TRANSPORTATION_NAME  !',
@@ -163,6 +165,7 @@ export class OutboundScantrackingComponent implements OnInit {
         });
       }else{
         this.transport = res;
+        this.buildTransportNames();
         resp = true;
       }
     })
@@ -170,26 +173,47 @@ export class OutboundScantrackingComponent implements OnInit {
     return resp;
   }
 
+  // สร้างรายชื่อขนส่งแบบไม่ซ้ำ (case-insensitive) สำหรับให้ผู้ใช้คลิกเลือก
+  buildTransportNames() {
+    const seen = new Set<string>();
+    const names: string[] = [];
+    const list = (this.transport && this.transport.data) ? this.transport.data : [];
+    for (const t of list) {
+      const name = (t.TRANSPORT_NAME || '').trim();
+      if (!name) { continue; }
+      const key = name.toUpperCase();
+      if (seen.has(key)) { continue; }
+      seen.add(key);
+      names.push(name);
+    }
+    names.sort((a, b) => a.localeCompare(b));
+    this.transportNames = names;
+  }
+
+  // ผู้ใช้คลิกเลือกขนส่งก่อนสแกน แล้วโฟกัสไปช่อง Pallet
+  selectTransport(name: string) {
+    // 1 Pallet = 1 ขนส่ง: ถ้า Pallet ปัจจุบันมีรายการอยู่แล้ว ห้ามเปลี่ยนขนส่ง (กันปนกัน)
+    if (this.selectedTransport && name !== this.selectedTransport
+        && this.showdataPage && this.data && this.data.length > 0) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Pallet นี้มีรายการอยู่แล้ว',
+        html: 'Pallet <b>' + this.input.Pallet_NO + '</b> มี ' + this.data.length + ' รายการ (' + this.selectedTransport + ')<br>' +
+              'ถ้าต้องการเปลี่ยนขนส่ง กรุณาใช้ <b>Pallet ใหม่</b> หรือ <b>ลบรายการใน Pallet นี้ออกก่อน</b> เพื่อไม่ให้ขนส่งปนกัน',
+        showConfirmButton: true
+      });
+      this.playAudioError();
+      return;
+    }
+    this.selectedTransport = name;
+    setTimeout(() => { this.inputPallet?.nativeElement.focus(); }, 200);
+  }
+
   // Function to get the transport name based on the input string
- getTransportName(input : string) {
-  console.log(this.transport);
-  if(this.transport.data == null){
-    var status_ =  this.Get_TRANSPORTATION_NAME()
-
-    if(status_){
-
-      // Loop through the data to find a match
-      for (let i = 0; i < this.transport.data.length; i++) {
-        // Extract the first `TRANSPORT_LEN` characters from the input
-        const transportCodePrefix = input.substring(0, this.transport.data[i].TRANSPORT_LEN);
-        // Check if the transport code prefix matches
-        if (transportCodePrefix.toUpperCase() == this.transport.data[i].TRANSPORT_CODE.toUpperCase()) {
-          return this.transport.data[i].TRANSPORT_NAME;
-          
-        }
-      }
-
-    }else{
+  // ใช้ longest-prefix match: เลือก code ที่ยาว/เจาะจงที่สุด (แก้ปัญหา TH2/TH7 ถูกจับเป็น TH)
+  getTransportName(input: string) {
+    if (!this.transport || this.transport.data == null) {
+      this.Get_TRANSPORTATION_NAME();
       Swal.fire({
         icon: 'warning',
         title: 'Load Master Unsuccress!',
@@ -197,22 +221,24 @@ export class OutboundScantrackingComponent implements OnInit {
         showConfirmButton: false,
         timer: 2500
       });
+      return null;
     }
-   
-  }else{
 
-      // Loop through the data to find a match
-      for (let i = 0; i < this.transport.data.length; i++) {
-        // Extract the first `TRANSPORT_LEN` characters from the input
-        const transportCodePrefix = input.substring(0, this.transport.data[i].TRANSPORT_LEN);
-        // Check if the transport code prefix matches
-        if (transportCodePrefix.toUpperCase() == this.transport.data[i].TRANSPORT_CODE.toUpperCase()) {
-          return this.transport.data[i].TRANSPORT_NAME;
-          
+    const code = (input || '').toUpperCase();
+    let best: any = null;
+
+    for (const t of this.transport.data) {
+      const transportCode = (t.TRANSPORT_CODE || '').toUpperCase();
+      const prefix = code.substring(0, t.TRANSPORT_LEN);
+      // prefix ต้องตรงกับ code และความยาวเท่ากับ code จริง (กันข้อมูล LEN เพี้ยน เช่น BFO/TIGER LEN=10)
+      if (prefix === transportCode && prefix.length === transportCode.length) {
+        if (best == null || t.TRANSPORT_LEN > best.TRANSPORT_LEN) {
+          best = t;
         }
       }
-  }
-  return null;  // Return null if no match is found
+    }
+
+    return best ? best.TRANSPORT_NAME : null;
   }
 
   tablecheck_user() {
@@ -655,6 +681,18 @@ export class OutboundScantrackingComponent implements OnInit {
       var transport_name =  this.getTransportName(this.input.TRACK_CODE)
 
       if(transport_name != null){
+        // ตรวจสอบว่าขนส่งของ Track ตรงกับที่เลือกไว้หรือไม่ (prefix ต้องตรงกับขนส่งที่เลือก)
+        if (this.selectedTransport && transport_name.toString().trim().toUpperCase() !== this.selectedTransport.trim().toUpperCase()) {
+          Swal.fire({
+            icon: 'warning',
+            title: 'ขนส่งไม่ตรงกับที่เลือก',
+            html: 'เลือกไว้: <b>' + this.selectedTransport + '</b><br>Track นี้เป็น: <b>' + transport_name + '</b><br>' + this.input.TRACK_CODE,
+            showConfirmButton: true
+          });
+          this.playAudioError();
+          this.input.TRACK_CODE = '';
+          return;
+        }
         this.input.SHIP_PROVIDER_OOD = transport_name
         this.input.PIN_ID = this.input.USER_NAME
         this.input.INTERNAL_ID = this.input.PIN_CODE
@@ -893,6 +931,18 @@ export class OutboundScantrackingComponent implements OnInit {
       var transport_name =  this.getTransportName(this.input.TRACK_CODE)
 
       if(transport_name != null){
+        // ตรวจสอบว่าขนส่งของ Track ตรงกับที่เลือกไว้หรือไม่ (prefix ต้องตรงกับขนส่งที่เลือก)
+        if (this.selectedTransport && transport_name.toString().trim().toUpperCase() !== this.selectedTransport.trim().toUpperCase()) {
+          Swal.fire({
+            icon: 'warning',
+            title: 'ขนส่งไม่ตรงกับที่เลือก',
+            html: 'เลือกไว้: <b>' + this.selectedTransport + '</b><br>Track นี้เป็น: <b>' + transport_name + '</b><br>' + this.input.TRACK_CODE,
+            showConfirmButton: true
+          });
+          this.playAudioError();
+          this.input.TRACK_CODE = '';
+          return;
+        }
         this.input.SHIP_PROVIDER_OOD = transport_name
         this.input.PIN_ID = this.input.USER_NAME
         this.input.INTERNAL_ID = this.input.PIN_CODE

@@ -55,7 +55,7 @@
                     <div class="col-1"> 
 
                       <button type="button" class="btn btn-info btn-sm float-left" (click)="Get_TRANSPORTATION_NAME()" >
-                        Master <i class="fas fa-sync-alt"></i> 
+                        รีโหลดขนส่ง <i class="fas fa-sync-alt"></i> 
                       </button>
                       
                     </div>
@@ -69,10 +69,32 @@
                       </div>
       
                       <div class="form-group row">
+                        <label class="col-2 col-form-label">เลือกขนส่ง</label>
+                        <div class="col-10">
+                          <div>
+                            <button *ngFor="let name of transportNames" type="button"
+                                    class="btn btn-sm mr-2 mb-2"
+                                    [class.btn-primary]="selectedTransport === name"
+                                    [class.btn-outline-secondary]="selectedTransport !== name"
+                                    (click)="selectTransport(name)">
+                              {{name}}
+                            </button>
+                          </div>
+                          <small *ngIf="!selectedTransport" class="text-danger">
+                            * กรุณาเลือกขนส่งก่อน จึงจะระบุ Pallet / Tracking ได้
+                          </small>
+                          <small *ngIf="selectedTransport" class="text-success">
+                            เลือกขนส่ง: <b>{{selectedTransport}}</b>
+                          </small>
+                        </div>
+                      </div>
+
+                      <div class="form-group row">
                         <label for="Pallet NO" class="col-2 col-form-label">Pallet NO </label>
                         <div class="col-10">
                           <input type="text" class="form-control" name="Pallet_NO" placeholder="เลขพาเลทไม่สามารถใช้ซ้ำได้ภายในวัน"
                             [(ngModel)]="input.Pallet_NO" (keyup.enter)="check_Pallet();" minlength="1" maxlength="4" required
+                            [disabled]="!selectedTransport"
                             #inputPallet>
                         </div>
                       </div>
@@ -82,6 +104,7 @@
                         <div class="col-10">
                           <input type="text" class="form-control" name="Tracking" placeholder="SCAN เลข Tracking Order"
                             [(ngModel)]="input.TRACK_CODE" (keyup.enter)="check_Tracking();" minlength="10" maxlength="30" required
+                            [disabled]="!selectedTransport"
                             #inputTrack>
                         </div>
                       </div>
@@ -91,6 +114,7 @@
                         <div class="col-10">
                           <input type="text" class="form-control is-invalid" name="Tracking2" placeholder="เลข Tracking Order(ยิงซ้ำบวกเพิ่ม)"
                             [(ngModel)]="input.TRACK_CODE" (keyup.enter)="check_Tracking2();" minlength="10" maxlength="30" required
+                            [disabled]="!selectedTransport"
                             #inputTrack>
                         </div>
                       </div>

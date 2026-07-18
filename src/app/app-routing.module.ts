@@ -61,7 +61,7 @@ const routes: Routes = [
   },
   {
     path: 'Outbound-Sacn-Tracking', component: OutboundScantrackingComponent,
-    data: { menubar: 'Tracking Order', version: '2.1.0', lastupdate: '2026-07-04' }
+    data: { menubar: 'Tracking Order', version: '2.2.0', lastupdate: '2026-07-18' }
   },
   {
     path: 'register-pack', component: RegisterPackComponent,
