@@ -156,6 +156,7 @@ showRecordingFinished(fileName: string) {
   input: any = {};
   btn: any = {};
   dataprint_LIST_ITEM: any = [];
+  printTimeShow: any = '';   
   interval: any;
   user: any;
   box_size: any = [];
@@ -2606,6 +2607,8 @@ ngOnDestroy(): void {
   }
 
   async printTracking() {
+    this.printTimeShow = this.timeService.getNow();   // เซ็ตเวลาก่อนพิมพ์
+    await new Promise(f => setTimeout(f, 0));          // ให้ Angular render เวลาใหม่ลง DOM ก่อนสั่งพิมพ์
     await window.print();
     await new Promise(f => setTimeout(f, 1000));
     this.scanCon();

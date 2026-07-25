@@ -77,6 +77,7 @@ export class AuditCheckComponent implements OnInit {
   input: any = {};
   btn: any = {};
   dataprint_LIST_ITEM: any = [];
+  printTimeShow: any = '';   // เวลาที่สั่งพิมพ์ (ใช้ debug อาการค้างที่ printer buffer)
   interval: any;
   user: any;
   box_size: any = [];
@@ -1661,6 +1662,8 @@ console.log(this.input.check_QTY_PICK,this.res_QTY_equal,this.Status_Print_Track
   }
 
   async printTracking() {
+    this.printTimeShow = this.timeService.getNow();   // เซ็ตเวลาก่อนพิมพ์
+    await new Promise(f => setTimeout(f, 0));          // ให้ Angular render เวลาใหม่ลง DOM ก่อนสั่งพิมพ์
     await window.print();
     await new Promise(f => setTimeout(f, 1000));
     this.scanCon();

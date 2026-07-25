@@ -478,16 +478,16 @@
 
   </div>
 
-  <div class="container-fluid" [hidden]="pagePrintTrack">
+  <div class="container-fluid" *ngIf="!pagePrintTrack">
     <div style="page-break-after: always" class="page" *ngFor="let list of dataprint ;let i = index;">
       <div class="row ">
         <div class="col-3">
           <font size="4">
-            Tracking No :
+            Tracking No
           </font>
         </div>
         <div class="col-9">
-          <ngx-barcode6 [bc-element-type]="'svg'" [bc-format]="'CODE128'" [bc-text-position]="'button'" [bc-width]="2"
+          <ngx-barcode6 [bc-element-type]="'img'" [bc-format]="'CODE128'" [bc-text-position]="'button'" [bc-width]="2"
                         [bc-height]="50" [bc-font-size]="15" [bc-value]="list.REF_INDEX" [bc-display-value]="true">
           </ngx-barcode6>
         </div>
@@ -497,7 +497,7 @@
       <div class="row ">
         <div class="col-3">
           <font size="4">
-            Box Size :
+            Box Size
           </font>
         </div>
         <div class="col-9">
@@ -512,7 +512,7 @@
       <div class="row ">
         <div class="col-3">
           <font size="4">
-            Shipping Name :
+            Shipping Name
           </font>
         </div>
         <div class="col-9">
@@ -528,7 +528,7 @@
 
         <div class="col-3">
           <font size="4">
-            Channel :
+            Channel
           </font>
         </div>
         <div class="col-2">
@@ -541,7 +541,7 @@
 
         <div class="col-2">
           <font size="4">
-            Seller :
+            Seller
           </font>
         </div>
         <div>
@@ -558,7 +558,7 @@
 
         <div class="col-3">
           <font size="4">
-            Company :
+            Company
           </font>
         </div>
         <div class="col-2">
@@ -571,7 +571,7 @@
 
         <div class="col-3">
           <font size="4">
-            Order Date :
+            Order Date
           </font>
         </div>
         <div>
@@ -587,7 +587,7 @@
 
         <div class="col-3">
           <font size="4">
-            Table Check :
+            Table Check
           </font>
         </div>
         <div class="col-2">
@@ -600,7 +600,7 @@
 
         <div class="col-2">
           <font size="4">
-            Box No :
+            Box No
           </font>
         </div>
         <div>
@@ -630,13 +630,19 @@
       <div class="row ">
         <div class="col-3">
           <font size="4">
-            Shipment :
+            Shipment
           </font>
         </div>
         <div class="col-9">
-          <ngx-barcode6 [bc-element-type]="'svg'" [bc-format]="'CODE128'" [bc-text-position]="'button'" [bc-width]="2"
+          <ngx-barcode6 [bc-element-type]="'img'" [bc-format]="'CODE128'" [bc-text-position]="'button'" [bc-width]="2"
                         [bc-height]="40" [bc-font-size]="15" [bc-value]="list.SHIPMENT_ID" [bc-display-value]="true">
           </ngx-barcode6>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-12" style="text-align:left; font-size:12px; color:#555;">
+          Print: {{printTimeShow}}
         </div>
       </div>
 
@@ -644,7 +650,7 @@
   </div>
 
 
-  <div class="container-fluid" [hidden]="pagePrintTrackAll">
+  <div class="container-fluid" *ngIf="!pagePrintTrackAll">
     <div style="page-break-after: always" class="page" *ngFor="let list of dataprint ;let i = index;">
       <div class="row ">
         <div class="col-3">
@@ -653,7 +659,7 @@
           </font>
         </div>
         <div class="col-9">
-          <ngx-barcode6 [bc-element-type]="'svg'" [bc-format]="'CODE128'" [bc-text-position]="'button'" [bc-width]="2"
+          <ngx-barcode6 [bc-element-type]="'img'" [bc-format]="'CODE128'" [bc-text-position]="'button'" [bc-width]="2"
                         [bc-height]="50" [bc-font-size]="15" [bc-value]="list.REF_INDEX" [bc-display-value]="true">
           </ngx-barcode6>
         </div>
@@ -813,9 +819,15 @@
           </font>
         </div>
         <div class="col-9">
-          <ngx-barcode6 [bc-element-type]="'svg'" [bc-format]="'CODE128'" [bc-text-position]="'button'" [bc-width]="2"
+          <ngx-barcode6 [bc-element-type]="'img'" [bc-format]="'CODE128'" [bc-text-position]="'button'" [bc-width]="2"
                         [bc-height]="40" [bc-font-size]="15" [bc-value]="list.SHIPMENT_ID" [bc-display-value]="true">
           </ngx-barcode6>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-12" style="text-align:left; font-size:12px; color:#555;">
+          Print: {{printTimeShow}}
         </div>
       </div>
 
@@ -823,7 +835,7 @@
   </div>
 
 
-  <div class="container-fluid" [hidden]="pagePrintCoverSheet">
+  <div class="container-fluid" *ngIf="!pagePrintCoverSheet">
     <div style="page-break-after: always" class="page" *ngFor="let list of dataprintCoverSheet;let i = index;">
       <div class="row ">
         <div class="col" align="center">
@@ -866,7 +878,7 @@
         </div>
 
         <div class="col" align="center">
-          <ngx-barcode6 [bc-element-type]="'svg'" [bc-format]="'CODE128'" [bc-text-position]="'button'" [bc-width]="1"
+          <ngx-barcode6 [bc-element-type]="'img'" [bc-format]="'CODE128'" [bc-text-position]="'button'" [bc-width]="1"
                         [bc-height]="43" [bc-font-size]="15" [bc-value]="list.BILL_NO" [bc-display-value]="true">
           </ngx-barcode6>
 
@@ -1066,7 +1078,7 @@
     </div>
   </div>
 
-  <div class="container-fluid" [hidden]="pagePrintCancel">
+  <div class="container-fluid" *ngIf="!pagePrintCancel">
     <div style="page-break-after: always" class="page" *ngFor="let list of dataprintcancel ; let i = index;">
       <div class="row">
         <div class="col-3">
@@ -1075,7 +1087,7 @@
           </font>
         </div>
         <div class="col-8">
-          <ngx-barcode6 [bc-element-type]="'svg'" [bc-format]="'CODE128'" [bc-text-position]="'button'" [bc-width]="2"
+          <ngx-barcode6 [bc-element-type]="'img'" [bc-format]="'CODE128'" [bc-text-position]="'button'" [bc-width]="2"
                         [bc-height]="40" [bc-font-size]="15" [bc-value]="list.SHIPMENT_ID" [bc-display-value]="true">
           </ngx-barcode6>
         </div>
@@ -1137,6 +1149,7 @@
         <div class="col-5"></div>
         <div class="col-7">
           <qrcode [qrdata]="list.SHIPMENT_ID"
+                  [elementType]="'img'"
                   [width]="80"
                   [errorCorrectionLevel]="'M'">
           </qrcode>

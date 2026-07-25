@@ -65,4 +65,11 @@ hr.style19 {
     opacity: 0.2;
     pointer-events: none; /* ไม่ให้สามารถคลิกได้ */
 }
+
+@media print {
+  /* ยกเลิก page-break หลังใบสุดท้าย กันหน้าเปล่าติดมา */
+  .page:last-child {
+    page-break-after: auto !important;
+  }
+}
  
