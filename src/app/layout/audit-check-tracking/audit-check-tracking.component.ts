@@ -1347,6 +1347,12 @@ ngOnDestroy(): void {
         this.alertcancel = true;
         this.ButtonprintCancel = true;
         this.input.WARNING = 'ORDER CANCEL'
+        this.input.SHIPPING_NAME = ordercancel.data[0].SHIPPING_NAME,
+        this.input.TCHANNEL = ordercancel.data[0].TCHANNEL,
+        this.input.SELLER_NO = ordercancel.data[0].SELLER_NO,
+        this.input.COMPANY = ordercancel.data[0].COMPANY,
+        this.input.ORDER_DATE = ordercancel.data[0].ORDER_DATE,
+
         this.insert_log();
         // ล็อกช่อง CONTAINER_ID
         this.isZoneModalOpen = true;
@@ -1367,7 +1373,6 @@ ngOnDestroy(): void {
             this.isZoneModalOpen = false;
           }
         });
-        this, this.input.CONTAINER_ID = '';
 
       } else {
 
@@ -2847,6 +2852,7 @@ ngOnDestroy(): void {
   }
 
   printcancel() {
+    console.log('printcancel', this.input)
     var a = Array();
     if (this.input.TABLE_CHECK == null || this.input.TABLE_CHECK == undefined) {
       Swal.fire({

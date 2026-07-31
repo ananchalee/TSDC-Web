@@ -37,11 +37,11 @@ const routes: Routes = [
   },
   {
     path: 'audit-check', component: AuditCheckComponent,
-    data: { menubar: 'Audit Check Online A', version: '2.0.0', lastupdate: '2026-03-29' }
+    data: { menubar: 'Audit Check Online A', version: '2.0.0', lastupdate: '2026-07-31' }
   },
   {
     path: 'audit-check-tracking', component: AuditCheckTrackingComponent,
-    data: { menubar: 'Audit Check Online B', version: '2.0.1', lastupdate: '2026-07-04' }
+    data: { menubar: 'Audit Check Online B', version: '2.0.1', lastupdate: '2026-07-31' }
   },
   {
     path: 'audit-check-fullcarton', component: AuditCheckFullcartonComponent,
@@ -53,7 +53,7 @@ const routes: Routes = [
   },
   {
     path: 'audit-check-Print-Old', component: AuditCheckPrintOldComponent,
-    data: { menubar: 'Audit Check Offline A', version: '1.0.0', lastupdate: '2026-01-01' }
+    data: { menubar: 'Audit Check Offline A', version: '1.0.0', lastupdate: '2026-07-31' }
   },
   {
     path: 'audit-check-Print-Old-Full', component: AuditCheckPrintOldFullComponent,

@@ -1144,6 +1144,36 @@
           <font size="4"><b> {{ list.ORDER_DATE }}</b></font>
         </div>
       </div>
+      <div class="row">
+        <div class="col-3">
+          <font size="4">
+            Zone:
+          </font>
+        </div>
+        <div class="col-2">
+          <font size="4"><b>{{ list.Zone }}</b></font>
+        </div>
+
+        <div class="col-3">
+          <font size="4">
+            Table:
+          </font>
+        </div>
+        <div>
+          <font size="4"><b> {{ list.Table }}</b></font>
+        </div>
+      </div>
+      <div class="row mt-1">
+        <div class="col-4"> <font size="2">version B.02 </font> </div>
+        <div class="col-8 text-left">
+          <font size="4">
+            Print Date :
+            <b>
+              {{ list.PRINT_DATE | date:'dd/MM/yyyy HH:mm' }}
+            </b>
+          </font>
+        </div>
+      </div>
 
       <div class="row">
         <div class="col-5"></div>

@@ -36,7 +36,8 @@ export class AuditCheckPrintOldComponent implements OnInit {
   
 
   isLoading = false;
-  
+  isCoverSheetRunning = false; 
+
   pageactive: any;
 
   dtOptions: any = {};
@@ -1722,14 +1723,17 @@ summaryConCheckPrint() {
 }
 
 coverSheet2() { //// ใบปะกล่อง
-  
+
+  if (this.isCoverSheetRunning) { return; } //// กำลังทำงานอยู่ ไม่ให้กดซ้ำ
+
   this.input.listbox = this.totalbox;
   console.log(this.input);
   if(this.input.listbox.length > 0){
 
     //this.pagePrintCoverSheet = false;
     //this.pagePrint = false;
-    this.isLoading = true; 
+    this.isCoverSheetRunning = true;
+    this.isLoading = true;
 
     this.dataService.UPDATE_CARTON_PRINT(this.input).subscribe(res => {
       var data: any = res
@@ -1741,7 +1745,7 @@ coverSheet2() { //// ใบปะกล่อง
           showConfirmButton: false,
           timer: 2500
         });
-        this.isLoading = false;
+        this.endCoverSheet();
       }else{
         this.dataService.loaddataToOut(this.input).subscribe(res => {
           var data: any = res
@@ -1753,6 +1757,7 @@ coverSheet2() { //// ใบปะกล่อง
               showConfirmButton: false,
               timer: 2500
             });
+            this.endCoverSheet();
           }else if (data.status === 'null') {
             Swal.fire({
               icon: 'error',
@@ -1764,13 +1769,14 @@ coverSheet2() { //// ใบปะกล่อง
             this.input.BILL_N8_BLH = '';
             this.input.CHUTENO = '';
             this.input.BOX_QTY = '';
-    
+            this.endCoverSheet();
+
           }else{
-  
+
            this.busy = this.dataService.tracking_running_Old2(this.input).subscribe(res => {
             var datatrack: any = res
             console.log(datatrack);
-  
+
             if(datatrack.status == 'success'){
               var a = Array();
               for (var i = 0; i < datatrack.data.length; i++) {
@@ -1817,13 +1823,14 @@ coverSheet2() { //// ใบปะกล่อง
                 timer: 5500
               });
             }
+            this.endCoverSheet();
             jQuery(this.myModalBOX.nativeElement).modal('hide');
-            setTimeout(() => { this.focusInput_item(); }, 1500) 
-            });
+            setTimeout(() => { this.focusInput_item(); }, 1500)
+            }, err => { console.log(err); this.endCoverSheet(); });
           }
-        });
+        }, err => { console.log(err); this.endCoverSheet(); });
       }
-    });
+    }, err => { console.log(err); this.endCoverSheet(); });
   }else{
     Swal.fire({
       icon: 'warning',
@@ -1832,6 +1839,12 @@ coverSheet2() { //// ใบปะกล่อง
       timer: 2500
     });
   }
+}
+
+endCoverSheet() {
+  this.isLoading = false;
+  //// หน่วง 800ms ก่อนปลดล็อกปุ่ม กันนิ้วเด้ง/กดซ้ำบนมือถือ กรณี API ตอบเร็วมาก
+  setTimeout(() => { this.isCoverSheetRunning = false; }, 800);
 }
 
 
