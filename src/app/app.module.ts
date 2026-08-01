@@ -42,6 +42,7 @@ import {TsuruhaOrderdetailComponent} from './layout/TSURUHA/tsuruha-orderdetail/
 import {TsuruhaMapInvoiceComponent} from './layout/TSURUHA/tsuruha-mapping-invoice/tsuruha-mapping-invoice.component';
 import {ReportPackingListComponent} from './layout/reports/report-packinglist/report-packinglist.component';
 import {ReportPrintWaveOrderComponent} from './layout/reports/report-print-waveorder/report-print-waveorder.component';
+import {ReportPrintTrackingGroupSkuComponent} from './layout/reports/report-print-tracking-groupsku/report-print-tracking-groupsku.component';
 import {MonitorWaveOrdeComponent} from './layout/monitor-waveorde/monitor-waveorde.component';
 
 
@@ -73,6 +74,7 @@ import {MonitorWaveOrdeComponent} from './layout/monitor-waveorde/monitor-waveor
     TsuruhaMapInvoiceComponent,
     ReportPackingListComponent,
     ReportPrintWaveOrderComponent,
+    ReportPrintTrackingGroupSkuComponent,
     MonitorWaveOrdeComponent
 
   ],

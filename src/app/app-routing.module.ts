@@ -24,6 +24,7 @@ import { TsuruhaOrderdetailComponent }from './layout/TSURUHA/tsuruha-orderdetail
 import {TsuruhaMapInvoiceComponent} from './layout/TSURUHA/tsuruha-mapping-invoice/tsuruha-mapping-invoice.component';
 import {ReportPackingListComponent} from './layout/reports/report-packinglist/report-packinglist.component';
 import {ReportPrintWaveOrderComponent} from './layout/reports/report-print-waveorder/report-print-waveorder.component';
+import {ReportPrintTrackingGroupSkuComponent} from './layout/reports/report-print-tracking-groupsku/report-print-tracking-groupsku.component';
 import {MonitorWaveOrdeComponent} from './layout/monitor-waveorde/monitor-waveorde.component';
 
 const routes: Routes = [
@@ -114,6 +115,10 @@ const routes: Routes = [
   {
     path: 'report-printWaveOrder', component: ReportPrintWaveOrderComponent,
     data: { menubar: 'Report Print Wave Order', version: '1.0.0', lastupdate: '2026-05-30' }
+  },
+  {
+    path: 'report-printTrackingGroupSku', component: ReportPrintTrackingGroupSkuComponent,
+    data: { menubar: 'Print Tracking Group SKU', version: '1.0.0', lastupdate: '2026-08-01' }
   },
   {
     path: 'monitor-waveorde', component: MonitorWaveOrdeComponent,

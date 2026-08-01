@@ -1,0 +1,590 @@
+<body class="hold-transition sidebar-mini layout-navbar">
+  <div class="wrapper full-page">
+
+    <app-header id="page" [Pageactive]="pageactive"></app-header>
+    <app-menu id="page" [Pageactive]="pageactive"></app-menu>
+
+    <div class="content-wrapper flex-content">
+      <section class="content-header">
+        <div class="container-fluid">
+          <div class="row mb-2">
+            <div class="col-sm-6">
+              <ol class="breadcrumb">
+                <li class="breadcrumb-item">Report</li>
+                <li class="breadcrumb-item active">
+                  {{pageactive && pageactive[0]?.menubar || 'Print Tracking Group SKU'}}
+                  <small *ngIf="pageactive && pageactive[0]?.version" style="font-size:0.7rem; opacity:0.75;">v{{pageactive[0].version}} | {{pageactive[0].lastupdate}}</small>
+                </li>
+              </ol>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="content h-100">
+        <div class="container-fluid h-100 d-flex flex-column">
+          <div class="screen-wrapper">
+
+            <!-- Search Card -->
+            <div class="card">
+              <div class="card-header">
+                <h5 class="card-title mb-0">
+                  <i class="fas fa-search mr-2"></i>ค้นหา Group Pick
+                </h5>
+              </div>
+              <div class="card-body">
+                <div class="form-row align-items-end">
+                  <div class="col-auto">
+                    <label class="mb-1">Group Pick</label>
+                    <input type="text"
+                           class="form-control"
+                           placeholder=""
+                           [(ngModel)]="input.GROUP_PICK"
+                           name="GROUP_PICK"
+                           [disabled]="isLoading || isPrinting"
+                           (keydown.enter)="getdata()" />
+                  </div>
+                  <div class="col-auto">
+                    <button type="button"
+                            class="btn btn-primary"
+                            [disabled]="isLoading || isPrinting"
+                            (click)="getdata()">
+                      <i class="fas" [ngClass]="isLoading ? 'fa-spinner fa-spin' : 'fa-search'"></i>
+                      {{ isLoading ? 'กำลังค้นหา...' : 'ค้นหา' }}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Result Card -->
+            <div class="card mt-3" *ngIf="transportList.length > 0">
+              <div class="card-header d-flex align-items-center justify-content-between">
+                <h5 class="card-title mb-0">
+                  <i class="fas fa-truck mr-2"></i>สรุปตาม Transport
+                  <span class="badge badge-info ml-2">{{ loadedGroupPick }}</span>
+                </h5>
+                <small class="text-muted">ทั้งหมด {{ totalRows }} รายการ</small>
+              </div>
+
+              <div class="card-body">
+
+                <!-- Transport Summary Buttons -->
+                <div class="row">
+                  <div class="col-auto mb-3" *ngFor="let t of transportList">
+                    <button type="button"
+                            class="card mb-0 tp-card text-left"
+                            [style.min-width.px]="190"
+                            [style.border-left]="t.isCancel ? '3px solid #dc3545'
+                                               : t.isDocP  ? '3px solid #ffc107'
+                                                           : '3px solid #17a2b8'"
+                            [disabled]="isPrinting || t.pending === 0"
+                            [title]="t.pending === 0 ? 'พิมพ์ครบแล้ว' : 'กดเพื่อพิมพ์'"
+                            (click)="openPrintModal(t.code)">
+                      <div class="card-body py-2 px-3">
+                        <div class="d-flex align-items-center justify-content-between">
+                          <div>
+                            <div style="font-size:15px;font-weight:500">
+                              {{ t.code }}
+                              <span class="badge badge-danger ml-1" *ngIf="t.isCancel">ใบ Cancel</span>
+                              <span class="badge badge-warning ml-1" *ngIf="t.isDocP">ใบ Track</span>
+                            </div>
+                            <div style="font-size:26px;font-weight:500;line-height:1.2">
+                              {{ t.total }}
+                              <small style="font-size:13px;color:#6c757d"> รายการ</small>
+                            </div>
+                            <div style="font-size:11px" class="mt-1">
+                              <span class="badge"
+                                    [ngClass]="t.pending > 0 ? 'badge-warning' : 'badge-success'">
+                                {{ t.pending > 0 ? 'รอพิมพ์ ' + t.pending : 'พิมพ์แล้วทั้งหมด' }}
+                              </span>
+                              <span class="badge badge-danger ml-1" *ngIf="t.noFile > 0">
+                                ไม่มีไฟล์ {{ t.noFile }}
+                              </span>
+                            </div>
+                          </div>
+                          <i class="fas ml-3" style="font-size:22px;opacity:0.3"
+                             [ngClass]="t.isCancel ? 'fa-ban' : t.isDocP ? 'fa-file-alt' : 'fa-print'"></i>
+                        </div>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Detail Table -->
+                <div class="table-responsive mt-2"
+                     style="max-height: calc(100vh - 480px); overflow-y: auto;">
+                  <table class="table table-bordered table-hover table-sm">
+                    <thead class="thead-light text-center" style="position: sticky; top: 0; z-index: 1;">
+                      <tr>
+                        <th style="width:50px">No</th>
+                        <th style="width:110px">Transport</th>
+                        <th>Shipment ID</th>
+                        <th>Tracking</th>
+                        <th style="width:100px">Seller</th>
+                        <th style="width:130px">Tracking Doc P</th>
+                        <th style="width:120px">Pallet No</th>
+                        <th style="width:110px">สถานะ Print</th>
+                        <th style="width:80px">ไฟล์</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let row of data_list; index as i">
+                        <td class="text-center text-muted">{{ i + 1 }}</td>
+                        <td class="text-center">
+                          <span class="badge" [ngClass]="transportBadgeClass(row)">
+                            {{ row.TRANSPORT_CODE }}
+                          </span>
+                        </td>
+                        <td>{{ row.SHIPMENT_ID }}</td>
+                        <td><strong>{{ row.TRACKING }}</strong></td>
+                        <td class="text-center">{{ row.SELLER_NO }}</td>
+                        <td class="text-center">
+                          <span *ngIf="row.TRACKING_DOC_P">{{ row.TRACKING_DOC_P }}</span>
+                          <span *ngIf="!row.TRACKING_DOC_P" class="text-muted">—</span>
+                        </td>
+                        <td class="text-center">
+                          <span *ngIf="row.PALLET_NO">{{ row.PALLET_NO }}</span>
+                          <span *ngIf="!row.PALLET_NO" class="text-muted">—</span>
+                        </td>
+                        <td class="text-center">
+                          <span class="badge"
+                                [ngClass]="isPending(row) ? 'badge-warning' : 'badge-success'">
+                            {{ isPending(row) ? 'รอพิมพ์' : 'พิมพ์แล้ว' }}
+                          </span>
+                        </td>
+                        <td class="text-center">
+                          <i class="fas"
+                             [ngClass]="row.FILE_PACKING ? 'fa-file-pdf text-danger' : 'fa-times text-muted'"
+                             [title]="row.FILE_PACKING || 'ไม่มีไฟล์'"></i>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+              </div>
+            </div>
+
+            <!-- Empty state -->
+            <div class="card mt-3" *ngIf="isSearched && transportList.length === 0 && !isLoading">
+              <div class="card-body text-center text-muted py-5">
+                <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
+                — ไม่พบข้อมูล Group Pick นี้ —
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+    </div>
+
+  </div>
+</body>
+
+
+<!-- Box Size Modal — STATUS_PRINT 1 และ 2 ต้องระบุขนาดกล่องก่อน running
+     ต่างกันแค่พิมพ์อะไรต่อ: 1 = PDF, 2 = ใบ tracking running (html) -->
+<div class="modal fade" id="boxPrintModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <h5 class="modal-title" style="color:rgb(8, 83, 110)">
+          <i class="fa fa-box mr-2"></i>
+          <b>ระบุขนาดกล่อง</b>
+          <small class="text-muted ml-2" style="font-size:12px">
+            {{ isActiveDocP ? '— พิมพ์ใบ Tracking Running' : '— พิมพ์ PDF' }}
+          </small>
+        </h5>
+        <button type="button" class="close" (click)="closeBoxModal()">
+          <span>&times;</span>
+        </button>
+      </div>
+
+      <div class="modal-body">
+
+        <p class="text-muted mb-3" style="font-size:13px">
+          Group Pick : <strong class="text-dark">{{ loadedGroupPick }}</strong>
+          &nbsp;·&nbsp;
+          Transport : <strong class="text-dark">{{ activeCode }}</strong>
+        </p>
+
+        <div class="row mb-3">
+          <div [ngClass]="isActiveDocP ? 'col-12' : 'col-6'">
+            <div class="card mb-0" style="border-left:3px solid #17a2b8">
+              <div class="card-body py-2 px-3">
+                <div style="font-size:11px;color:#6c757d">
+                  {{ isActiveDocP ? 'ใบ track ที่จะพิมพ์ (1 ใบ ต่อ 1 Shipment)' : 'จำนวนที่จะพิมพ์' }}
+                </div>
+                <div style="font-size:24px;font-weight:500">
+                  {{ isActiveDocP ? activeShipmentIds.length : printableRows.length }}
+                  <small style="font-size:13px;color:#6c757d"> ใบ</small>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-6" *ngIf="!isActiveDocP">
+            <div class="card mb-0" style="border-left:3px solid #dc3545">
+              <div class="card-body py-2 px-3">
+                <div style="font-size:11px;color:#6c757d">ไม่มีไฟล์ (ข้าม)</div>
+                <div style="font-size:24px;font-weight:500">
+                  {{ activePendingRows.length - printableRows.length }}
+                  <small style="font-size:13px;color:#6c757d"> ใบ</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <form>
+          <label><b>ขนาดกล่อง</b></label>
+          <div class="input-group">
+            <input type="text" maxlength="20" minlength="1" name="box" class="form-control"
+                   placeholder="ขนาดกล่อง" [(ngModel)]="boxInput.BOX_SIZE" required
+                   [disabled]="isPrinting"
+                   (keyup.enter)="check_size()" (blur)="check_size()">
+            <div class="input-group-append">
+              <button type="button" class="btn btn-outline-secondary" (click)="check_size()">
+                ตรวจสอบ
+              </button>
+            </div>
+          </div>
+
+          <div class="mt-2" style="font-size:13px">
+            <i [hidden]="box.Errorhide" style="color:rgb(216, 120, 10)">{{ box.des }}</i>
+            <i [hidden]="box.Suchide">
+              Size: <b style="color:rgb(214, 32, 16)">{{ boxInput.BOX_SIZE }}</b>
+              กว้าง : <b style="color:rgb(214, 32, 16)">{{ boxInput.CARTON_BOX_W }}</b> (CM)
+              ลึก : <b style="color:rgb(214, 32, 16)">{{ boxInput.CARTON_BOX_L }}</b> (CM)
+              สูง : <b style="color:rgb(214, 32, 16)">{{ boxInput.CARTON_BOX_H }}</b> (CM)
+            </i>
+          </div>
+        </form>
+
+        <div class="border rounded p-2 mt-3" style="max-height:180px;overflow-y:auto">
+
+          <!-- DocP ไม่มี TRACKING/ไฟล์ — แสดงเป็นรายการ shipment แทน -->
+          <ng-container *ngIf="isActiveDocP">
+            <div *ngFor="let id of activeShipmentIds"
+                 class="py-1 border-bottom" style="font-size:13px">
+              {{ id }}
+            </div>
+          </ng-container>
+
+          <ng-container *ngIf="!isActiveDocP">
+            <div *ngFor="let row of activePendingRows"
+                 class="d-flex justify-content-between align-items-center py-1 border-bottom">
+              <div>
+                <div style="font-size:13px;font-weight:500">{{ row.TRACKING }}</div>
+                <div class="text-muted" style="font-size:11px">{{ row.SHIPMENT_ID }}</div>
+              </div>
+              <span class="badge" [ngClass]="row.FILE_PACKING ? 'badge-info' : 'badge-danger'">
+                {{ row.FILE_PACKING ? 'พร้อมพิมพ์' : 'ไม่มีไฟล์' }}
+              </span>
+            </div>
+          </ng-container>
+
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeBoxModal()">ยกเลิก</button>
+        <button type="button"
+                class="btn btn-success"
+                [disabled]="isPrinting || !isBoxValid || printCount === 0"
+                (click)="confirmPrint()">
+          <i class="fas fa-print mr-1"></i>
+          พิมพ์ทั้งหมด ({{ printCount }})
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+
+
+<!-- Zone Modal — เฉพาะกลุ่ม Cancel -->
+<div class="modal fade" id="zonePrintModal" tabindex="-1" role="dialog"
+     data-backdrop="static" data-keyboard="false">
+  <div class="modal-dialog modal-md" role="document">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <h5 class="modal-title" style="color:rgb(8, 83, 110)">
+          <i class="fa fa-box mr-2"></i><b>พิมพ์ใบ Cancel</b>
+        </h5>
+        <button type="button" class="close" (click)="closeZoneModal()">
+          <span>&times;</span>
+        </button>
+      </div>
+
+      <div class="modal-body">
+
+        <p class="text-muted mb-3" style="font-size:13px">
+          Group Pick : <strong class="text-dark">{{ loadedGroupPick }}</strong>
+          &nbsp;·&nbsp;
+          จะพิมพ์ <strong class="text-dark">{{ activeShipmentIds.length }}</strong> ใบ
+          (1 ใบ ต่อ 1 Shipment)
+        </p>
+
+        <form>
+          <label><b>Select Zone</b></label>
+          <ng-select [items]="zones"
+                     [(ngModel)]="selectedZone"
+                     name="zone"
+                     [searchable]="true"
+                     [clearable]="false">
+          </ng-select>
+        </form>
+
+        <div class="border rounded p-2 mt-3" style="max-height:180px;overflow-y:auto">
+          <div *ngFor="let id of activeShipmentIds"
+               class="py-1 border-bottom" style="font-size:13px">
+            {{ id }}
+          </div>
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeZoneModal()">ยกเลิก</button>
+        <button type="button"
+                class="btn btn-primary"
+                [disabled]="!selectedZone || isPrinting"
+                (click)="confirmPrintCancel()">
+          <i class="fas fa-print mr-1"></i>
+          OK ({{ activeShipmentIds.length }})
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+<!-- Loading overlay ระหว่างโหลด/รวมไฟล์ -->
+<div class="print-overlay" *ngIf="isPrinting">
+  <div class="print-overlay-box">
+    <i class="fas fa-3x fa-sync-alt fa-spin mb-3"></i>
+    <div style="font-size:16px">กำลังเตรียมไฟล์สำหรับพิมพ์...</div>
+    <div class="text-muted mt-1" style="font-size:13px" *ngIf="printProgress.total > 0">
+      {{ printProgress.done }} / {{ printProgress.total }}
+      {{ isActiveCancel || isActiveDocP ? 'ใบ' : 'รายการ' }}
+    </div>
+  </div>
+</div>
+
+
+
+<!-- ========== ใบ Tracking Running — ยกโครงมาจาก pagePrintTrack ของ audit-check-tracking ========== -->
+<!-- ใช้ *ngIf (ไม่ใช่ [hidden]) เพื่อให้ barcode สร้างใหม่ทุกครั้ง ไม่ค้างค่าเก่า -->
+<div class="track-print-section" *ngIf="!pagePrintTrack">
+  <div class="container-fluid">
+    <div style="page-break-after: always" class="page"
+         *ngFor="let list of dataprint; let i = index;">
+
+      <div class="row">
+        <div class="col-3">
+          <font size="4">Tracking No</font>
+        </div>
+        <div class="col-9">
+          <ngx-barcode6 [bc-element-type]="'img'" [bc-format]="'CODE128'" [bc-text-position]="'button'"
+                        [bc-width]="2" [bc-height]="50" [bc-font-size]="15"
+                        [bc-value]="list.REF_INDEX" [bc-display-value]="true">
+          </ngx-barcode6>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-3">
+          <font size="4">Box Size</font>
+        </div>
+        <div class="col-9">
+          <font size="4"><b>{{ list.BOX_SIZE }}</b></font>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-3">
+          <font size="4">Shipping Name</font>
+        </div>
+        <div class="col-9">
+          <font size="4"><b>{{ list.SHIPPING_NAME }}</b></font>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-3">
+          <font size="4">Company</font>
+        </div>
+        <div class="col-2">
+          <font size="4"><b>{{ list.COMPANY }}</b></font>
+        </div>
+        <div class="col-2">
+          <font size="4">Seller</font>
+        </div>
+        <div>
+          <font size="4"><b>{{ list.SELLER_NO }}</b></font>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-3">
+          <font size="4">Table Check</font>
+        </div>
+        <div class="col-2">
+          <font size="4"><b>{{ list.TABLE_CHECK }}</b></font>
+        </div>
+        <div class="col-2">
+          <font size="4">Box No</font>
+        </div>
+        <div>
+          <font size="4"><b>{{ list.BOX_NO_ORDER }}</b></font>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-3">
+          <font size="4">QTY</font>
+        </div>
+        <div class="col-9">
+          <font size="4"><b>{{ list.QTY }}</b></font>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-3">
+          <font size="4">Shipment</font>
+        </div>
+        <div class="col-9">
+          <ngx-barcode6 [bc-element-type]="'img'" [bc-format]="'CODE128'" [bc-text-position]="'button'"
+                        [bc-width]="2" [bc-height]="40" [bc-font-size]="15"
+                        [bc-value]="list.SHIPMENT_ID" [bc-display-value]="true">
+          </ngx-barcode6>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-12" style="text-align:left; font-size:12px; color:#555;">
+          Print: {{ printTimeShow }}
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+<!-- ========== ใบ Cancel — ยกโครงมาจาก audit-check-tracking ========== -->
+<!-- ใช้ *ngIf (ไม่ใช่ [hidden]) เพื่อให้ barcode/qrcode สร้างใหม่ทุกครั้ง ไม่ค้างค่าเก่า -->
+<div class="cancel-print-section" *ngIf="!pagePrintCancel">
+  <div class="container-fluid">
+    <div style="page-break-after: always" class="page"
+         *ngFor="let list of dataprintcancel; let i = index;">
+
+      <div class="row">
+        <div class="col-3">
+          <font size="4">Shipment :</font>
+        </div>
+        <div class="col-8">
+          <ngx-barcode6 [bc-element-type]="'img'" [bc-format]="'CODE128'" [bc-text-position]="'button'"
+                        [bc-width]="2" [bc-height]="40" [bc-font-size]="15"
+                        [bc-value]="list.SHIPMENT_ID" [bc-display-value]="true">
+          </ngx-barcode6>
+        </div>
+        <div class="col-1"> </div>
+      </div>
+
+      <div class="row">
+        <div class="col-3">
+          <font size="4">Shipping :</font>
+        </div>
+        <div class="col-9">
+          <font size="4"><b>{{ list.SHIPPING_NAME }}</b></font>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-3">
+          <font size="4">Channel :</font>
+        </div>
+        <div class="col-2">
+          <font size="4"><b>{{ list.TCHANNEL }}</b></font>
+        </div>
+
+        <div class="col-2">
+          <font size="4">Seller :</font>
+        </div>
+        <div>
+          <font size="4"><b>{{ list.SELLER_NO }}</b></font>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-3">
+          <font size="4">Company:</font>
+        </div>
+        <div class="col-2">
+          <font size="4"><b>{{ list.COMPANY }}</b></font>
+        </div>
+
+        <div class="col-3">
+          <font size="4">OrderDate:</font>
+        </div>
+        <div>
+          <font size="4"><b> {{ list.ORDER_DATE }}</b></font>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-3">
+          <font size="4">Zone:</font>
+        </div>
+        <div class="col-2">
+          <font size="4"><b>{{ list.Zone }}</b></font>
+        </div>
+
+        <div class="col-3">
+          <font size="4">Table:</font>
+        </div>
+        <div>
+          <font size="4"><b> {{ list.Table }}</b></font>
+        </div>
+      </div>
+
+      <div class="row mt-1">
+        <div class="col-4"> <font size="2">version B.02 </font> </div>
+        <div class="col-8 text-left">
+          <font size="4">
+            Print Date :
+            <b>{{ list.PRINT_DATE | date:'dd/MM/yyyy HH:mm' }}</b>
+          </font>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-5"></div>
+        <div class="col-7">
+          <qrcode [qrdata]="list.SHIPMENT_ID"
+                  [elementType]="'img'"
+                  [width]="80"
+                  [errorCorrectionLevel]="'M'">
+          </qrcode>
+        </div>
+      </div>
+      <br>
+      <div class="row">
+        <div class="col-4"></div>
+        <div class="col-8">
+          <font size="9"><span>CANCEL</span></font>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+<!-- ========== END ใบ Cancel ========== -->

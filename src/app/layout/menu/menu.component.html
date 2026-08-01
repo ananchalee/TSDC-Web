@@ -328,7 +328,21 @@
               </li>
 
             </ul>
-            
+
+            <ul class="nav nav-treeview">
+              <li class="nav-item"  (click)="Onclick_menu('report_printtrackgroupsku') ">
+                <a class="nav-link"  [ngClass]='{active:page.report_printtrackgroupsku}'>
+                  <i class="nav-icon fas fa-file-contract"></i>
+                  <p>
+                    {{routeData['report-printTrackingGroupSku']?.menubar || 'Print Tracking Group SKU'}}
+                    <br>
+                    <small *ngIf="routeData['report-printTrackingGroupSku']?.version" style="font-size:0.65rem; opacity:0.75; display:block; text-align:center;">v{{routeData['report-printTrackingGroupSku'].version}} | {{routeData['report-printTrackingGroupSku'].lastupdate}}</small>
+                  </p>
+                </a>
+              </li>
+
+            </ul>
+
           </li>
 
           <li class="nav-header" >Outbound</li>

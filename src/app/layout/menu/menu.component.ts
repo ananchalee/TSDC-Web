@@ -120,6 +120,8 @@ export class MenuComponent implements OnInit {
               break;
               case 'Report Print Wave Order' :this.page.report_printwave = true;
               break;
+              case 'Print Tracking Group SKU' :this.page.report_printtrackgroupsku = true;
+              break;
           }
         break;
         case 'Moniter':
@@ -194,6 +196,9 @@ export class MenuComponent implements OnInit {
         break;
       case 'report_printwave':
         this.router.navigate(["/report-printWaveOrder"]);
+        break;
+      case 'report_printtrackgroupsku':
+        this.router.navigate(["/report-printTrackingGroupSku"]);
         break;
       case 'report_printordercancel':
         this.router.navigate(["/report-printordercancel"]);
