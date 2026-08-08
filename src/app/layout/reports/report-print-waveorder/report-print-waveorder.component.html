@@ -297,14 +297,7 @@
                 class="btn btn-secondary"
                 (click)="closeModal()">ยกเลิก</button>
 
-        <!-- ปุ่มพิมพ์ใบปะหน้า -->
-        <button type="button"
-                class="btn btn-warning"
-                (click)="printCoverPage()">
-          <i class="fas fa-file-alt mr-1"></i> พิมพ์ใบปะหน้า
-        </button>
-
-        <!-- ปุ่มพิมพ์ใบ Pick -->
+        <!-- ปุ่มพิมพ์ใบ Pick (ใบปะหน้าถูกแทรกมาจาก SSRS ในชุดเดียวกันแล้ว) -->
         <button type="button"
                 class="btn btn-success"
                 (click)="confirmPrint()">
@@ -316,92 +309,5 @@
   </div>
 </div>
 
-<!-- ========== COVER PAGE PRINT SECTION ========== -->
-<div class="container-fluid cover-print-section"
-     [class.d-none]="pagePrintCoverSheet">
-
-  <!-- PAGE 1 : ใบปะหน้า -->
-  <div class="cover-paper">
-
-    <div class="cover-hd-top">
-      <div class="cover-company">TSDC FULFILLMENT CENTER</div>
-      <div class="cover-doc-title">ใบปะหน้า Wave</div>
-    </div>
-
-    <div class="cover-row">
-      <span class="cover-lbl">Wave No</span>
-      <span class="cover-val-wave">{{ input.waveno }}</span>
-    </div>
-
-    <div class="cover-row">
-      <span class="cover-lbl">ประเภท</span>
-      <span class="cover-val">{{ activeLabel }}</span>
-    </div>
-
-    <!-- <div class="cover-row">
-      <span class="cover-lbl">วันที่ปล่อย Man</span>
-      <span class="cover-val">{{ firstRow?.PROCRESS_DATE }}</span>
-    </div> -->
-
-    <div class="cover-row">
-      <span class="cover-lbl">วันที่พิมพ์</span>
-      <span class="cover-val">{{ firstRow?.GETDATEDATE  }}</span>
-    </div>
-
-    <hr class="cover-divider">
-
-    <div class="cover-sum-grid">
-      <div class="cover-sum-box">
-        <div class="cover-s-lbl">จำนวน Order</div>
-        <div class="cover-s-num">{{ filteredList.length }}</div>
-        <div class="cover-s-unit">รายการ</div>
-      </div>
-      <div class="cover-sum-box">
-        <div class="cover-s-lbl">QTY รวม</div>
-        <div class="cover-s-num">{{ totalQty}}</div>
-        <div class="cover-s-unit">ชิ้น</div>
-      </div>
-    </div>
-
-  </div>
-  <!-- END PAGE 1 -->
-
-  <!-- PAGE 2 : Item Location -->
-<div class="cover-paper cover-page2"
-     *ngIf="isGroupSingleSku && itemLocationList.length > 0">
-
-  <div class="cover-hd-top">
-    <div class="cover-company">TSDC FULFILLMENT CENTER</div>
-    <div class="cover-doc-title">รายการ Item / Location — Wave {{ input.waveno }}</div>
-  </div>
-
-  <table class="cover-item-table">
-    <thead>
-      <tr>
-        <th>Item ID</th>
-        <th>Location</th>
-        <th style="text-align:right">QTY</th>
-      </tr>
-    </thead>
-    <tbody>
-     
-      <tr *ngFor="let r of itemLocationList">
-        <td>{{ r.ITEM }}</td>
-        <td>{{ r.FROM_LOC }}</td>
-        <td style="text-align:right">{{ r.Total_QTY | number:'1.0-0' }}</td>
-      </tr>
-    </tbody>
-    <tfoot>
-      <tr>
-        <td colspan="2" style="text-align:right"><strong>รวม</strong></td>
-        <td style="text-align:right"><strong>{{ totalItemQty | number:'1.0-0' }}</strong></td>
-      </tr>
-    </tfoot>
-  </table>
-
-</div>
-
-</div>
-<!-- ========== END COVER PAGE ========== -->
 
 
