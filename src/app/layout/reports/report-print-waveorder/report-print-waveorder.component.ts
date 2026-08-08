@@ -18,14 +18,9 @@ interface PrintRow {
 }
 
 interface TypeItem {
-  key:   string;
-  label: string;
-}
-
-interface ItemLocationRow {
-  ITEM:   string;
-  FROM_LOC:  string;
-  Total_QTY: number;
+  key:       string;   // TYPE_PICK_DESC (การ์ด 1 ใบ = 1 ประเภท)
+  label:     string;
+  pickTypes: string[]; // TYPE_PICK ทั้งหมดในประเภทนี้ — ตัวที่ส่งให้ API
 }
 
 @Component({
@@ -41,7 +36,6 @@ export class ReportPrintWaveOrderComponent implements OnInit {
   busy!:        Subscription;
   pageactive:   any;
   interval:     any;
-  pagePrintCoverSheet = true;  
   isLoading   = false;
   //isSearched  = false;
   activeType  = '';
@@ -53,7 +47,6 @@ export class ReportPrintWaveOrderComponent implements OnInit {
   data_list:   PrintRow[] = [];
   detail_list: any[]      = [];
   typeList:    TypeItem[] = [];
-  itemLocationList: ItemLocationRow[] = [];
 
   fromMonitor = false;
 
@@ -126,26 +119,32 @@ export class ReportPrintWaveOrderComponent implements OnInit {
               this.activeType = '';
               //this.isSearched = true;
 
-              // สร้าง typeList จาก API
-              const fromData: TypeItem[] = [
-                ...new Map(
-                  this.data_list.map((r: PrintRow) => [
-                    r.TYPE_PICK,
-                    {
-                      key:        r.TYPE_PICK,
-                      label:      r.TYPE_PICK_DESC
-                    } as TypeItem
-                  ])
-                ).values()
-              ];
+              // สร้าง typeList จาก API — 1 การ์ด = 1 TYPE_PICK_DESC
+              // เก็บ TYPE_PICK ทุกตัวในประเภทนั้นไว้ด้วย เพราะ API กับ SSRS ยังกรองด้วย TYPE_PICK
+              const groupMap = new Map<string, TypeItem>();
+              this.data_list.forEach((r: PrintRow) => {
+                const group = groupMap.get(r.TYPE_PICK_DESC);
+                if (group) {
+                  if (!group.pickTypes.includes(r.TYPE_PICK)) {
+                    group.pickTypes.push(r.TYPE_PICK);
+                  }
+                } else {
+                  groupMap.set(r.TYPE_PICK_DESC, {
+                    key:       r.TYPE_PICK_DESC,
+                    label:     r.TYPE_PICK_DESC,
+                    pickTypes: [r.TYPE_PICK]
+                  });
+                }
+              });
+              const fromData: TypeItem[] = [...groupMap.values()];
 
-              console.log(fromData)
-              if(fromData[0].key != "SORTER"){
+              if (!fromData.some((g: TypeItem) => g.pickTypes.includes('SORTER'))) {
                 // เพิ่ม ORDER ไว้ลำดับแรก
                 this.typeList = [
                   {
                     key:        'Order',
-                    label:      'เรียงลำดับ ORDER ทั้งหมด'
+                    label:      'เรียงลำดับ ORDER ทั้งหมด',
+                    pickTypes:  []
                   },
                   ...fromData
                 ];
@@ -154,7 +153,7 @@ export class ReportPrintWaveOrderComponent implements OnInit {
                   ...fromData
                 ];
               }
-              
+
 
             }
           });
@@ -187,11 +186,17 @@ export class ReportPrintWaveOrderComponent implements OnInit {
       // คืนเฉพาะรายการที่ยังไม่พิมพ์
       return this.data_list.filter((r: PrintRow) => r.STATUS_PRINT === 'N');
     }
-    return this.data_list.filter((r: PrintRow) => r.TYPE_PICK === this.activeType);
+    return this.data_list.filter((r: PrintRow) => r.TYPE_PICK_DESC === this.activeType);
   }
 
   get firstRow(): PrintRow | null {
   return this.filteredList.length > 0 ? this.filteredList[0] : null;
+  }
+
+  // ── TYPE_PICK ทั้งหมดของประเภทที่เลือกอยู่ — สะพานไป API/SSRS ──
+  get activePickTypes(): string[] {
+    const found = this.typeList.find((t: TypeItem) => t.key === this.activeType);
+    return found ? found.pickTypes : [];
   }
 
   getTypeCount(key: string): number {
@@ -199,7 +204,7 @@ export class ReportPrintWaveOrderComponent implements OnInit {
       // นับเฉพาะรายการที่ยังไม่พิมพ์
       return this.data_list.filter((r: PrintRow) => r.STATUS_PRINT === 'N').length;
     }
-    return this.data_list.filter((r: PrintRow) => r.TYPE_PICK === key).length;
+    return this.data_list.filter((r: PrintRow) => r.TYPE_PICK_DESC === key).length;
   }
 
   get activeLabel(): string {
@@ -241,9 +246,7 @@ export class ReportPrintWaveOrderComponent implements OnInit {
 
   let url = '';
 
-  if (this.activeType === 'SORTER') {
-    this.input.type  = this.activeType;
-
+  if (this.activePickTypes.includes('SORTER')) {
     // ── กรณี SORTER ──────────────────────────────────────────
     url = `${this.REPORT_BASE}`
         + `?%2fILS%2fReporting%2fSorterTest`
@@ -260,22 +263,26 @@ export class ReportPrintWaveOrderComponent implements OnInit {
     window.open(url, '_blank');
 
   } else {
-    // ── กรณีอื่นๆ → ส่ง TYPE_PICK ด้วย ──────────────────────
+    // ── กรณีอื่นๆ → ส่ง TYPE_PICK_DESC ตัวเดียว ─────────────
+    // SSRS วนสร้างใบปะหน้า + ใบ pick ให้ครบทุก TYPE_PICK ในประเภทนั้นเอง
     if (!this.activeType || this.filteredList.length === 0) return;
-    this.input.type  = this.activeType;
 
     url = `${this.REPORT_BASE}`
-        + `?%2fILS%2fReporting%2fTsdcOrderPicking_SortByType`
+        + `?%2fILS%2fReporting%2fTsdcOrderPicking_SortByTypeDesc`
         + `&rs:Command=Render`
         + `&Wave_No=${wave}`
-        + `&TYPE_PICK=${encodeURIComponent(this.activeType)}`;
+        + `&TYPE_PICK_DESC=${encodeURIComponent(this.activeType)}`;
     window.open(url, '_blank');
   }
 
-  this.dataService.Update_MANHT_PICK_PAPER(this.input).subscribe((res: any) => {
-    this.res       = res;
+  const payload = this.activeType === 'Order'
+    ? { waveno: this.input.waveno }
+    : { waveno: this.input.waveno, typeDesc: this.activeType };
+
+  this.dataService.Update_MANHT_PICK_PAPER(payload).subscribe((res: any) => {
+    this.res = res;
     this.getdata();
-  })
+  });
 
 }
 
@@ -284,54 +291,6 @@ get totalQty(): number {
   return this.filteredList.reduce((sum: number, r: PrintRow) => sum + r.Total_QTY, 0);
 }
 
-// ── พิมพ์ใบปะหน้า ────────────────────────────────────────────
-printCoverPage(): void {
-  $('#printModal').modal('hide');
-
-  if (this.activeType.startsWith('GROUP_SINGLESKU')) {
-    this.isLoading = true;
-    this.input.type  = this.activeType;
-    this.dataService.Get_ITEM_LOCATION_MANHT_PICK_PAPER(this.input).subscribe((res: any) => {
-      this.isLoading = false;
-      if (res.status === 'success') {
-        this.itemLocationList = res.data as ItemLocationRow[];
-        this.doPrint();
-      } else {
-        Swal.fire({
-          icon: 'error',
-          title: 'ไม่สามารถดึงข้อมูล Item Location',
-          showConfirmButton: false,
-          timer: 2000
-        });
-      }
-    });
-  } else {
-    // พิมพ์ใบปะหน้าอย่างเดียว
-    this.itemLocationList = [];
-    this.doPrint();
-  }
-}
-
-// ── function สั่งพิมพ์จริง ───────────────────────────────────
-doPrint(): void {
-  this.pagePrintCoverSheet = false;
-  setTimeout(() => {
-    window.print();
-    this.pagePrintCoverSheet = true;
-  }, 500);
-}
-
-// ── getter ตรวจว่าเป็น GROUP_SINGLESKU ──────────────────────
-get isGroupSingleSku(): boolean {
-  return this.activeType.startsWith('GROUP_SINGLESKU');
-}
-
-// ── sum qty ของ itemLocationList ─────────────────────────────
-get totalItemQty(): number {
-  return this.itemLocationList.reduce(
-    (sum: number, r: ItemLocationRow) => sum + r.Total_QTY, 0
-  );
-}
 
 // ── พิมพ์ใบ Pick ──────────────────────────────────────────────
 printTracking(): void {

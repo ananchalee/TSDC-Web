@@ -114,7 +114,7 @@ const routes: Routes = [
   },
   {
     path: 'report-printWaveOrder', component: ReportPrintWaveOrderComponent,
-    data: { menubar: 'Report Print Wave Order', version: '1.0.0', lastupdate: '2026-05-30' }
+    data: { menubar: 'Report Print Wave Order', version: '1.1.0', lastupdate: '2026-08-08' }
   },
   {
     path: 'report-printTrackingGroupSku', component: ReportPrintTrackingGroupSkuComponent,
