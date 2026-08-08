@@ -1,0 +1,15 @@
+{
+  "port": 5050,
+  "deskName": "",
+  "outputRoot": "D:/VideoRecord",
+  "segmentSeconds": 300,
+  "ffmpegPath": "ffmpeg",
+  "videoDevice": "",
+  "audioDevice": "",
+  "videoSize": "1280x720",
+  "framerate": 15,
+  "inputFormat": "",
+  "rtbufsize": "256M",
+  "crf": 28,
+  "preset": "veryfast"
+}

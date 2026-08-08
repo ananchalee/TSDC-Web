@@ -5,7 +5,7 @@ import { Subscription } from 'rxjs';
 import { Router, ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { NgSelectComponent } from '@ng-select/ng-select';
-//import { VideoRecordingService } from '../../services/video-recording.service';
+import { VideoRecordingService } from '../../services/video-recording.service';
 
 declare var jQuery: any;
 
@@ -23,7 +23,7 @@ interface TrackingItem {
   templateUrl: './audit-check-tracking.component.html',
   styleUrls: ['./audit-check-tracking.component.scss']
 })
-export class AuditCheckTrackingComponent implements OnInit {
+export class AuditCheckTrackingComponent implements OnInit, OnDestroy {
   busy!: Subscription;
   @ViewChild('myModalBOX') myModalBOX!: ElementRef;
   @ViewChild('myModalSt') myModalSt!: ElementRef;
@@ -85,8 +85,9 @@ export class AuditCheckTrackingComponent implements OnInit {
   private toastTimerId: any = null;
   private currentToastMessage: string = '';
   private recordingToastTimeout: any = null;
-  private recordingStatusSubscription!: Subscription; 
-  private connectionStatusSubscription!: Subscription; 
+  private recordingStatusSubscription!: Subscription;
+  private connectionStatusSubscription!: Subscription;
+  private lastRecordingStatus: any = null;
   
   showRecordingStarted(fileName: string) {
   const Toast = Swal.mixin({
@@ -180,7 +181,7 @@ showRecordingFinished(fileName: string) {
     private router: Router,
     private http: HttpClient, // Inject HttpClient
     private route: ActivatedRoute,
-    //private videoRecordingService: VideoRecordingService,
+    private videoRecordingService: VideoRecordingService,
   ) { }
 
   ngOnInit(): void {
@@ -211,176 +212,148 @@ showRecordingFinished(fileName: string) {
     this.input.TRACKING = null;
 
    
-    //this.connectionStatusSubscription = this.videoRecordingService.getConnectionStatus().subscribe(isConnected => { 
-    //console.log('Video Recording WebSocket Connected Status:', isConnected); 
-    //});
-    //this.getRecordingStatus();
+    this.connectionStatusSubscription = this.videoRecordingService.getConnectionStatus().subscribe(isConnected => {
+      console.log('Video Recording WebSocket Connected Status:', isConnected);
+    });
+    this.getRecordingStatus();
   }
 
-// getRecordingStatus(){
-//     this.recordingStatusSubscription = this.videoRecordingService.getRecordingStatus().subscribe((status: any) => {
-//   //console.log('✨ **AuditCheckComponent received recording status:**', status);
+getRecordingStatus(){
+    this.recordingStatusSubscription = this.videoRecordingService.getRecordingStatus().subscribe((status: any) => {
+  this.lastRecordingStatus = status;
 
-//   // 🔔 เคลียร์ setTimeout ที่รอดำเนินการเสมอ เมื่อได้รับสถานะใหม่
-//   if (this.recordingToastTimeout) {
-//     clearTimeout(this.recordingToastTimeout);
-//     this.recordingToastTimeout = null;
-//   }
+  if (this.recordingToastTimeout) {
+    clearTimeout(this.recordingToastTimeout);
+    this.recordingToastTimeout = null;
+  }
 
-//   if (status.status === 'recording') {
-//     const orderCode = status.orderCode || 'ไม่ระบุออเดอร์'; // ใช้ข้อความที่ชัดเจนขึ้น
-//     const fileName = status.fileName || 'ไม่ระบุชื่อไฟล์';
-//     const startedAt = status.startedAtLocal || 'ไม่ระบุเวลา'; // ดึงเวลาเริ่มต้น
+  if (status.status === 'recording') {
+    const startedAt = status.startedAtLocal || 'ไม่ระบุเวลา';
 
-//         //console.log('🚀 Status is "recording", scheduling toast to show in 3 seconds.');
+    this.recordingToastTimeout = setTimeout(() => {
+    if (Swal.isVisible()) {
+        this.recordingToastTimeout = setTimeout(() => {
+            this.showRecordingToast(`
+                <br>
+                กำลังบันทึกวิดีโอ...📸🎞️ <br>
+                START : ${startedAt}
+            `);
+            this.recordingToastTimeout = null;
+        }, 8000);
+        return;
+    }
 
-//     // ⏰ หน่วงเวลาการแสดง Toast 3 วินาที
-//     this.recordingToastTimeout = setTimeout(() => {
-//     // เพิ่มเงื่อนไขการตรวจสอบ Popup
-//     if (Swal.isVisible()) {
-//         //console.log('A popup is visible, delaying recording toast...');
-//         // ถ้ามี popup ให้ตั้งเวลาหน่วงใหม่
-//         this.recordingToastTimeout = setTimeout(() => {
-//             this.showRecordingToast(`
-//                 <br>
-//                 กำลังบันทึกวิดีโอ...📸🎞️ <br>
-//                 START : ${startedAt}
-//             `);
-//             this.recordingToastTimeout = null;
-//         }, 8000); // รออีก 8 วินาที แล้วลองแสดงใหม่
-//         return; // หยุดการทำงานของโค้ดส่วนนี้
-//     }
+    this.showRecordingToast(`
+        <br>
+        กำลังบันทึกวิดีโอ...📸🎞️ <br>
+        START : ${startedAt}
+    `);
+    this.recordingToastTimeout = null;
+}, 3500);
 
-//     // ถ้าไม่มี popup ให้แสดง toast ทันที
-//     this.showRecordingToast(`
-//         <br>
-//         กำลังบันทึกวิดีโอ...📸🎞️ <br>
-//         START : ${startedAt}
-//     `);
-//     this.recordingToastTimeout = null;
-// }, 3500);
+  } else if (status.status === 'stopped') {
+    this.closeRecordingToast();
+    Swal.fire({
+      toast: true,
+      position: 'top-end',
+      icon: 'success',
+      title: '<br>บันทึกวิดีโอเรียบร้อยแล้ว!',
+      showConfirmButton: false,
+      timerProgressBar: true,
+    });
+    setTimeout(() => {
+      Swal.close();
+    },500);
 
-//   } else if (status.status === 'stopped') {
-//     //console.log('🛑 Status is "stopped", attempting to close toast and show success.');
-//     this.closeRecordingToast();
-//     Swal.fire({
-//       toast: true,
-//       position: 'top-end',
-//       icon: 'success',
-//       title: '<br>บันทึกวิดีโอเรียบร้อยแล้ว!',
-//       showConfirmButton: false,
-//       timerProgressBar: true,
-//     });
-//     setTimeout(() => {
-//       Swal.close();
-//     },500); // ปิด Toast หลังจาก ไม่ถึง 1 วินาที
-  
-//   } else if (status.status === 'error') {
-//     console.log('🚨 Status is "error", attempting to close toast and show error.');
-//     this.closeRecordingToast();
-//      setTimeout(() => {
-//         Swal.fire({
-//             toast: true,
-//             position: 'top-end',
-//             icon: 'error',
-//             title: status.message || 'เกิดข้อผิดพลาดในการบันทึกวิดีโอ!',
-//             showConfirmButton: false,
-//         });
-//         setTimeout(() => {
-//           Swal.close();
-//         }, 10000); //slow 10 seconds
-//     }, 3000); // 3000 มิลลิวินาที = 3 วินาที
-//   }
-// },);
-// }
-
-ngOnDestroy(): void {
-    // if (this.recordingStatusSubscription) {
-    //     this.recordingStatusSubscription.unsubscribe();
-    // }
-    // if (this.connectionStatusSubscription) {
-    //     this.connectionStatusSubscription.unsubscribe();
-    // }
-    //this.closeRecordingToast(); // ปิด Toast หาก Component ถูกทำลาย
-    //this.videoRecordingService.closeConnection(); // ปิดการเชื่อมต่อ WebSocket ใน Service
-    
-    // if (this.interval) {
-    //     clearInterval(this.interval);
-    // }
+  } else if (status.status === 'error') {
+    console.log('Status is "error", attempting to close toast and show error.');
+    this.closeRecordingToast();
+     setTimeout(() => {
+        Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'error',
+            title: status.message || 'เกิดข้อผิดพลาดในการบันทึกวิดีโอ!',
+            showConfirmButton: false,
+        });
+        setTimeout(() => {
+          Swal.close();
+        }, 10000);
+    }, 3000);
+  }
+},);
 }
 
-// *** เพิ่มฟังก์ชัน didDestroy เป็นเมธอดของคลาส ***
-// private didDestroy(): void {
-//     //console.log('Toast was closed, checking if recording is still active...');
+ngOnDestroy(): void {
+    if (this.recordingStatusSubscription) {
+        this.recordingStatusSubscription.unsubscribe();
+    }
+    if (this.connectionStatusSubscription) {
+        this.connectionStatusSubscription.unsubscribe();
+    }
+    this.closeRecordingToast();
+    this.videoRecordingService.closeConnection();
 
-//     // ตรวจสอบว่ามีตัวจับเวลาเดิมทำงานอยู่หรือไม่ ถ้ามี ให้ยกเลิกก่อน
-//     if (this.toastTimerId) {
-//         clearTimeout(this.toastTimerId);
-//         this.toastTimerId = null;
-//     }
-    
-//     // ตั้งเวลาหน่วง 10 วินาที
-//     const delayMilliseconds = 10000;
+    if (this.interval) {
+        clearInterval(this.interval);
+    }
+}
 
-//     // เก็บ ID ของ setTimeout ที่สร้างขึ้นใหม่
-//     this.toastTimerId = setTimeout(() => {
-//         if (Swal.isVisible()) {
-//           //console.log('A popup is currently visible, waiting for it to close...');
-//             this.toastTimerId = setTimeout(() => {
-//                 this.didDestroy();
-//             }, 10000); 
-//             return;
-//         }
-        
-//         // เมื่อไม่มี Popup ให้ดำเนินการต่อ
-//         //const currentStatus = this.videoRecordingService.getRecordingStatus().getValue();
-        
-//         if (currentStatus && currentStatus.status === 'recording') {
-//             //console.log('Recording is still active, showing toast again.');
-//             // *** แก้ไขตรงนี้: เรียกใช้ showRecordingToast ด้วยข้อความที่เก็บไว้ ***
-//             this.showRecordingToast(this.currentToastMessage);
-//         } else {
-//             //console.log('Recording has stopped, clearing toast and timer.');
-//             this.recordingToast = null;
-//             clearTimeout(this.toastTimerId);
-//             this.toastTimerId = null;
-//         }
-//     }, delayMilliseconds); 
-// }
+private didDestroy(): void {
+    if (this.toastTimerId) {
+        clearTimeout(this.toastTimerId);
+        this.toastTimerId = null;
+    }
 
-// private showRecordingToast(message: string): void {
-//     //console.log('Showing recording toast with message:', message, this.recordingToast);
-//     this.currentToastMessage = message;
-//     // ถ้ายังไม่มี toast → สร้างใหม่
-//     this.recordingToast = Swal.fire({
-//         toast: true,
-//         position: 'top-end',
-//         icon: 'warning',
-//         html: message,
-//         showConfirmButton: false,
-//         timer: undefined,
-//         timerProgressBar: true,
-//         customClass: {
-//             container: 'my-custom-toast',
-//         },
-//         didOpen: (toast) => {
-//             toast.onmouseenter = Swal.stopTimer;
-//             toast.onmouseleave = Swal.resumeTimer;
-//         },
-//         // *** แก้ไข: เปลี่ยนการเรียกใช้ didDestroy ***
-//         didDestroy: () => {
-//             this.didDestroy();
-//         }
-//     });
-// }
+    const delayMilliseconds = 10000;
 
-// *** ส่วนของฟังก์ชันอื่นๆ ที่คุณมีอยู่ ***
-// private closeRecordingToast(): void {
-//     if (this.recordingToast) {
-//         Swal.close();
-//         this.recordingToast = null;
-//     }
-// }
+    this.toastTimerId = setTimeout(() => {
+        if (Swal.isVisible()) {
+            this.toastTimerId = setTimeout(() => {
+                this.didDestroy();
+            }, 10000);
+            return;
+        }
+
+        if (this.lastRecordingStatus && this.lastRecordingStatus.status === 'recording') {
+            this.showRecordingToast(this.currentToastMessage);
+        } else {
+            this.recordingToast = null;
+            clearTimeout(this.toastTimerId);
+            this.toastTimerId = null;
+        }
+    }, delayMilliseconds);
+}
+
+private showRecordingToast(message: string): void {
+    this.currentToastMessage = message;
+    this.recordingToast = Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: 'warning',
+        html: message,
+        showConfirmButton: false,
+        timer: undefined,
+        timerProgressBar: true,
+        customClass: {
+            container: 'my-custom-toast',
+        },
+        didOpen: (toast) => {
+            toast.onmouseenter = Swal.stopTimer;
+            toast.onmouseleave = Swal.resumeTimer;
+        },
+        didDestroy: () => {
+            this.didDestroy();
+        }
+    });
+}
+
+private closeRecordingToast(): void {
+    if (this.recordingToast) {
+        Swal.close();
+        this.recordingToast = null;
+    }
+}
 
 
   printLabel() {
@@ -410,6 +383,9 @@ ngOnDestroy(): void {
           iframe.onload = () => {
             iframe.contentWindow?.focus();
             iframe.contentWindow?.print();
+
+            this.videoRecordingService.sendCommand('stop', this.input.shipment_id);
+            this.closeRecordingToast();
 
             new Promise(f => setTimeout(f, 2000));
             //this.scanCon();
@@ -746,6 +722,12 @@ ngOnDestroy(): void {
 
 
   scanCon() {
+    const orderCodeForVideo = this.input.shipment_id || this.input.CONTAINER_ID || '';
+    if (orderCodeForVideo) {
+      this.videoRecordingService.sendCommand('stop', orderCodeForVideo);
+      this.closeRecordingToast();
+    }
+
     this.view = true;
     this.scanConPage = false;
     this.scanItemPage = true;
@@ -769,12 +751,6 @@ ngOnDestroy(): void {
     setTimeout(() => { this.focusInput_con() }, 1000);
     this.interval = setInterval(() => this.focusInput_item(), 3000);
     //console.log(this.input)
-
-    // console.log(' สแกนกล่อง กำลังส่งคำสั่งหยุดการบันทึก...');
-    // // ส่งคำสั่งหยุดการบันทึกผ่าน WebSocket
-    //     this.videoRecordingService.sendCommand('stop');
-    //     this.closeRecordingToast();
-
   }
 
 
@@ -1004,8 +980,6 @@ ngOnDestroy(): void {
                           });
 
                           this.summaryConCheck();
-                          //const orderCodeForVideo = this.input.shipment_id || this.input.CONTAINER_ID || 'UNKNOWN_ORDER';
-                          //this.videoRecordingService.sendCommand('start', orderCodeForVideo); 
                         }
 
                       } else {
@@ -1571,6 +1545,7 @@ ngOnDestroy(): void {
               }).then((result) => {
                 if (result.value) {
                   this.summaryConCheck();
+                  this.videoRecordingService.sendCommand('start', this.input.shipment_id);
                 } else {
                   this.input.CONTAINER_ID = ''
                 }
@@ -1641,6 +1616,7 @@ ngOnDestroy(): void {
                   this.scanConPage = true;
                   this.scanItemPage = false;
                   this.summaryPage = true;
+                  this.videoRecordingService.sendCommand('start', this.input.shipment_id);
                 } else {
                   this.input.CONTAINER_ID = ''
                 }
@@ -1696,6 +1672,7 @@ ngOnDestroy(): void {
                   this.scanConPage = true;
                   this.scanItemPage = false;
                   this.summaryPage = true;
+                  this.videoRecordingService.sendCommand('start', this.input.shipment_id);
                 } else {
                   this.input.CONTAINER_ID = ''
                 }
@@ -1777,6 +1754,7 @@ ngOnDestroy(): void {
                   }
 
                   setTimeout(() => { this.focusInput_item() }, 300)
+                  this.videoRecordingService.sendCommand('start', this.input.shipment_id);
                 } else {
                   this.input.CONTAINER_ID = ''
                 }
