@@ -8,7 +8,7 @@
   "audioDevice": "",
   "videoSize": "1280x720",
   "framerate": 15,
-  "inputFormat": "",
+  "inputFormat": "mjpeg",
   "rtbufsize": "256M",
   "crf": 28,
   "preset": "veryfast"

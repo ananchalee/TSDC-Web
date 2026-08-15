@@ -42,6 +42,11 @@ insert_user_tablecheck2(data:any){
   return this.http.post('http://10.26.1.21:1661/api/insert_user_tablecheck2', data)
 }
 
+// บันทึกไฟล์วิดีโอที่อัดเสร็จลง TSDC_VIDEO_HD (VIDEO_LIST 1 รายการ = 1 แถว)
+insert_video_hd(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/insert_video_hd', data)
+}
+
 load_checkinPack(data:any){
   return this.http.post('http://10.26.1.21:1661/api/load_checkinPack', data)
 }

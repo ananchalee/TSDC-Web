@@ -5,6 +5,21 @@
 <app-header id="page" [Pageactive]="pageactive" ></app-header>
 <app-menu id="page" [Pageactive]="pageactive"></app-menu>
 <div class="content-wrapper" style="min-height: 800px;">
+
+  <!-- ไฟสถานะโปรแกรมบันทึกวิดีโอ — ซ่อนทั้งป้ายถ้าเครื่องนี้ไม่ได้ลง agent (ไม่เคยต่อติดเลย) -->
+  <div class="video-agent-badge" *ngIf="videoAgentEverConnected"
+       [class.is-ready]="videoAgentConnected && !videoRecordingNow"
+       [class.is-recording]="videoAgentConnected && videoRecordingNow"
+       [class.is-down]="!videoAgentConnected">
+    <span class="dot"></span>
+    <span *ngIf="videoAgentConnected && !videoRecordingNow">กล้องพร้อม</span>
+    <span *ngIf="videoAgentConnected && videoRecordingNow">
+      กำลังบันทึก
+      <small *ngIf="videoRecordingStartedAt" class="since">เริ่ม {{videoRecordingStartedAt}}</small>
+    </span>
+    <span *ngIf="!videoAgentConnected">ขาดการเชื่อมต่อ</span>
+  </div>
+
   <div class="content-header">
     <div class="container-fluid">
       <div class="row ">

@@ -213,7 +213,12 @@ showRecordingFinished(fileName: string) {
 
    
     this.connectionStatusSubscription = this.videoRecordingService.getConnectionStatus().subscribe(isConnected => {
-      console.log('Video Recording WebSocket Connected Status:', isConnected);
+      this.videoAgentConnected = isConnected;
+      // จำไว้ว่าเครื่องนี้เคยต่อ agent ได้ = เป็นเครื่องที่ลง agent ไว้แล้ว
+      // เครื่องที่ยังไม่ได้ลงจะไม่เคยเป็น true จึงซ่อนป้ายไปเลย ไม่กวนระหว่างทยอย deploy
+      if (isConnected) {
+        this.videoAgentEverConnected = true;
+      }
     });
     this.getRecordingStatus();
   }
@@ -221,6 +226,7 @@ showRecordingFinished(fileName: string) {
 getRecordingStatus(){
     this.recordingStatusSubscription = this.videoRecordingService.getRecordingStatus().subscribe((status: any) => {
   this.lastRecordingStatus = status;
+  this.videoRecordingNow = (status.status === 'recording' || status.status === 'segment');
 
   if (this.recordingToastTimeout) {
     clearTimeout(this.recordingToastTimeout);
@@ -228,31 +234,24 @@ getRecordingStatus(){
   }
 
   if (status.status === 'recording') {
-    const startedAt = status.startedAtLocal || 'ไม่ระบุเวลา';
+    // ไม่เด้ง toast ระหว่างอัดแล้ว — ใช้ไฟสถานะมุมขวาบนแทน เพราะ toast บังหน้าจอตอนทำงาน
+    // เวลาเริ่มอัดไปโชว์ในป้ายนั้นแทน
+    this.videoRecordingStartedAt = this.shortTime(status.startedAtLocal);
 
-    this.recordingToastTimeout = setTimeout(() => {
-    if (Swal.isVisible()) {
-        this.recordingToastTimeout = setTimeout(() => {
-            this.showRecordingToast(`
-                <br>
-                กำลังบันทึกวิดีโอ...📸🎞️ <br>
-                START : ${startedAt}
-            `);
-            this.recordingToastTimeout = null;
-        }, 8000);
-        return;
-    }
+    // เขียนแถวตั้งต้นตั้งแต่เริ่มอัด (FNStaUpload = 2) เพื่อให้มีร่องรอยแม้เครื่องดับกลางทาง
+    this.saveVideoToDb(status);
+    this.videoErrorPrompted = false;
 
-    this.showRecordingToast(`
-        <br>
-        กำลังบันทึกวิดีโอ...📸🎞️ <br>
-        START : ${startedAt}
-    `);
-    this.recordingToastTimeout = null;
-}, 3500);
+  } else if (status.status === 'segment') {
+    // ffmpeg ตัดไฟล์ใหม่ = ไฟล์ก่อนหน้าปิดสมบูรณ์แล้ว
+    // ปิดแถวเดิมเป็น 0 (พร้อมอัปโหลด) และเปิดแถวใหม่เป็น 2 โดยไม่รอให้ทั้งออเดอร์จบ
+    this.saveVideoToDb(status);
 
   } else if (status.status === 'stopped') {
     this.closeRecordingToast();
+    this.videoRecordingStartedAt = '';
+    // อัดจบแล้ว ปิดท้ายทุก segment เป็น 0 ให้ตัวอัปโหลดมาเก็บ
+    this.saveVideoToDb(status);
     Swal.fire({
       toast: true,
       position: 'top-end',
@@ -266,22 +265,152 @@ getRecordingStatus(){
     },500);
 
   } else if (status.status === 'error') {
-    console.log('Status is "error", attempting to close toast and show error.');
+    // status error มาจากตัว agent เท่านั้น แปลว่าเครื่องนี้ "ลง agent ไว้แล้วแต่บันทึกไม่ได้"
+    // เครื่องที่ยังไม่ได้ลง agent จะไม่มีทางเข้าเงื่อนไขนี้ จึงไม่ถูกกวนระหว่างทยอย deploy
+    console.error('video agent error:', status.message);
     this.closeRecordingToast();
-     setTimeout(() => {
-        Swal.fire({
-            toast: true,
-            position: 'top-end',
-            icon: 'error',
-            title: status.message || 'เกิดข้อผิดพลาดในการบันทึกวิดีโอ!',
-            showConfirmButton: false,
-        });
-        setTimeout(() => {
-          Swal.close();
-        }, 10000);
-    }, 3000);
+    this.videoRecordingStartedAt = '';
+    this.confirmContinueWithoutVideo(status.message);
   }
 },);
+}
+
+// กันยิงซ้ำตอน agent ส่งสถานะ recording เดิมมาใหม่ (เช่นหน้าเว็บ reconnect ระหว่างที่ยังอัดอยู่)
+lastVideoStartKey = '';
+
+// กันเด้งซ้ำถ้า agent ส่ง error ติดๆ กันหลายครั้งในการเช็ครอบเดียว
+videoErrorPrompted = false;
+
+// สถานะสำหรับไฟบอกสถานะมุมขวาบน
+videoAgentConnected = false;       // ต่อ agent อยู่ตอนนี้ไหม
+videoAgentEverConnected = false;   // เครื่องนี้ลง agent ไว้ไหม (เคยต่อติดสักครั้ง)
+videoRecordingNow = false;         // กำลังอัดอยู่ไหม
+videoRecordingStartedAt = '';      // เวลาที่เริ่มอัด โชว์ในป้ายแทน toast เดิม
+
+// สำเนาข้อมูลออเดอร์สำหรับเขียน DB
+// จำเป็นเพราะ check_closeShipment() สั่ง input.TRACKING = "" ทันทีหลัง sendCommand('stop')
+// แต่ agent ใช้เวลาอีกราวครึ่งวินาทีกว่าจะส่ง stopped กลับมา ถ้าอ่าน input ตอนนั้นจะได้ค่าว่าง
+videoCtx: any = {};
+
+// REF_INDEX ของ "รอบการอัดนี้" เท่านั้น เซ็ตตอน tracking_running สร้างเลขสำเร็จ (ปิดกล่องจริง)
+// ห้ามอ่านจาก this.dataprint ตรงๆ เพราะตัวนั้นค้างข้ามออเดอร์ จะทำให้ REF_INDEX ของออเดอร์ก่อน
+// ติดไปกับวิดีโอของออเดอร์ถัดไปที่ยังไม่ได้ปิดกล่อง
+videoRefIndex = '';
+
+// เก็บเฉพาะค่าที่ "มี" — ค่าที่จับได้แล้วจะไม่ถูกล้างทับด้วยค่าว่างที่มาทีหลัง
+captureVideoContext() {
+  const refIndex = this.videoRefIndex || '';
+
+  this.videoCtx = {
+    FTTable_id:     this.input.TABLE_CHECK  || this.videoCtx.FTTable_id     || '',
+    FTZone:         this.input.Zone         || this.videoCtx.FTZone         || '',
+    FTContainer_id: this.input.CONTAINER_ID || this.videoCtx.FTContainer_id || '',
+    FTPin_code:     this.input.PIN_CODE     || this.videoCtx.FTPin_code     || '',
+
+    // ลำดับสำคัญมาก: เลขขนส่งสดใหม่ > เลขขนส่งที่จับไว้ก่อนหน้า > REF_INDEX
+    // REF_INDEX ต้องอยู่ท้ายสุดเพราะมันถูกสร้างตอนปิดกล่อง (หลังเลือก tracking)
+    // ถ้าเอามาก่อนค่าที่เก็บไว้ มันจะทับเลขขนส่งจริงทิ้งตอน input.TRACKING ถูกล้าง
+    FTTracking_id:  this.input.TRACKING || this.videoCtx.FTTracking_id || refIndex || '',
+  };
+}
+
+// startedAtLocal มาเป็น "15/8/2569 11:38:49" — เอาเฉพาะเวลาไปโชว์บนป้ายให้สั้น
+shortTime(localDateTime: string): string {
+  if (!localDateTime) {
+    return '';
+  }
+  const parts = String(localDateTime).trim().split(' ');
+  return parts.length > 1 ? parts[parts.length - 1] : String(localDateTime);
+}
+
+// เครื่องที่ลง agent ไว้แล้วแต่บันทึกวิดีโอไม่ได้ (เช่นหากล้องไม่เจอ) — ให้พนักงานตัดสินใจว่าจะเช็คต่อไหม
+// ไม่ปิดกั้นงานเอง เพราะของอาจต้องส่งออกตามรอบ แต่ต้องไม่ให้ "ไม่มีวิดีโอ" ผ่านไปโดยไม่มีใครรู้
+confirmContinueWithoutVideo(message: string) {
+  if (this.videoErrorPrompted) {
+    return;
+  }
+  this.videoErrorPrompted = true;
+
+  Swal.fire({
+    icon: 'warning',
+    title: 'บันทึกวิดีโอไม่สำเร็จ',
+    html: (message || 'ไม่สามารถเริ่มบันทึกวิดีโอได้')
+      + '<br><br><b>ต้องการทำงานต่อโดยไม่มีวิดีโอหรือไม่?</b>',
+    showCancelButton: true,
+    confirmButtonText: 'ทำงานต่อ',
+    cancelButtonText: 'ยกเลิก',
+    allowOutsideClick: false,
+    allowEscapeKey: false,
+  }).then((result) => {
+    if (result.value) {
+      console.warn('ผู้ใช้เลือกทำงานต่อโดยไม่มีวิดีโอ');
+    } else {
+      // พนักงานเลือกไปตามคนแก้กล้องก่อน — โหลดหน้าใหม่เพื่อกลับสู่สถานะตั้งต้น
+      window.location.reload();
+    }
+  });
+}
+
+// เขียน TSDC_VIDEO_HD — 1 ไฟล์ = 1 แถว
+// แต่ละไฟล์พก staUpload มาจาก agent เอง: 2 = กำลังเขียนอยู่, 0 = ปิดไฟล์แล้วพร้อมอัปโหลด
+// เรียกได้ 3 จังหวะ: เริ่มอัด / ffmpeg ตัด segment ใหม่ / อัดจบ
+saveVideoToDb(status: any) {
+  const files = status.files || [];
+  if (!files.length) {
+    console.warn('saveVideoToDb: agent ไม่ได้ส่งรายการไฟล์มา ข้ามการบันทึก DB');
+    return;
+  }
+
+  // สถานะ recording ถูกส่งซ้ำได้ทุกครั้งที่ WebSocket ต่อใหม่ระหว่างที่ยังอัดอยู่
+  if (status.status === 'recording') {
+    const key = files[0].name;
+    if (this.lastVideoStartKey === key) {
+      return;
+    }
+    this.lastVideoStartKey = key;
+    // ขึ้นรอบอัดใหม่ ล้างสำเนาและ REF_INDEX ของรอบก่อนทิ้ง
+    this.videoCtx = {};
+    this.videoRefIndex = '';
+  }
+
+  // เก็บค่าล่าสุดที่มีก่อนสร้าง payload เสมอ
+  this.captureVideoContext();
+
+  const payload = {
+    VIDEO_LIST: files.map((f: any) => ({
+      FTVideo_name: f.name,
+      // ชื่อก่อนถูกเปลี่ยน (ไฟล์เดียวจะถูกตัด -001 ออกตอนอัดจบ) — API ใช้หาแถวเดิม
+      FTVideo_name_old: f.nameOld || '',
+      FTPath: f.path,
+      // คอลัมน์เป็น decimal(18,2) และของเดิมในตารางเก็บเป็น "MB" ไม่ใช่ไบต์
+      FCFile_size: Number((f.sizeBytes / (1024 * 1024)).toFixed(2)),
+      FNStaUpload: f.staUpload,
+      FTStaDesc: f.staUpload === 2 ? 'Recording' : 'Insert success',
+      FDStartdate: f.startedAt,
+      FDEnddate: f.endedAt || ''      // ว่าง = ยังเขียนไม่จบ ฝั่ง API จะไม่แตะคอลัมน์นี้
+    })),
+    FTTable_id: this.videoCtx.FTTable_id || '',
+    FTZone: this.videoCtx.FTZone || '',
+    FTContainer_id: this.videoCtx.FTContainer_id || '',
+    FTOrder_number: status.orderCode || this.input.shipment_id || '',
+    FTTracking_id: this.videoCtx.FTTracking_id || '',
+    FTPin_code: this.videoCtx.FTPin_code || '',
+    // ตามแบบระบบเดิม (Tsdc Camera vision) คอลัมน์นี้เก็บชื่อโปรแกรมที่เขียนแถว ไม่ใช่ชื่อคน
+    // ตัวคนแพ็คดูได้จาก FTPin_code
+    FTUser_create: 'TSDC Recording Agent 1.0',
+    FTIp_address_local: status.ipLocal || ''
+  };
+
+  this.dataService.insert_video_hd(payload).subscribe((res: any) => {
+    if (res && res.status === 'success') {
+      console.log('saveVideoToDb: บันทึก', payload.VIDEO_LIST.length, 'แถว');
+    } else {
+      console.error('saveVideoToDb: API ตอบกลับไม่สำเร็จ', res);
+    }
+  }, (err: any) => {
+    // ไม่ขวาง flow การแพ็ค — ไฟล์ยังอยู่ในเครื่องโต๊ะเช็ค ตามเก็บย้อนหลังได้
+    console.error('saveVideoToDb: เรียก API ไม่สำเร็จ', err);
+  });
 }
 
 ngOnDestroy(): void {
@@ -384,6 +513,9 @@ private closeRecordingToast(): void {
             iframe.contentWindow?.focus();
             iframe.contentWindow?.print();
 
+            // ต้องจับก่อนสั่ง stop เพราะ check_closeShipment() ข้างล่างจะล้าง input.TRACKING ทิ้ง
+            // ก่อนที่ agent จะส่ง stopped กลับมา
+            this.captureVideoContext();
             this.videoRecordingService.sendCommand('stop', this.input.shipment_id);
             this.closeRecordingToast();
 
@@ -724,6 +856,7 @@ private closeRecordingToast(): void {
   scanCon() {
     const orderCodeForVideo = this.input.shipment_id || this.input.CONTAINER_ID || '';
     if (orderCodeForVideo) {
+      this.captureVideoContext();   // จับค่าก่อน scanCon() ล้างค่าใน input
       this.videoRecordingService.sendCommand('stop', orderCodeForVideo);
       this.closeRecordingToast();
     }
@@ -1545,7 +1678,7 @@ private closeRecordingToast(): void {
               }).then((result) => {
                 if (result.value) {
                   this.summaryConCheck();
-                  this.videoRecordingService.sendCommand('start', this.input.shipment_id);
+                  this.videoRecordingService.sendCommand('start', this.input.shipment_id, this.input.TABLE_CHECK);
                 } else {
                   this.input.CONTAINER_ID = ''
                 }
@@ -1616,7 +1749,7 @@ private closeRecordingToast(): void {
                   this.scanConPage = true;
                   this.scanItemPage = false;
                   this.summaryPage = true;
-                  this.videoRecordingService.sendCommand('start', this.input.shipment_id);
+                  this.videoRecordingService.sendCommand('start', this.input.shipment_id, this.input.TABLE_CHECK);
                 } else {
                   this.input.CONTAINER_ID = ''
                 }
@@ -1672,7 +1805,7 @@ private closeRecordingToast(): void {
                   this.scanConPage = true;
                   this.scanItemPage = false;
                   this.summaryPage = true;
-                  this.videoRecordingService.sendCommand('start', this.input.shipment_id);
+                  this.videoRecordingService.sendCommand('start', this.input.shipment_id, this.input.TABLE_CHECK);
                 } else {
                   this.input.CONTAINER_ID = ''
                 }
@@ -1754,7 +1887,7 @@ private closeRecordingToast(): void {
                   }
 
                   setTimeout(() => { this.focusInput_item() }, 300)
-                  this.videoRecordingService.sendCommand('start', this.input.shipment_id);
+                  this.videoRecordingService.sendCommand('start', this.input.shipment_id, this.input.TABLE_CHECK);
                 } else {
                   this.input.CONTAINER_ID = ''
                 }
@@ -1915,6 +2048,11 @@ private closeRecordingToast(): void {
     this.summaryPage = true;
     this.selecttrackPage = true;
     setTimeout(() => { this.focusInput_item() }, 150)
+
+    // shipment ที่มีหลาย tracking: พอปิดกล่อง tracking แรกการอัดจะหยุดไปแล้ว
+    // พอผู้ใช้เลือก tracking ถัดไปแล้วกดเริ่มงาน ต้องสั่งอัดใหม่ ไม่งั้นช่วงนี้จะไม่มีวิดีโอเลย
+    // ถ้า agent ยังอัดออเดอร์เดิมค้างอยู่ คำสั่งนี้จะถูกมองข้าม ไม่เกิดไฟล์ซ้อน
+    this.videoRecordingService.sendCommand('start', this.input.shipment_id, this.input.TABLE_CHECK);
 
   }
 
@@ -2545,6 +2683,9 @@ private closeRecordingToast(): void {
         }
         a.push(array)
         this.dataprint = a
+
+        // ปิดกล่องสำเร็จและได้เลข running จริงแล้ว — ใช้เป็น FTTracking_id ได้ถ้าไม่มีเลขขนส่ง
+        this.videoRefIndex = data.data[0].REF_INDEX || '';
         //console.log(this.dataprint)
         jQuery(this.myModalBOX.nativeElement).modal('hide');
 

@@ -32,11 +32,11 @@ wss.on('connection', (socket) => {
       return;
     }
 
-    const { command, orderCode } = payload;
-    console.log(`[server] command=${command} orderCode=${orderCode}`);
+    const { command, orderCode, tableCheck } = payload;
+    console.log(`[server] command=${command} orderCode=${orderCode} tableCheck=${tableCheck || '-'}`);
 
     if (command === 'start') {
-      recorder.start(orderCode);
+      recorder.start(orderCode, tableCheck);
     } else if (command === 'stop') {
       recorder.stop();
     } else if (command === 'status') {

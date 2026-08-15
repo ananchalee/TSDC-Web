@@ -59,12 +59,13 @@ export class VideoRecordingService {
     }, RECONNECT_DELAY_MS);
   }
 
-  sendCommand(command: 'start' | 'stop', orderCode: string): void {
+  // tableCheck ใช้ตั้งชื่อไฟล์ฝั่ง agent (tablecheck-order-วันเดือนปี-running) ส่งเฉพาะตอน start
+  sendCommand(command: 'start' | 'stop', orderCode: string, tableCheck?: string): void {
     if (this.socket?.readyState !== WebSocket.OPEN) {
       console.warn('VideoRecordingService: socket not open, cannot send command', command);
       return;
     }
-    this.socket.send(JSON.stringify({ command, orderCode }));
+    this.socket.send(JSON.stringify({ command, orderCode, tableCheck }));
   }
 
   getRecordingStatus(): Observable<any> {

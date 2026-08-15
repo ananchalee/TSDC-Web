@@ -38,6 +38,13 @@ function loadConfig() {
   }
   config.outputRoot = path.resolve(config.outputRoot);
 
+  // ffmpegPath แบบ relative ("./ffmpeg.exe") ต้องอิงโฟลเดอร์ agent ไม่ใช่ current directory
+  // เพราะตอน auto-start จาก Task Scheduler ตัว cwd จะเป็น C:\Windows\System32 แล้วหาไฟล์ไม่เจอ
+  // ส่วนคำสั่งเปล่าๆ อย่าง "ffmpeg" ต้องปล่อยไว้ให้หาจาก PATH ตามเดิม
+  if (/[\\/]/.test(config.ffmpegPath)) {
+    config.ffmpegPath = path.resolve(__dirname, '..', config.ffmpegPath);
+  }
+
   return config;
 }
 
