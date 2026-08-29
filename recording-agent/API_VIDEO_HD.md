@@ -96,8 +96,65 @@ agent รู้ว่า segment ปิดแล้วโดยส่องโ�
 ## Response
 
 ```json
-{ "status": "success", "inserted": 4, "updated": 1, "message": "" }
+{
+  "status": "success",
+  "inserted": 4,
+  "updated": 1,
+  "message": "",
+  "ids": [
+    { "FTVideo_name": "P52-ICCZ14382-Date(2026-08-15)-Time(15-52-48).mp4", "FNVideo_id": 660 }
+  ]
+}
 ```
+
+### `ids`
+
+คืน `FNVideo_id` ของ **ทุกแถวใน `VIDEO_LIST`** ที่เพิ่ง insert หรือ update จับคู่ด้วย `FTVideo_name`
+(ชื่อหลัง rename ถ้ารอบนั้นส่ง `FTVideo_name_old` มาด้วย)
+
+ทำแล้วใน `TSDC-Api.21/API/tsdc-project/server/api.js` — แถวใหม่เอา id จาก `SCOPE_IDENTITY()`
+ส่วนแถวที่มีอยู่แล้วอ่านกลับด้วย `FTVideo_name` (ชื่อใหม่ เพราะ UPDATE เขียนลงไปก่อนแล้ว)
+
+**เอาไปทำอะไร:** ชื่อไฟล์ต้องขึ้นต้นด้วย `FNVideo_id` ตามรูปแบบ
+`660-P52-ICCZ14382-Date(2026-08-15)-Time(15-52-48).mp4`
+แต่ `FNVideo_id` เป็น IDENTITY ที่เกิดตอน insert ส่วนไฟล์ถูก ffmpeg สร้างก่อนหน้านั้นเสมอ
+จึงใส่ตั้งแต่แรกไม่ได้ ลำดับจริงเป็นแบบนี้
+
+```
+1. ffmpeg สร้าง   P52-ICCZ14382-Date(...)-Time(...).mp4
+2. หน้าเว็บ insert  -> API คืน ids: FNVideo_id = 660
+3. หน้าเว็บสั่ง agent เปลี่ยนชื่อเป็น 660-P52-...
+4. หน้าเว็บ insert ซ้ำ  FTVideo_name = "660-P52-..."
+                       FTVideo_name_old = "P52-..."
+   -> API หาแถวเดิมจาก name_old แล้ว update FTVideo_name กับ FTPath
+```
+
+ขั้นที่ 4 ใช้กลไก `FTVideo_name_old` ที่ API รองรับอยู่แล้ว (ของเดิมใช้ตอนตัด `-001` ออก)
+ไม่ต้องทำอะไรเพิ่มนอกจากคืน `ids`
+
+**เข้ากันได้กับของเดิม:** ถ้า API ยังไม่คืน `ids` มา หน้าเว็บจะข้ามขั้นเปลี่ยนชื่อไปเฉยๆ
+ไฟล์คงชื่อ `P52-ICCZ14382-Date(...)-Time(...).mp4` และทุกอย่างทำงานต่อได้ตามปกติ
+จึงขึ้น Angular กับ agent ก่อนได้ ไม่ต้องรอ API
+
+> **ความยาว `FTVideo_name varchar(70)`** — วัดกับของจริงแล้ว (ทดสอบยิงเข้า API 22/08/2026)
+>
+> | ชื่อ | ยาว |
+> |---|---|
+> | `703-P52-ICCZ7707-Date(2026-08-15)-Time(15-52-48).mp4` | 52 |
+> | `704-P52-1111869002407707-Date(2026-08-15)-Time(15-52-48)-001.mp4` | 64 |
+>
+> เคสยาวสุดที่เป็นไปได้จริง (ออเดอร์ 16 หลัก + `-001`) ยัง **ลงได้** แต่เหลือที่ว่างแค่ ~6 ตัว
+> สูตรคือ `60 + จำนวนหลักของ FNVideo_id + 1` เมื่อ `deskName` ยาว 3 ตัวอย่าง `P52`
+>
+> จุดที่จะพังคือ **`deskName` ที่ยาวกว่านี้** — ตั้งชื่อโต๊ะเป็น `PACK-12` (7 ตัว) จะเกิน 70 ทันที
+> ที่ id 6 หลัก ควรขยายเป็น `varchar(100)` ไว้ก่อนเริ่ม deploy หลายโต๊ะ
+>
+> ```sql
+> ALTER TABLE [TSDC_VIDEO_HD] ALTER COLUMN [FTVideo_name] varchar(100);
+> ```
+>
+> ถ้าชนจริง API จะตอบ `status: "error"` พร้อม `String or binary data would be truncated.`
+> และแถวนั้นจะไม่ถูกเขียน (ไฟล์ยังอยู่ในเครื่องโต๊ะเช็ค ตามเก็บย้อนหลังได้)
 
 - เริ่มอัด → `inserted:1, updated:0`
 - ตัด segment → `inserted:1, updated:1`

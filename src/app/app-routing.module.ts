@@ -42,7 +42,7 @@ const routes: Routes = [
   },
   {
     path: 'audit-check-tracking', component: AuditCheckTrackingComponent,
-    data: { menubar: 'Audit Check Online B', version: '2.0.1', lastupdate: '2026-07-31' }
+    data: { menubar: 'Audit Check Online B', version: '2.0.1', lastupdate: '2026-08-22' }
   },
   {
     path: 'audit-check-fullcarton', component: AuditCheckFullcartonComponent,

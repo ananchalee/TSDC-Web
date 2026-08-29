@@ -93,6 +93,13 @@ hr.style19 {
     flex: none;
   }
 
+  /* เวลาที่อัดมาแล้ว — ตัวเลขความกว้างเท่ากันทุกหลัก ป้ายจะได้ไม่ขยับตอนวินาทีเปลี่ยน */
+  .elapsed {
+    margin-left: 6px;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
+  }
+
   /* เวลาที่เริ่มอัด — เบากว่าข้อความหลักเพื่อไม่ให้ป้ายดูรก */
   .since {
     margin-left: 6px;
@@ -100,9 +107,14 @@ hr.style19 {
     opacity: 0.85;
   }
 
-  &.is-ready     { background: #28a745; }   /* เขียว = พร้อมอัด */
+  &.is-ready     { background: #28a745; }   /* เขียว = agent ทำงาน + กล้องพร้อม */
   &.is-recording { background: #dc3545; }   /* แดง = กำลังอัด */
+  &.is-warning   { background: #fd7e14; }   /* ส้ม = agent ทำงานแต่กล้องไม่พร้อม */
   &.is-down      { background: #6c757d; }   /* เทา = เคยต่อได้แต่ตอนนี้หลุด */
+
+  /* ปกติป้ายไม่รับเมาส์ (กันบังปุ่มข้างหลัง) เปิดให้ชี้ได้เฉพาะตอนกล้องมีปัญหา
+     เพื่อให้ hover อ่าน title ว่าไม่พร้อมเพราะอะไร */
+  &.is-warning { pointer-events: auto; }
 
   /* กะพริบเฉพาะตอนกำลังอัด ให้สังเกตเห็นจากระยะไกล */
   &.is-recording .dot {

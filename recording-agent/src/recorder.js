@@ -29,16 +29,18 @@ function sqlDateTime(date) {
     + ` ${p(date.getHours())}:${p(date.getMinutes())}:${p(date.getSeconds())}`;
 }
 
-// วันเดือนปีสำหรับชื่อไฟล์ เช่น 15082026 (ใช้ ค.ศ. เพื่อให้เรียงตามเวลาได้ตรง)
+// วันที่สำหรับชื่อไฟล์ เช่น Date(2026-08-15)
+// ปี ค.ศ. ขึ้นก่อนเพื่อให้เรียงชื่อไฟล์ในโฟลเดอร์แล้วได้ลำดับเวลาที่ถูกต้องไปในตัว
 function dateTag(date) {
   const p = (n) => String(n).padStart(2, '0');
-  return `${p(date.getDate())}${p(date.getMonth() + 1)}${date.getFullYear()}`;
+  return `Date(${date.getFullYear()}-${p(date.getMonth() + 1)}-${p(date.getDate())})`;
 }
 
-// เวลาสำหรับชื่อไฟล์ เช่น 093033 — กันไฟล์ทับกันตอนออเดอร์เดิมถูกเอามาเช็คซ้ำในวันเดียวกัน
+// เวลาสำหรับชื่อไฟล์ เช่น Time(15-52-48) — กันไฟล์ทับกันตอนออเดอร์เดิมถูกเอามาเช็คซ้ำในวันเดียวกัน
+// ใช้ - คั่นแทน : เพราะ : เป็นอักขระต้องห้ามในชื่อไฟล์บน Windows
 function timeTag(date) {
   const p = (n) => String(n).padStart(2, '0');
-  return `${p(date.getHours())}${p(date.getMinutes())}${p(date.getSeconds())}`;
+  return `Time(${p(date.getHours())}-${p(date.getMinutes())}-${p(date.getSeconds())})`;
 }
 
 // IP ของเครื่องโต๊ะเช็คเอง เอาไว้ชี้ว่าไฟล์อยู่เครื่องไหนก่อนถูกอัปโหลดขึ้น server
@@ -193,6 +195,10 @@ class Recorder extends EventEmitter {
     return Object.assign({
       status: 'recording',
       startedAtLocal: this.startedAtLocal,
+      // จำนวนวินาทีที่อัดมาแล้ว ให้ป้ายฝั่งหน้าเว็บเดินนาฬิกาต่อเองได้
+      // ส่งเป็นตัวเลขวินาที ไม่ส่งเวลาเริ่มเป็นข้อความ เพราะ startedAtLocal เป็นปี พ.ศ. พาร์สไม่ได้
+      // และค่านี้ยังถูกต้องเมื่อหน้าเว็บเพิ่งรีเฟรชกลางคันระหว่างที่ยังอัดอยู่
+      elapsedSeconds: this.startedAt ? Math.max(0, Math.round((Date.now() - this.startedAt.getTime()) / 1000)) : 0,
       files: open ? [toFileRow(open, 2)] : [],
     }, this.statusContext());
   }
@@ -285,7 +291,11 @@ class Recorder extends EventEmitter {
 
     // เลขโต๊ะเช็คส่งมาจากหน้าเว็บ (input.TABLE_CHECK) — ถ้าไม่ได้ส่งมาถอยไปใช้ deskName ใน config
     const table = sanitize(tableCheck || this.config.deskName);
-    const outputDir = path.join(this.config.outputRoot, code);
+
+    // ไฟล์วางใน outputRoot ตรงๆ ไม่แยกโฟลเดอร์ตามชื่อ shipment อีกแล้ว
+    // ชื่อไฟล์มีทั้งโต๊ะ ออเดอร์ และเวลาอยู่ในตัวจึงไม่ชนกันอยู่แล้ว และตัวอัปโหลดกับคนที่มาตามหาไฟล์
+    // ดูโฟลเดอร์เดียวจบ ไม่ต้องไล่เปิดทีละโฟลเดอร์ย่อยที่มีไฟล์อยู่ไฟล์สองไฟล์
+    const outputDir = this.config.outputRoot;
 
     try {
       fs.mkdirSync(outputDir, { recursive: true });
@@ -294,7 +304,8 @@ class Recorder extends EventEmitter {
       return;
     }
 
-    // tablecheck-order-วันเดือนปี-เวลา-running เช่น T01-SHIPMENT123-15082026-093033-001.mp4
+    // โต๊ะเช็ค-ออเดอร์-วันที่-เวลา-ลำดับ
+    // เช่น P52-ICCZ14382-Date(2026-08-15)-Time(15-52-48)-001.mp4
     // เวลาคือเวลาที่เริ่มอัดรอบนั้น ทำให้ออเดอร์เดิมที่เอามาเช็คซ้ำในวันเดียวกันได้ไฟล์คนละชุด ไม่ทับของเดิม
     const startedNow = new Date();
     const prefix = `${table}-${code}-${dateTag(startedNow)}-${timeTag(startedNow)}`;
@@ -471,6 +482,70 @@ class Recorder extends EventEmitter {
     this.segments = [];
     this.ipLocal = '';
     this.stopping = false;
+  }
+
+  // เปลี่ยนชื่อไฟล์ที่อัดเสร็จแล้ว ตามที่หน้าเว็บสั่งมาหลังรู้ FNVideo_id จาก DB
+  //
+  // ทำไมต้องมาเปลี่ยนทีหลัง: FNVideo_id เป็น IDENTITY ที่ DB สร้างตอน insert แถว
+  // แต่ไฟล์ถูก ffmpeg สร้างขึ้นก่อนหน้านั้นเสมอ จึงเอา id ไปใส่ในชื่อตั้งแต่แรกไม่ได้
+  // หน้าเว็บจึงรอให้ API คืน id มาก่อน แล้วค่อยสั่งเปลี่ยนชื่อ และส่งชื่อเดิมกลับไปให้ API
+  // update คอลัมน์ FTVideo_name โดยหาแถวจาก FTVideo_name_old (กลไกเดียวกับตอนตัด -001)
+  //
+  // หน้าเว็บสั่งเฉพาะหลังอัดจบเท่านั้น เพราะ scanSegments() หาไฟล์ด้วย prefix เดิม
+  // ถ้าไปเปลี่ยนชื่อระหว่างยังอัดอยู่ ไฟล์จะหลุดจากการ scan รอบถัดไปทันที
+  renameFiles(list) {
+    const rows = [];
+    const openName = this.openSegment ? this.openSegment.name : null;
+
+    for (const item of list || []) {
+      const from = String((item && item.name) || '');
+      const to = String((item && item.newName) || '');
+
+      // ชื่อที่รับมาจากหน้าเว็บต้องเป็นชื่อไฟล์ล้วนๆ เท่านั้น ห้ามมี path ปนมา
+      // ไม่งั้นจะกลายเป็นช่องให้เขียนทับไฟล์นอกโฟลเดอร์วิดีโอได้
+      if (!from || !to || /[\\/]/.test(from) || /[\\/]/.test(to) || from.includes('..') || to.includes('..')) {
+        console.error(`[recorder] ชื่อไฟล์สำหรับเปลี่ยนชื่อไม่ถูกต้อง ข้าม: ${from} -> ${to}`);
+        continue;
+      }
+      if (!/\.mp4$/i.test(to)) {
+        console.error(`[recorder] ชื่อใหม่ต้องลงท้ายด้วย .mp4 ข้าม: ${to}`);
+        continue;
+      }
+      if (from === to) {
+        continue;   // ชื่อตรงอยู่แล้ว (หน้าเว็บสั่งซ้ำ) ไม่ต้องทำอะไร
+      }
+      if (openName && from === openName) {
+        console.error(`[recorder] ${from} ยังถูก ffmpeg เขียนอยู่ เปลี่ยนชื่อไม่ได้`);
+        continue;
+      }
+
+      const fromPath = path.join(this.config.outputRoot, from);
+      const toPath = path.join(this.config.outputRoot, to);
+
+      if (fs.existsSync(toPath)) {
+        console.error(`[recorder] มีไฟล์ชื่อ ${to} อยู่แล้ว ไม่เขียนทับ`);
+        continue;
+      }
+
+      try {
+        fs.renameSync(fromPath, toPath);
+      } catch (err) {
+        // เปลี่ยนไม่ได้ก็ปล่อยชื่อเดิมไว้ ดีกว่าทำให้แถวใน DB ชี้ไปไฟล์ที่ไม่มีอยู่จริง
+        console.error(`[recorder] เปลี่ยนชื่อ ${from} ไม่สำเร็จ: ${err.message}`);
+        continue;
+      }
+
+      let sizeBytes = 0;
+      try {
+        sizeBytes = fs.statSync(toPath).size;
+      } catch (err) { /* เพิ่งเปลี่ยนชื่อเสร็จ อ่านไม่ได้ก็ปล่อย 0 */ }
+
+      console.log(`[recorder] เปลี่ยนชื่อ ${from} -> ${to}`);
+      rows.push({ name: to, nameOld: from, path: toPath, sizeBytes: sizeBytes });
+    }
+
+    // ส่งกลับเสมอแม้ไม่มีไฟล์ไหนเปลี่ยนได้ หน้าเว็บจะได้ไม่ค้างรอ
+    this.emit('status', { status: 'renamed', files: rows });
   }
 }
 

@@ -87,6 +87,7 @@ export class AuditCheckTrackingComponent implements OnInit, OnDestroy {
   private recordingToastTimeout: any = null;
   private recordingStatusSubscription!: Subscription;
   private connectionStatusSubscription!: Subscription;
+  private cameraStatusSubscription!: Subscription;
   private lastRecordingStatus: any = null;
   
   showRecordingStarted(fileName: string) {
@@ -212,6 +213,10 @@ showRecordingFinished(fileName: string) {
     this.input.TRACKING = null;
 
    
+    // ngOnDestroy รอบก่อนปิด socket ทิ้งไปแล้ว (service เป็น singleton ไม่ได้ถูกสร้างใหม่)
+    // ต้องสั่งต่อใหม่ทุกครั้งที่เข้าหน้านี้ ไม่งั้นเปิดหน้าเช็คซ้ำจะไม่มีไฟสถานะขึ้นเลย
+    this.videoRecordingService.ensureConnected();
+
     this.connectionStatusSubscription = this.videoRecordingService.getConnectionStatus().subscribe(isConnected => {
       this.videoAgentConnected = isConnected;
       // จำไว้ว่าเครื่องนี้เคยต่อ agent ได้ = เป็นเครื่องที่ลง agent ไว้แล้ว
@@ -220,6 +225,13 @@ showRecordingFinished(fileName: string) {
         this.videoAgentEverConnected = true;
       }
     });
+
+    // สถานะกล้องแยกมาจาก agent ต่างหาก — ต่อ agent ติดไม่ได้แปลว่าอัดได้
+    this.cameraStatusSubscription = this.videoRecordingService.getCameraStatus().subscribe((camera: any) => {
+      this.videoCameraReady = camera.ready;
+      this.videoCameraMessage = camera.message || '';
+    });
+
     this.getRecordingStatus();
   }
 
@@ -237,6 +249,7 @@ getRecordingStatus(){
     // ไม่เด้ง toast ระหว่างอัดแล้ว — ใช้ไฟสถานะมุมขวาบนแทน เพราะ toast บังหน้าจอตอนทำงาน
     // เวลาเริ่มอัดไปโชว์ในป้ายนั้นแทน
     this.videoRecordingStartedAt = this.shortTime(status.startedAtLocal);
+    this.startElapsedClock(status.elapsedSeconds || 0);
 
     // เขียนแถวตั้งต้นตั้งแต่เริ่มอัด (FNStaUpload = 2) เพื่อให้มีร่องรอยแม้เครื่องดับกลางทาง
     this.saveVideoToDb(status);
@@ -248,10 +261,20 @@ getRecordingStatus(){
     this.saveVideoToDb(status);
 
   } else if (status.status === 'stopped') {
+    // getRecordingStatus() เป็น BehaviorSubject มันจะรีเพลย์สถานะล่าสุดให้ผู้ subscribe รายใหม่
+    // ทุกครั้งที่กลับเข้าหน้านี้ ถ้าไม่กันไว้ จะเด้ง toast "บันทึกวิดีโอเรียบร้อย" และเขียน DB ซ้ำ
+    // ทั้งที่ไม่ได้เพิ่งอัดจบ
+    const stopKey = this.videoFilesKey(status);
+    if (this.lastVideoStopKey === stopKey) {
+      return;
+    }
+    this.lastVideoStopKey = stopKey;
+
     this.closeRecordingToast();
     this.videoRecordingStartedAt = '';
+    this.stopElapsedClock();
     // อัดจบแล้ว ปิดท้ายทุก segment เป็น 0 ให้ตัวอัปโหลดมาเก็บ
-    this.saveVideoToDb(status);
+    this.saveVideoToDb(status, true);   // อัดจบแล้ว ไฟล์ปิดหมดแล้ว เปลี่ยนชื่อเติม FNVideo_id ได้
     Swal.fire({
       toast: true,
       position: 'top-end',
@@ -264,12 +287,17 @@ getRecordingStatus(){
       Swal.close();
     },500);
 
+  } else if (status.status === 'renamed') {
+    // agent เติม FNVideo_id ไว้หน้าชื่อไฟล์เรียบร้อย ส่งชื่อใหม่กลับไปแก้แถวใน DB
+    this.applyRenamedVideos(status);
+
   } else if (status.status === 'error') {
     // status error มาจากตัว agent เท่านั้น แปลว่าเครื่องนี้ "ลง agent ไว้แล้วแต่บันทึกไม่ได้"
     // เครื่องที่ยังไม่ได้ลง agent จะไม่มีทางเข้าเงื่อนไขนี้ จึงไม่ถูกกวนระหว่างทยอย deploy
     console.error('video agent error:', status.message);
     this.closeRecordingToast();
     this.videoRecordingStartedAt = '';
+    this.stopElapsedClock();
     this.confirmContinueWithoutVideo(status.message);
   }
 },);
@@ -277,6 +305,15 @@ getRecordingStatus(){
 
 // กันยิงซ้ำตอน agent ส่งสถานะ recording เดิมมาใหม่ (เช่นหน้าเว็บ reconnect ระหว่างที่ยังอัดอยู่)
 lastVideoStartKey = '';
+
+// กันสถานะ stopped ตัวเดิมถูกรีเพลย์ซ้ำตอนกลับเข้าหน้าเช็คใหม่
+lastVideoStopKey = '';
+
+// คีย์ระบุ "รอบการอัด" จากรายชื่อไฟล์ ใช้เทียบว่าเป็นสถานะเดิมที่เคยจัดการไปแล้วหรือไม่
+videoFilesKey(status: any): string {
+  const files = status.files || [];
+  return files.length ? files.map((f: any) => f.name).join('|') : (status.orderCode || '');
+}
 
 // กันเด้งซ้ำถ้า agent ส่ง error ติดๆ กันหลายครั้งในการเช็ครอบเดียว
 videoErrorPrompted = false;
@@ -286,6 +323,46 @@ videoAgentConnected = false;       // ต่อ agent อยู่ตอนน�
 videoAgentEverConnected = false;   // เครื่องนี้ลง agent ไว้ไหม (เคยต่อติดสักครั้ง)
 videoRecordingNow = false;         // กำลังอัดอยู่ไหม
 videoRecordingStartedAt = '';      // เวลาที่เริ่มอัด โชว์ในป้ายแทน toast เดิม
+
+// สถานะกล้องที่ agent ตรวจให้ — true/false = ตรวจแล้ว, null = ยังไม่รู้ (agent รุ่นเก่ายังไม่ส่งค่านี้)
+// ป้ายจะเขียวก็ต่อเมื่อ "ต่อ agent ได้ และกล้องไม่ได้แจ้งว่าไม่พร้อม" เท่านั้น
+videoCameraReady: boolean | null = null;
+videoCameraMessage = '';           // เหตุผลที่กล้องไม่พร้อม โชว์ตอนเอาเมาส์ชี้ป้าย
+
+videoRecordingElapsed = '';        // นาฬิกาที่เดินระหว่างอัด (mm:ss) ให้เห็นว่าอัดมานานแค่ไหนแล้ว
+private videoElapsedTimer: any = null;
+private videoElapsedBase = 0;      // วินาทีที่ agent บอกว่าอัดไปแล้วตอนได้รับสถานะ
+private videoElapsedFrom = 0;      // เวลาเครื่องตอนรับสถานะนั้น ใช้บวกต่อเอง ไม่ต้องถาม agent ซ้ำ
+
+// นับเวลาต่อจากค่าที่ agent ส่งมา ไม่ได้เริ่มนับจาก 0 เสมอ
+// เพราะถ้าหน้าเว็บรีเฟรชกลางคันระหว่างที่ยังอัดอยู่ ต้องโชว์เวลาที่อัดมาแล้วจริงๆ ไม่ใช่เริ่มใหม่
+startElapsedClock(baseSeconds: number) {
+  this.videoElapsedBase = baseSeconds;
+  this.videoElapsedFrom = Date.now();
+  this.tickElapsedClock();
+
+  if (this.videoElapsedTimer) {
+    return;   // เดินอยู่แล้ว (เช่นสถานะ recording ถูกส่งซ้ำตอน reconnect) ไม่ต้องตั้งซ้อน
+  }
+  this.videoElapsedTimer = setInterval(() => this.tickElapsedClock(), 1000);
+}
+
+stopElapsedClock() {
+  if (this.videoElapsedTimer) {
+    clearInterval(this.videoElapsedTimer);
+    this.videoElapsedTimer = null;
+  }
+  this.videoRecordingElapsed = '';
+}
+
+tickElapsedClock() {
+  const seconds = this.videoElapsedBase + Math.floor((Date.now() - this.videoElapsedFrom) / 1000);
+  const p = (n: number) => String(n).padStart(2, '0');
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  this.videoRecordingElapsed = h ? `${h}:${p(m)}:${p(s)}` : `${p(m)}:${p(s)}`;
+}
 
 // สำเนาข้อมูลออเดอร์สำหรับเขียน DB
 // จำเป็นเพราะ check_closeShipment() สั่ง input.TRACKING = "" ทันทีหลัง sendCommand('stop')
@@ -354,7 +431,7 @@ confirmContinueWithoutVideo(message: string) {
 // เขียน TSDC_VIDEO_HD — 1 ไฟล์ = 1 แถว
 // แต่ละไฟล์พก staUpload มาจาก agent เอง: 2 = กำลังเขียนอยู่, 0 = ปิดไฟล์แล้วพร้อมอัปโหลด
 // เรียกได้ 3 จังหวะ: เริ่มอัด / ffmpeg ตัด segment ใหม่ / อัดจบ
-saveVideoToDb(status: any) {
+saveVideoToDb(status: any, renameAfter = false) {
   const files = status.files || [];
   if (!files.length) {
     console.warn('saveVideoToDb: agent ไม่ได้ส่งรายการไฟล์มา ข้ามการบันทึก DB');
@@ -404,12 +481,101 @@ saveVideoToDb(status: any) {
   this.dataService.insert_video_hd(payload).subscribe((res: any) => {
     if (res && res.status === 'success') {
       console.log('saveVideoToDb: บันทึก', payload.VIDEO_LIST.length, 'แถว');
+      if (renameAfter) {
+        this.renameVideosWithId(payload, res);
+      }
     } else {
       console.error('saveVideoToDb: API ตอบกลับไม่สำเร็จ', res);
     }
   }, (err: any) => {
     // ไม่ขวาง flow การแพ็ค — ไฟล์ยังอยู่ในเครื่องโต๊ะเช็ค ตามเก็บย้อนหลังได้
     console.error('saveVideoToDb: เรียก API ไม่สำเร็จ', err);
+  });
+}
+
+// payload ที่เพิ่งส่งไป เก็บไว้ใช้ตอน update ชื่อไฟล์ใหม่ จะได้ส่งค่าคอลัมน์อื่นเดิมไปครบ
+// ไม่ต้องไปดึงค่าจากหน้าจอใหม่ ซึ่งตอนนั้นถูก check_closeShipment ล้างไปแล้ว
+private videoLastPayload: any = null;
+
+// เอา FNVideo_id ที่ API คืนมา ไปเติมไว้หน้าชื่อไฟล์
+//
+// ทำตอนนี้ไม่ได้ทำตั้งแต่แรก เพราะ FNVideo_id เป็น IDENTITY ที่เกิดตอน insert
+// ส่วนไฟล์ถูก ffmpeg สร้างก่อนหน้านั้นเสมอ
+//
+// สั่งเฉพาะหลังอัดจบ (stopped) เท่านั้น ถ้าไปเปลี่ยนชื่อระหว่างยังอัดอยู่
+// ไฟล์จะหลุดจากการ scan ด้วย prefix ของ agent ทันที แล้วรายการไฟล์ตอนจบจะขาดไป
+renameVideosWithId(payload: any, res: any) {
+  // API รุ่นที่ยังไม่คืน ids มาให้ = ข้ามไปเฉยๆ ชื่อไฟล์คงรูปแบบเดิม ทุกอย่างทำงานต่อได้ปกติ
+  const ids = (res && res.ids) || [];
+  if (!ids.length) {
+    return;
+  }
+
+  const idByName: any = {};
+  for (const row of ids) {
+    if (row && row.FTVideo_name) {
+      idByName[row.FTVideo_name] = row.FNVideo_id;
+    }
+  }
+
+  const renames: Array<{ name: string, newName: string }> = [];
+  for (const row of payload.VIDEO_LIST) {
+    const id = idByName[row.FTVideo_name];
+    if (!id) {
+      continue;
+    }
+    // เติมไปแล้วไม่ต้องเติมซ้ำ — กันวนไม่รู้จบ เพราะรอบ update ชื่อใหม่ API ก็คืน id มาอีก
+    if (String(row.FTVideo_name).startsWith(id + '-')) {
+      continue;
+    }
+    renames.push({ name: row.FTVideo_name, newName: `${id}-${row.FTVideo_name}` });
+  }
+
+  this.videoLastPayload = payload;
+  this.videoRecordingService.sendRename(renames);
+}
+
+// agent เปลี่ยนชื่อไฟล์ให้แล้ว ส่ง update กลับไปให้ API แก้ FTVideo_name/FTPath ของแถวเดิม
+// หาแถวเดิมด้วย FTVideo_name_old เหมือนกลไกตอนตัด -001 ที่มีอยู่ก่อนแล้ว
+applyRenamedVideos(status: any) {
+  const files = status.files || [];
+  const last = this.videoLastPayload;
+  if (!files.length || !last) {
+    return;
+  }
+
+  const rowByName: any = {};
+  for (const row of last.VIDEO_LIST) {
+    rowByName[row.FTVideo_name] = row;
+  }
+
+  const list = [];
+  for (const f of files) {
+    const before = rowByName[f.nameOld];
+    if (!before) {
+      continue;   // ไม่ใช่ไฟล์ของรอบที่เพิ่งส่งไป ไม่ต้องยุ่ง
+    }
+    list.push(Object.assign({}, before, {
+      FTVideo_name: f.name,
+      FTVideo_name_old: f.nameOld,
+      FTPath: f.path,
+    }));
+  }
+
+  if (!list.length) {
+    return;
+  }
+
+  // รอบนี้ห้ามสั่ง rename ต่ออีก ไม่งั้นวนไม่จบ
+  this.videoLastPayload = null;
+  this.dataService.insert_video_hd(Object.assign({}, last, { VIDEO_LIST: list })).subscribe((res: any) => {
+    if (res && res.status === 'success') {
+      console.log('applyRenamedVideos: อัปเดตชื่อไฟล์', list.length, 'แถว');
+    } else {
+      console.error('applyRenamedVideos: API ตอบกลับไม่สำเร็จ', res);
+    }
+  }, (err: any) => {
+    console.error('applyRenamedVideos: เรียก API ไม่สำเร็จ', err);
   });
 }
 
@@ -420,6 +586,10 @@ ngOnDestroy(): void {
     if (this.connectionStatusSubscription) {
         this.connectionStatusSubscription.unsubscribe();
     }
+    if (this.cameraStatusSubscription) {
+        this.cameraStatusSubscription.unsubscribe();
+    }
+    this.stopElapsedClock();
     this.closeRecordingToast();
     this.videoRecordingService.closeConnection();
 
