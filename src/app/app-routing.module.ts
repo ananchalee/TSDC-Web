@@ -26,6 +26,7 @@ import {ReportPackingListComponent} from './layout/reports/report-packinglist/re
 import {ReportPrintWaveOrderComponent} from './layout/reports/report-print-waveorder/report-print-waveorder.component';
 import {ReportPrintTrackingGroupSkuComponent} from './layout/reports/report-print-tracking-groupsku/report-print-tracking-groupsku.component';
 import {MonitorWaveOrdeComponent} from './layout/monitor-waveorde/monitor-waveorde.component';
+import {ConfirmQtyGroupSkuComponent} from './layout/confirm-qty-groupsku/confirm-qty-groupsku.component';
 
 const routes: Routes = [
 
@@ -118,11 +119,15 @@ const routes: Routes = [
   },
   {
     path: 'report-printTrackingGroupSku', component: ReportPrintTrackingGroupSkuComponent,
-    data: { menubar: 'Print Tracking Group SKU', version: '1.0.0', lastupdate: '2026-08-01' }
+    data: { menubar: 'Print Tracking Group SKU', version: '1.1.0', lastupdate: '2026-08-29' }
   },
   {
     path: 'monitor-waveorde', component: MonitorWaveOrdeComponent,
     data: { menubar: 'Monitor Wave Order', version: '1.0.0', lastupdate: '2026-01-01' }
+  },
+  {
+    path: 'confirm-qty-groupsku', component: ConfirmQtyGroupSkuComponent,
+    data: { menubar: 'Confirm Qty Group SKU', version: '1.0.0', lastupdate: '2026-08-29' }
   },
   { path: '**', redirectTo: 'login' } ,
 

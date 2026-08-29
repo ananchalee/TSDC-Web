@@ -1,5 +1,5 @@
 // report-print-tracking-groupsku.component.ts
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ElementRef, ViewChild } from '@angular/core';
 import { DataService, TimeService } from '../../../services/index';
 import { ActivatedRoute } from '@angular/router';
 import { PDFDocument, PDFFont, StandardFonts } from 'pdf-lib';
@@ -22,6 +22,12 @@ interface TrackingRow {
   PRINT_STATUS:   string;
   PRINT_DATE:     string;
   TABLE_CHECK:    string;
+  ITEM_ID:         string;
+  ITEM_ID_BARCODE: string;
+  QTY:             number;
+  //// กลุ่มย่อยใน GROUP_PICK เดียวกัน แยกของที่ QTY ต่อ order ไม่เท่ากัน
+  //// ว่างได้ = กลุ่มนั้นไม่ได้แบ่ง sub (ของเท่ากันหมด)
+  SUB_GROUP_PICK:  string;
 }
 
 //// STATUS_PRINT เป็นตัวแยกว่าแถวนี้พิมพ์แบบไหน (คุมโดยระบบ ไม่ใช่ free text อย่าง TRANSPORT_CODE)
@@ -30,10 +36,14 @@ interface TrackingRow {
 ////   3 = Cancel ไม่มี TRACKING/FILE_PACKING → พิมพ์ใบ Cancel
 type PrintKind = 1 | 2 | 3;
 
+//// 1 การ์ด = 1 คู่ TRANSPORT_CODE + SUB_GROUP_PICK
+//// SUB_GROUP_PICK แยกของที่ QTY ไม่เท่ากันออกจากกันภายใน group ใหญ่เดียวกัน
+//// จึงต้องพิมพ์แยกใบกัน ไม่งั้นขนาดกล่องกับจำนวนของแต่ละ sub จะปนกัน
 interface TransportSummary {
   code:     string;     //// TRANSPORT_CODE
+  subGroup: string;     //// SUB_GROUP_PICK ('' = ไม่ได้แบ่ง sub)
   kind:     PrintKind;  //// แบบการพิมพ์ของการ์ดนี้
-  total:    number;     //// จำนวนทั้งหมดใน group pick นี้
+  total:    number;     //// จำนวนทั้งหมดในคู่นี้
   pending:  number;     //// ที่ยังไม่พิมพ์ (PRINT_STATUS = 'N')
   noFile:   number;     //// ที่ไม่มี FILE_PACKING
   isCancel: boolean;    //// kind 3 — พิมพ์ใบ Cancel ไม่ใช่ PDF
@@ -110,7 +120,10 @@ export class ReportPrintTrackingGroupSkuComponent implements OnInit {
   data_list:    TrackingRow[]      = [];
   transportList: TransportSummary[] = [];
 
-  activeCode = '';   //// transport ที่เลือกอยู่ในหน้ายืนยัน
+  //// การ์ดที่เลือกอยู่ — ต้องใช้ทั้งคู่ ไม่ใช่ transport อย่างเดียว
+  //// เพราะ transport เดียวกันมีได้หลาย SUB_GROUP_PICK และต้องพิมพ์แยกใบกัน
+  activeCode     = '';   //// TRANSPORT_CODE ที่เลือก
+  activeSubGroup = '';   //// SUB_GROUP_PICK ที่เลือก ('' = การ์ดที่ไม่มี sub)
 
   //// ── ใบ Cancel ─────────────────────────────────────────────
   readonly CANCEL_CODE = 'cancel';
@@ -131,6 +144,14 @@ export class ReportPrintTrackingGroupSkuComponent implements OnInit {
   //// ขนาดกล่อง — ถามครั้งเดียวต่อการ์ด ใช้กับทุก shipment ใน batch นั้น
   boxInput = { BOX_SIZE: '', CARTON_BOX_W: 0, CARTON_BOX_H: 0, CARTON_BOX_L: 0, CARTON_BOX_WEIGHT: 0 };
   box: any = { Errorhide: true, Suchide: true, des: '' };
+
+  //// ── สแกนไอเทมก่อนระบุขนาดกล่อง ────────────────────────────
+  @ViewChild('inputScanItem') inputScanItem!: ElementRef<HTMLInputElement>;
+  @ViewChild('inputBoxSize')  inputBoxSize!:  ElementRef<HTMLInputElement>;
+
+  scanInput      = { ITEM_BARCODE: '' };
+  itemScanned    = false;   //// สแกนผ่านแล้ว — ช่องขนาดกล่องถึงจะกรอกได้
+  scannedBarcode = '';      //// barcode ที่สแกนผ่าน โชว์ยืนยันให้เห็นบนหน้าจอ
 
   constructor(
     private dataService: DataService,
@@ -159,8 +180,9 @@ export class ReportPrintTrackingGroupSkuComponent implements OnInit {
     if (!group) { return; }
 
     this.input.GROUP_PICK = group;
-    this.isLoading  = true;
-    this.activeCode = '';
+    this.isLoading      = true;
+    this.activeCode     = '';
+    this.activeSubGroup = '';
 
     this.dataService.Get_TrackingGroupSku({ GROUP_PICK: group }).subscribe((res: any) => {
       this.isLoading  = false;
@@ -201,6 +223,7 @@ export class ReportPrintTrackingGroupSkuComponent implements OnInit {
     this.data_list       = [];
     this.transportList   = [];
     this.activeCode      = '';
+    this.activeSubGroup  = '';
     this.loadedGroupPick = '';
   }
 
@@ -231,7 +254,9 @@ export class ReportPrintTrackingGroupSkuComponent implements OnInit {
   }
 
   get activeKind(): PrintKind {
-    const t = this.transportList.find(x => x.code === this.activeCode);
+    const t = this.transportList.find(
+      x => x.code === this.activeCode && x.subGroup === this.activeSubGroup
+    );
     return t ? t.kind : 1;
   }
 
@@ -243,19 +268,36 @@ export class ReportPrintTrackingGroupSkuComponent implements OnInit {
     return this.activeKind === 2;
   }
 
-  // ── สรุปจำนวนต่อ TRANSPORT_CODE ─────────────────────────────
+  //// TRANSPORT_CODE ของแถว — ค่าว่างถูกจัดเป็นกลุ่ม (ไม่ระบุ) เหมือนเดิม
+  codeOf(row: TrackingRow): string {
+    return (row.TRANSPORT_CODE || '').trim() || '(ไม่ระบุ)';
+  }
+
+  //// SUB_GROUP_PICK ของแถว — ว่างได้ (กลุ่มที่ไม่ได้แบ่ง sub) ไม่ต้องแทนด้วย (ไม่ระบุ)
+  //// เพราะ '' เป็นค่าที่ถูกต้องตามธุรกิจ ไม่ใช่ข้อมูลขาด
+  subGroupOf(row: TrackingRow): string {
+    return (row.SUB_GROUP_PICK || '').toString().trim();
+  }
+
+  // ── สรุปจำนวนต่อ TRANSPORT_CODE + SUB_GROUP_PICK ────────────
   buildTransportSummary(rows: TrackingRow[]): TransportSummary[] {
     const map = new Map<string, TransportSummary>();
 
     rows.forEach(r => {
-      const code = (r.TRANSPORT_CODE || '').trim() || '(ไม่ระบุ)';
+      const code = this.codeOf(r);
+      const sub  = this.subGroupOf(r);
       const kind = this.printKindOf(r);
 
-      let s = map.get(code);
+      //// คีย์ของการ์ด = TRANSPORT_CODE + SUB_GROUP_PICK
+      //// ใช้ JSON.stringify แทนการต่อสตริงด้วยตัวคั่น จะได้ไม่ต้องเดาว่าตัวคั่นตัวไหนปลอดภัย
+      //// (ถ้าใช้ '|' แล้วชื่อ transport หรือ sub มี '|' อยู่ คีย์ของคนละการ์ดจะชนกันได้)
+      const key = JSON.stringify([code, sub]);
+
+      let s = map.get(key);
       if (!s) {
-        s = { code: code, kind: kind, total: 0, pending: 0, noFile: 0,
+        s = { code: code, subGroup: sub, kind: kind, total: 0, pending: 0, noFile: 0,
               isCancel: kind === 3, isDocP: kind === 2 };
-        map.set(code, s);
+        map.set(key, s);
       }
       s.total++;
       if (this.isPending(r)) { s.pending++; }
@@ -263,29 +305,38 @@ export class ReportPrintTrackingGroupSkuComponent implements OnInit {
       if (!r.FILE_PACKING && s.kind === 1) { s.noFile++; }
     });
 
-    //// เรียงตาม STATUS_PRINT ก่อน แล้วค่อย TRANSPORT_CODE — ให้ตรงกับลำดับในตาราง
+    //// เรียงตาม STATUS_PRINT → TRANSPORT_CODE → SUB_GROUP_PICK ให้ตรงกับลำดับในตาราง
     return Array.from(map.values()).sort(
-      (a, b) => (a.kind - b.kind) || a.code.localeCompare(b.code)
+      (a, b) => (a.kind - b.kind)
+             || a.code.localeCompare(b.code)
+             || a.subGroup.localeCompare(b.subGroup)
     );
   }
 
-  //// order by STATUS_PRINT, TRANSPORT_CODE, TRACKING
+  //// order by STATUS_PRINT, TRANSPORT_CODE, SUB_GROUP_PICK, TRACKING
   sortRows(rows: TrackingRow[]): TrackingRow[] {
     return rows.slice().sort((a, b) =>
          (this.printKindOf(a) - this.printKindOf(b))
       || (a.TRANSPORT_CODE || '').trim().localeCompare((b.TRANSPORT_CODE || '').trim())
+      || this.subGroupOf(a).localeCompare(this.subGroupOf(b))
       || (a.TRACKING || '').trim().localeCompare((b.TRACKING || '').trim())
     );
   }
 
-  rowsOf(code: string): TrackingRow[] {
+  //// แถวของการ์ดหนึ่งใบ — ต้องตรงทั้ง transport และ sub group
+  rowsOf(code: string, subGroup: string): TrackingRow[] {
     return this.data_list.filter(
-      r => ((r.TRANSPORT_CODE || '').trim() || '(ไม่ระบุ)') === code
+      r => this.codeOf(r) === code && this.subGroupOf(r) === subGroup
     );
   }
 
   get activeRows(): TrackingRow[] {
-    return this.activeCode ? this.rowsOf(this.activeCode) : [];
+    return this.activeCode ? this.rowsOf(this.activeCode, this.activeSubGroup) : [];
+  }
+
+  //// ชื่อการ์ดที่เลือกอยู่ สำหรับข้อความบนจอ เช่น "Lex / SUB-01"
+  get activeCardLabel(): string {
+    return this.activeSubGroup ? this.activeCode + ' / ' + this.activeSubGroup : this.activeCode;
   }
 
   //// พิมพ์สำเร็จแล้ว (PRINT_STATUS != 'N') จะไม่เอาเข้ารอบพิมพ์อีก กันพิมพ์ซ้ำ
@@ -322,16 +373,180 @@ export class ReportPrintTrackingGroupSkuComponent implements OnInit {
     return Array.from(seen);
   }
 
-  // ── กดการ์ด transport → เปิด modal ยืนยัน ────────────────────
-  openPrintModal(code: string): void {
+  //// แถวที่จะถูกพิมพ์จริงในรอบนี้ — DocP ไม่มี FILE_PACKING จึงใช้ทุกแถวที่ยังไม่พิมพ์
+  //// ใช้ร่วมกันระหว่างการสรุปจำนวนใน modal กับ confirmPrint() จะได้ไม่มีทางนับคนละชุดกัน
+  get printRows(): TrackingRow[] {
+    return this.isActiveDocP ? this.activePendingRows : this.printableRows;
+  }
+
+  // ── สแกนไอเทม + สรุปจำนวนชิ้น ───────────────────────────────
+
+  //// barcode ไอเทมไม่ซ้ำของรอบที่จะพิมพ์ — ปกติมีตัวเดียว (Group SKU) แต่รองรับหลายตัวไว้
+  get activeBarcodes(): string[] {
+    const seen = new Set<string>();
+    this.printRows.forEach(r => {
+      const code = this.normalizeBarcode(r.ITEM_ID_BARCODE);
+      if (code) { seen.add(code); }
+    });
+    return Array.from(seen);
+  }
+
+  //// รหัสสินค้าไม่ซ้ำของรอบที่จะพิมพ์ — โชว์ให้เห็นว่ากลุ่มนี้ต้องหยิบของตัวไหนมาสแกน
+  //// ปกติมีตัวเดียว ถ้าได้หลายตัวก็โชว์ทั้งหมด (กลุ่มมีหลาย SKU)
+  get activeItemIds(): string[] {
+    const seen = new Set<string>();
+    this.printRows.forEach(r => {
+      const id = (r.ITEM_ID || '').toString().trim();
+      if (id) { seen.add(id); }
+    });
+    return Array.from(seen);
+  }
+
+  //// ข้อความรหัสสินค้าสำหรับโชว์บน modal
+  get activeItemText(): string {
+    const ids = this.activeItemIds;
+    return ids.length ? ids.join(', ') : '—';
+  }
+
+  //// กลุ่มนี้มี barcode ให้เทียบไหม — ไม่มี = ข้อมูลต้นทางไม่ครบ ต้องไปแก้ที่ข้อมูล
+  get hasBarcodeData(): boolean {
+    return this.activeBarcodes.length > 0;
+  }
+
+  //// ผ่านด่านสแกนแล้วหรือยัง — ต้องสแกนผ่านเสมอ ไม่มีทางลัด
+  ////
+  //// เดิมเคยปล่อยผ่านเมื่อไม่มี barcode ในข้อมูล ซึ่งกลับหัวกลับหาง:
+  //// "ข้อมูลไม่ครบ" กลายเป็น "ข้ามด่านตรวจ" ทั้งที่เป็นกรณีที่ควรตรวจเข้มที่สุด
+  //// กลุ่มที่ไม่มี barcode จึงพิมพ์ไม่ได้จนกว่าจะไปเติมข้อมูลให้ครบ — สินค้าจะได้ไม่ตกหล่น
+  get isItemScanOk(): boolean {
+    return this.itemScanned;
+  }
+
+  //// เทียบ barcode แบบตัดช่องว่างหัวท้ายและไม่สนตัวพิมพ์เล็ก/ใหญ่
+  //// เครื่องสแกนบางรุ่นเติม space/ตัวพิมพ์มาไม่ตรงกับที่เก็บใน DB
+  normalizeBarcode(value: any): string {
+    return (value === null || value === undefined ? '' : String(value)).trim().toUpperCase();
+  }
+
+  //// จำนวนชิ้นทั้งหมดที่จะพิมพ์รอบนี้ — เอาไว้เช็คกับของจริงตรงหน้าก่อนกดพิมพ์
+  get totalQty(): number {
+    return this.printRows.reduce((sum, r) => sum + this.qtyOf(r), 0);
+  }
+
+  //// QTY ของแถว — คอลัมน์ใหม่อาจเป็น null ตอน job ต้นทางยังเติมไม่ครบ
+  qtyOf(row: TrackingRow): number {
+    const n = Number(row.QTY);
+    return isNaN(n) ? 0 : n;
+  }
+
+  //// จำนวนชิ้นต่อ 1 order — รวม QTY ของแถวที่เป็น order เดียวกันก่อน
+  //// (1 order มีได้หลาย SKU จึงห้ามอ่าน QTY ของแถวเดียวมาตอบตรงๆ)
+  //// คืนค่าที่ไม่ซ้ำกัน ปกติจะได้ตัวเดียว ถ้าได้หลายตัวแปลว่าแต่ละ order มีของไม่เท่ากัน
+  get qtyPerOrderValues(): number[] {
+    const byOrder = new Map<string, number>();
+    this.printRows.forEach(r => {
+      const id = (r.SHIPMENT_ID || '').trim();
+      if (!id) { return; }
+      byOrder.set(id, (byOrder.get(id) || 0) + this.qtyOf(r));
+    });
+    return Array.from(new Set(byOrder.values())).sort((a, b) => a - b);
+  }
+
+  //// ข้อความจำนวนชิ้นต่อ order สำหรับโชว์บน modal
+  get qtyPerOrderText(): string {
+    const values = this.qtyPerOrderValues;
+    if (values.length === 0) { return '—'; }
+    if (values.length === 1) { return String(values[0]); }
+    //// ไม่เท่ากันทุก order — โชว์ช่วงไว้ให้เห็นว่าข้อมูลผิดปกติ จะได้ไม่เผลอเชื่อเลขเดียว
+    return values[0] + ' - ' + values[values.length - 1];
+  }
+
+  //// true = แต่ละ order มีของไม่เท่ากัน ควรเตือนก่อนพิมพ์
+  get isQtyPerOrderMixed(): boolean {
+    return this.qtyPerOrderValues.length > 1;
+  }
+
+  //// เสียงตอบรับการสแกน — ไฟล์ชุดเดียวกับหน้า audit-check
+  ////
+  //// หน้าอื่น hardcode เป็น http://10.26.1.21/TSDC/assets/... ซึ่งเล่นไม่ออกตอน ng serve
+  //// และผูกกับเครื่อง production ตัวเดียว ตรงนี้อิง document.baseURI แทน จึงได้ path ที่ถูก
+  //// ทั้งตอน dev (localhost:4200) และตอน deploy ทุก base-href (/TSDC/, /beta/, /dev/)
+  playAudio(file: string): void {
+    try {
+      const audio = new Audio(new URL('assets/audio/' + file, document.baseURI).href);
+      audio.load();
+      //// เบราว์เซอร์บล็อกเสียงได้ถ้าผู้ใช้ยังไม่เคยคลิกอะไรในหน้านั้น — เงียบไปเฉยๆ พอ
+      //// ห้ามให้ error เรื่องเสียงไปขวางการสแกน ซึ่งเป็นงานหลักตรงนี้
+      const played: any = audio.play();
+      if (played && played.catch) { played.catch(() => { /* เล่นไม่ได้ก็ข้าม */ }); }
+    } catch (err) {
+      console.log('playAudio', err);
+    }
+  }
+
+  //// สแกน barcode ไอเทม — ถูกแล้วเด้งไปช่องขนาดกล่องทันที ผิดแล้วเตือนและให้สแกนใหม่
+  //// สแกนสำเร็จครั้งเดียวพอต่อการเปิด modal 1 ครั้ง (ทั้งกลุ่มเป็นสินค้าตัวเดียวกัน)
+  scanItem(): void {
+    if (this.itemScanned) { return; }
+
+    const code = this.normalizeBarcode(this.scanInput.ITEM_BARCODE);
+    if (!code) { return; }
+
+    //// ข้อมูลกลุ่มนี้ไม่มี barcode เลย — บอกตรงๆ ว่าต้องไปแก้ที่ข้อมูล
+    //// ไม่ใช้ข้อความ "Item ไม่ถูกต้อง" เพราะของที่พนักงานถืออยู่อาจถูกแล้ว ปัญหาอยู่ที่ข้อมูล
+    if (!this.hasBarcodeData) {
+      this.scanInput.ITEM_BARCODE = '';
+      this.playAudio('error.mp3');
+      Swal.fire({
+        icon: 'warning',
+        title: 'กลุ่มนี้ไม่มีข้อมูล barcode สินค้า',
+        html: 'Group Pick : <b>' + this.loadedGroupPick + '</b>'
+      }).then(() => this.focusScanTarget());
+      return;
+    }
+
+    if (this.activeBarcodes.indexOf(code) === -1) {
+      this.scanInput.ITEM_BARCODE = '';
+      this.playAudio('error.mp3');
+      Swal.fire({
+        icon: 'error',
+        title: 'Item ไม่ถูกต้อง',
+        html: 'barcode ที่สแกน : <b style="color:#dc3545">' + code + '</b><br>'
+            + '<small>กลุ่มนี้ต้องเป็นสินค้า <b>' + this.activeItemText + '</b></small>'
+      }).then(() => this.focusScanTarget());
+      return;
+    }
+
+    this.itemScanned    = true;
+    this.scannedBarcode = code;
+    this.playAudio('ok.mp3');
+    this.focusScanTarget();
+  }
+
+  //// โฟกัสช่องที่ต้องกรอกถัดไป — ยังไม่สแกน = ช่องไอเทม, สแกนผ่านแล้ว = ช่องขนาดกล่อง
+  //// setTimeout เพราะตอนถูกเรียกจาก shown.bs.modal / หลังปิด Swal ช่องยังโฟกัสไม่ติด
+  focusScanTarget(): void {
+    setTimeout(() => {
+      const target = this.isItemScanOk ? this.inputBoxSize : this.inputScanItem;
+      if (target && target.nativeElement) {
+        target.nativeElement.focus();
+        target.nativeElement.select();
+      }
+    }, 150);
+  }
+
+  // ── กดการ์ด → เปิด modal ยืนยัน ──────────────────────────────
+  //// รับทั้งใบ ไม่ใช่แค่ code เพราะ 1 การ์ด = transport + sub group
+  openPrintModal(t: TransportSummary): void {
     if (this.isPrinting) { return; }
 
-    this.activeCode = code;
+    this.activeCode     = t.code;
+    this.activeSubGroup = t.subGroup;
 
     //// พิมพ์ครบแล้วไม่ให้กดซ้ำ — การ์ดก็ disabled อยู่แล้ว ตรงนี้กันอีกชั้น
     if (this.activePendingRows.length === 0) {
       Swal.fire({ icon: 'info', title: 'พิมพ์ไปแล้วทั้งหมด',
-                  text: 'รายการของ ' + code + ' ถูกพิมพ์ครบแล้ว',
+                  text: 'รายการของ ' + this.activeCardLabel + ' ถูกพิมพ์ครบแล้ว',
                   showConfirmButton: false, timer: 2500 });
       return;
     }
@@ -357,13 +572,17 @@ export class ReportPrintTrackingGroupSkuComponent implements OnInit {
       }
     } else if (this.printableRows.length === 0) {
       Swal.fire({ icon: 'warning', title: 'ไม่มีไฟล์ให้พิมพ์',
-                  text: 'รายการของ ' + code + ' ไม่มี FILE_PACKING',
+                  text: 'รายการของ ' + this.activeCardLabel + ' ไม่มี FILE_PACKING',
                   showConfirmButton: false, timer: 2500 });
       return;
     }
 
-    //// ทั้ง 2 กลุ่มระบุขนาดกล่องก่อน แล้วค่อย running — ต่างกันแค่พิมพ์อะไรต่อ
+    //// ทั้ง 2 กลุ่มสแกนไอเทม → ระบุขนาดกล่อง → running — ต่างกันแค่พิมพ์อะไรต่อ
     this.resetBox();
+
+    //// ต้องรอ shown.bs.modal จริงๆ ถึงจะโฟกัสติด — ตอนสั่ง show() ช่องยังถูกซ่อนอยู่
+    //// one() = ผูกครั้งเดียวแล้วปลดเอง กันซ้อนกันทุกครั้งที่เปิด modal ใหม่
+    $('#boxPrintModal').one('shown.bs.modal', () => this.focusScanTarget());
     $('#boxPrintModal').modal('show');
   }
 
@@ -378,6 +597,11 @@ export class ReportPrintTrackingGroupSkuComponent implements OnInit {
   resetBox(): void {
     this.boxInput = { BOX_SIZE: '', CARTON_BOX_W: 0, CARTON_BOX_H: 0, CARTON_BOX_L: 0, CARTON_BOX_WEIGHT: 0 };
     this.box = { Errorhide: true, Suchide: true, des: '' };
+
+    //// ล้างผลสแกนด้วยทุกครั้งที่เปิด modal ใหม่ — คนละการ์ดคือคนละสินค้า ต้องสแกนใหม่เสมอ
+    this.scanInput      = { ITEM_BARCODE: '' };
+    this.itemScanned    = false;
+    this.scannedBarcode = '';
   }
 
   //// box.Suchide === false = ขนาดกล่องผ่านการตรวจแล้ว (ปุ่มบันทึกถึงจะโผล่)
@@ -431,8 +655,15 @@ export class ReportPrintTrackingGroupSkuComponent implements OnInit {
     if (this.isPrinting) { return; }
 
     //// DocP ไม่มี FILE_PACKING จึงใช้ทุกแถวที่ยังไม่พิมพ์ ไม่ใช่เฉพาะแถวที่มีไฟล์
-    const rows = this.isActiveDocP ? this.activePendingRows : this.printableRows;
+    const rows = this.printRows;
     if (rows.length === 0) { return; }
+
+    //// ปุ่มพิมพ์ disabled อยู่แล้วถ้ายังไม่สแกน ตรงนี้กันอีกชั้นเผื่อถูกเรียกทางอื่น
+    if (!this.isItemScanOk) {
+      Swal.fire({ icon: 'warning', title: 'สแกน barcode item ก่อน',
+                  showConfirmButton: false, timer: 2500 });
+      return;
+    }
 
     if (!this.isBoxValid) {
       Swal.fire({ icon: 'warning', title: 'ระบุขนาดกล่องให้ถูกต้องก่อน',

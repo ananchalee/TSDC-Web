@@ -687,6 +687,10 @@ Update_PrintStatus_TrackingGroupSku(data:any){
   return this.http.post('http://10.26.1.21:1661/api/Update_PrintStatus_TrackingGroupSku',data)
 }
 
+Confirm_QtyGroupSku(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/Confirm_QtyGroupSku',data)
+}
+
 tracking_running_groupsku(data:any){
   return this.http.post('http://10.26.1.21:1661/api/tracking_running_groupsku',data)
 }
