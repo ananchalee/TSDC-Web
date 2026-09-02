@@ -67,7 +67,7 @@
 
                 <table class="table table-sm ">
                   <tbody>
-                    <tr *ngFor="let data of user_listCheckIn; let i = index">
+                    <tr *ngFor="let data of user_listCheckIn; let i = index; trackBy: trackByIndex">
                       <td>{{i+1}}</td>
                       <td>{{data.WORKER_NAME}} {{data.WORKER_SURNAME}}</td>
 
@@ -227,7 +227,7 @@
                             </div>
                         </div> -->
 
-                        <div class="row" *ngFor="let data of trackall; let i = index">
+                        <div class="row" *ngFor="let data of trackall; let i = index; trackBy: trackByIndex">
                           <p style="color:rgb(18, 132, 193)"><b> Track {{i+1}}: </b> </p>
                           <div class="col-md-7">
                             {{data.REF_INDEX}} / {{data.TRACKING}}
@@ -240,7 +240,7 @@
 
                       </div>
                       <div class="card-footer">
-                        <div class="row" *ngFor="let data of sumqty; ">
+                        <div class="row" *ngFor="let data of sumqty; trackBy: trackByIndex">
                           จำนวนชิ้น :
                           <div [ngClass]="{'text_red': data.SUMCHECK !=
                           data.SUMCON}">
@@ -270,7 +270,7 @@
                             </tr>
                           </thead>
                           <tbody>
-                            <tr *ngFor="let data of res_list; let i = index" [ngClass]="{ 'row-danger': data.ITME_CANCEL == 'CANCEL' }">
+                            <tr *ngFor="let data of res_list; let i = index; trackBy: trackByIndex" [ngClass]="{ 'row-danger': data.ITME_CANCEL == 'CANCEL' }">
                               <td>{{data.ITEM_ID_BARCODE}}</td>
 
                               <td>{{data.ITEM_ID}}</td>
@@ -348,7 +348,7 @@
                   <div class="row">
                     <ul>
                       <div class="form-group">
-                        <div class="custom-control custom-checkbox" *ngFor="let data of VAS">
+                        <div class="custom-control custom-checkbox" *ngFor="let data of VAS; trackBy: trackByIndex">
                           <input class="custom-control-input" (change)="checkBoxVas(data.VAS_NAME,$event)"
                                  name="{{data.VAS_NAME}}" type="checkbox" id="{{data.VAS_NAME}}">
                           <label class="custom-control-label" for="{{data.VAS_NAME}}"> {{data.VAS_NAME}}</label>
@@ -415,7 +415,7 @@
                         <strong>เลือก TRACKING</strong>
                       </div>
                       <div class="card-body">
-                        <div *ngFor="let tracking of distinctTrackingList" class="form-check mb-2">
+                        <div *ngFor="let tracking of distinctTrackingList; trackBy: trackByTrackingId" class="form-check mb-2">
                           <input type="radio"
                                  class="form-check-input"
                                  name="trackingRadio"
@@ -997,7 +997,7 @@
 
 
     <!-- //////////////////////////////// shot /////////-->
-    <div class="container-fluid" [hidden]="pagePrintShear">
+    <div class="container-fluid" *ngIf="!pagePrintShear">
       <div style="page-break-after: always" class="page" *ngFor="let list of dataLACK_H ;let i = index;">
 
         <div class="row ">

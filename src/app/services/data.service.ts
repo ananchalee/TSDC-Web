@@ -1,7 +1,7 @@
 import { Injectable, ErrorHandler } from '@angular/core';
 //import { Http, RequestOptions, ResponseContentType, Response } from '@angular/http';
  import { Observable,throwError } from 'rxjs';
- import { catchError,map } from 'rxjs/operators';
+ import { catchError,map,shareReplay,finalize } from 'rxjs/operators';
 //import 'rxjs/add/operator/map'
 import { HttpClient,HttpHeaders,HttpErrorResponse } from '@angular/common/http';
 //import { errorHandler } from '@angular/platform-browser/src/browser';
@@ -16,6 +16,36 @@ export class DataService {
 
   constructor(private http: HttpClient) { }
 
+  /* =====================================================================
+     รวม request ที่ซ้ำกันให้เหลือครั้งเดียว
+     ---------------------------------------------------------------------
+     หน้ายิงของมีบางเส้นทางที่เรียก API ตัวเดียวกันด้วย payload เดียวกัน
+     พร้อมกัน 2 ครั้ง เพราะถูกเรียกจากคนละ callback เช่น
+       summaryConCheck() -> loadallsum() -> closeBox() -> tracksum_qty
+       และ popup .then()  -> CHECK_tracksum_qty()      -> tracksum_qty
+     วัดจากเบราว์เซอร์จริงเห็นสองตัวยิงห่างกัน 1 ms ตัวละ 1,084 ms
+
+     แทนที่จะไปลบจุดเรียก (เสี่ยงทำ logic พัง) เรารวมที่ชั้นนี้แทน
+     ถ้ามี request เดิมค้างอยู่ ให้ subscriber ตัวที่สองใช้ผลเดียวกัน
+     พอ request จบก็ล้างทิ้ง ครั้งต่อไปยิงใหม่ตามปกติ
+
+     *** ใส่ได้เฉพาะ endpoint ที่อ่านอย่างเดียวเท่านั้น ***
+     ห้ามใส่ตัวที่เขียนข้อมูล เพราะการยุบ 2 ครั้งเหลือ 1 จะทำให้ยอดหาย
+     ===================================================================== */
+  private inflight = new Map<string, Observable<any>>();
+
+  private postShared(url: string, data: any): Observable<any> {
+    const key = url + '|' + JSON.stringify(data);
+    const existing = this.inflight.get(key);
+    if (existing) { return existing; }
+    const req = this.http.post(url, data).pipe(
+      finalize(() => this.inflight.delete(key)),
+      shareReplay({ bufferSize: 1, refCount: false })
+    );
+    this.inflight.set(key, req);
+    return req;
+  }
+
 
   getServerDate(): Observable<{ date: string }> {
     return this.http.get<{ date: string }>('http://10.26.1.21:1661/api/serverdate');
@@ -28,7 +58,7 @@ export class DataService {
 
 LOAD_USERTABLECHECK(data:any) {
    //console.log(data)
-  return this.http.post('http://10.26.1.21:1661/api/LOAD_USERTABLECHECK', data)
+  return this.postShared('http://10.26.1.21:1661/api/LOAD_USERTABLECHECK', data)
 }
 get_userpincode() {
   //console.log(data)
@@ -148,7 +178,7 @@ tsdc_pick_vas(){
 }
 
 tracksum_qty(data:any){
-  return this.http.post('http://10.26.1.21:1661/api/tracksum_qty',data)
+  return this.postShared('http://10.26.1.21:1661/api/tracksum_qty', data)
 }
 
 tracking_running(data:any){
@@ -157,7 +187,7 @@ tracking_running(data:any){
 
 
 loadTracking(data:any){
-  return this.http.post('http://10.26.1.21:1661/api/loadTracking',data)
+  return this.postShared('http://10.26.1.21:1661/api/loadTracking', data)
 
 }
 
@@ -614,12 +644,12 @@ CheckWork_track(data:any){
 }
 
 CheckConOnline_track(data:any){
-  return this.http.post('http://10.26.1.21:1661/api/CheckConOnlinetrack',data)
+  return this.postShared('http://10.26.1.21:1661/api/CheckConOnlinetrack', data)
 }
 
 
 summaryContrack(data:any){
-  return this.http.post('http://10.26.1.21:1661/api/summaryContrack',data)
+  return this.postShared('http://10.26.1.21:1661/api/summaryContrack', data)
 
 }
 matchItemInContrack(data:any){

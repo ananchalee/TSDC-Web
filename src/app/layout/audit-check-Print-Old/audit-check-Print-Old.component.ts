@@ -646,11 +646,18 @@ export class AuditCheckPrintOldComponent implements OnInit {
     })
   }
 
+  /* คนเดิมที่โต๊ะเดิม ไม่ต้องบันทึกซ้ำทุกกล่อง — บันทึกเฉพาะตอนเปลี่ยนคน
+     เดิมยิงทุกครั้งที่สแกน CONTAINER วันหนึ่งได้ 16,000 แถวจากคนจริงแค่ 176 ชุด
+     ติดวันที่ไว้ด้วย เผื่อเปิดหน้าค้างข้ามวัน วันใหม่จะได้บันทึกใหม่ */
+  lastCheckedInKey = '';
+
   tablecheck_user() {
     /*  const user = JSON.parse(localStorage.getItem('currentUser') || '');
      this.input.USER_CHECK = user.WORKER_ID;
      this.input.TABLE_CHECK = this.input.USER_CHECK */
     this.input.WORKING_TYPE = 'Check';
+    const key = this.input.PIN_CODE + '|' + new Date().toDateString();
+    if (this.input.PIN_CODE && key === this.lastCheckedInKey) { return; }
     this.dataService.insert_user_tablecheck2(this.input).subscribe(res => {
       ////console.log(res);
       this.user = res
@@ -664,6 +671,7 @@ export class AuditCheckPrintOldComponent implements OnInit {
           timer: 2500
         });
       } else if (this.user.status === 'success') {
+        this.lastCheckedInKey = key;
         this.LOAD_USERTABLECHECK();
       }
 
