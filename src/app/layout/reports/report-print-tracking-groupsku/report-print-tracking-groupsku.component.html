@@ -89,13 +89,20 @@
                               <span class="badge badge-danger ml-1" *ngIf="t.isCancel">ใบ Cancel</span>
                               <span class="badge badge-warning ml-1" *ngIf="t.isDocP">ใบ Track</span>
                             </div>
-                            <!-- กลุ่มย่อย — โชว์เฉพาะกลุ่มที่แบ่ง sub ไว้ กลุ่มที่ไม่ได้แบ่งจะไม่มีบรรทัดนี้
-                                 การ์ดคนละ sub = พิมพ์คนละรอบ ขนาดกล่องจึงระบุแยกกันได้ -->
                             <div *ngIf="t.subGroup" style="font-size:12px;color:#6c757d">
                               <i class="fas fa-layer-group mr-1"></i>{{ t.subGroup }}
                             </div>
-                            <div style="font-size:26px;font-weight:500;line-height:1.2">
-                              {{ t.total }}
+                            <div *ngIf="t.subGroup" class="mt-1" style="line-height: 1.2;"
+                                 [style.color]="t.qtyMixed ? '#fd7e14' : 'inherit'">
+                              <i class="fas fa-exclamation-triangle mr-1" *ngIf="t.qtyMixed"
+                                 style="font-size:12px;color:#fd7e14"></i>
+                              <span style="font-size:26px;font-weight:500;color:crimson">{{ t.qtyText }}</span>
+                              <!-- หน่วยมาจาก UOM ของข้อมูลจริง (ชิ้น/แพ็ก) ไม่ fix ว่า "ชิ้น"
+                                   ถ้ายังไม่มี UOM จะเหลือแค่ "ต่อ Order" ดีกว่าเดาหน่วยให้ผิด -->
+                              <small style="font-size:13px;color:#6c757d"> {{ t.uom }}ต่อ Order</small>
+                            </div>
+                            <div style="line-height:1.2">
+                              <span style="font-size:26px;font-weight:500">{{ t.total }}</span>
                               <small style="font-size:13px;color:#6c757d"> รายการ</small>
                             </div>
                             <div style="font-size:11px" class="mt-1">
@@ -251,15 +258,15 @@
           </div>
         </div>
 
-        <!-- จำนวนชิ้น — ไว้เช็คกับของจริงตรงหน้าก่อนกดพิมพ์ -->
+        <!-- จำนวนของ — ไว้เช็คกับของจริงตรงหน้าก่อนกดพิมพ์ · หน่วยมาจาก UOM ของข้อมูล -->
         <div class="row mb-3">
           <div class="col-6">
             <div class="card mb-0" style="border-left:3px solid #28a745">
               <div class="card-body py-2 px-3">
-                <div style="font-size:11px;color:#6c757d">จำนวนชิ้นรวมทั้งหมด</div>
+                <div style="font-size:11px;color:#6c757d">จำนวนรวมทั้งหมด</div>
                 <div style="font-size:24px;font-weight:500">
                   {{ totalQty }}
-                  <small style="font-size:13px;color:#6c757d"> ชิ้น</small>
+                  <small style="font-size:13px;color:#6c757d"> {{ activeUom }}</small>
                 </div>
               </div>
             </div>
@@ -268,10 +275,10 @@
             <div class="card mb-0"
                  [style.border-left]="isQtyPerOrderMixed ? '3px solid #fd7e14' : '3px solid #6f42c1'">
               <div class="card-body py-2 px-3">
-                <div style="font-size:11px;color:#6c757d">ชิ้น/ออเดอร์</div>
+                <div style="font-size:11px;color:#6c757d">จำนวนต่อ 1 ออเดอร์</div>
                 <div style="font-size:24px;font-weight:500">
                   {{ qtyPerOrderText }}
-                  <small style="font-size:13px;color:#6c757d"> ชิ้น</small>
+                  <small style="font-size:13px;color:#6c757d"> {{ activeUom }}</small>
                 </div>
                 <!-- ข้อมูลผิดปกติ: ปกติทุก order ในกลุ่มต้องมีของเท่ากัน -->
                 <div *ngIf="isQtyPerOrderMixed" style="font-size:11px;color:#fd7e14">
@@ -377,6 +384,15 @@
       </div>
 
       <div class="modal-footer">
+        <!-- ดูใบปะหน้าอย่างเดียว ไม่ยิง confirm outbound ไม่เปลี่ยนสถานะพิมพ์
+             ใช้ตรวจหน้าตา/ตัวเลขก่อนพิมพ์จริงได้โดยไม่เกิดเลขพาเลทค้างในระบบ -->
+        <button type="button" class="btn btn-outline-secondary mr-auto"
+                *ngIf="!isActiveDocP"
+                [disabled]="isPrinting"
+                title="เปิดดูใบปะหน้าเฉย ๆ ไม่บันทึกอะไรลงระบบ"
+                (click)="previewPalletCover()">
+          <i class="fas fa-eye mr-1"></i>ดูตัวอย่างใบปะหน้า
+        </button>
         <button type="button" class="btn btn-secondary" (click)="closeBoxModal()">ยกเลิก</button>
         <button type="button"
                 class="btn btn-success"

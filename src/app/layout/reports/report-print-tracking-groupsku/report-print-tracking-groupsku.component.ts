@@ -25,6 +25,8 @@ interface TrackingRow {
   ITEM_ID:         string;
   ITEM_ID_BARCODE: string;
   QTY:             number;
+  //// หน่วยนับของแถวนั้น (ชิ้น / แพ็ก) — ว่างได้ ถ้า job ต้นทางยังไม่เติมมา
+  UOM:             string;
   //// กลุ่มย่อยใน GROUP_PICK เดียวกัน แยกของที่ QTY ต่อ order ไม่เท่ากัน
   //// ว่างได้ = กลุ่มนั้นไม่ได้แบ่ง sub (ของเท่ากันหมด)
   SUB_GROUP_PICK:  string;
@@ -48,6 +50,11 @@ interface TransportSummary {
   noFile:   number;     //// ที่ไม่มี FILE_PACKING
   isCancel: boolean;    //// kind 3 — พิมพ์ใบ Cancel ไม่ใช่ PDF
   isDocP:   boolean;    //// kind 2 — พิมพ์ใบ track เอกสาร
+  //// จำนวนชิ้นต่อ 1 order ของการ์ดนี้ — คิดตอนโหลดครั้งเดียว ไม่ผูกเป็น getter ใน template
+  //// เพราะการ์ดถูก render ทุกรอบ change detection
+  qtyText:     string;    //// ข้อความบนการ์ด ('2', '2 - 5' หรือ '—' เมื่อยังไม่มีข้อมูล)
+  uom:         string;    //// หน่วยนับของการ์ดนี้ (ชิ้น / แพ็ก) ว่างได้ถ้าข้อมูลยังไม่มา
+  qtyMixed:    boolean;   //// true = แต่ละ order มีของไม่เท่ากัน (ข้อมูลผิดปกติ)
 }
 
 //// ใบปะหน้าพาเลท 1 ใบ ต่อ 1 การพิมพ์ของ transport นั้น
@@ -56,10 +63,27 @@ interface PalletSheet {
   GROUP_PICK:     string;
   TRANSPORT_CODE: string;
   QTY_SHIPMENT:   number;   //// จำนวน shipment ที่พิมพ์สำเร็จรอบนี้
-  QTY_BOX:        number;   //// ยอดสะสมทั้งพาเลท — 1 shipment = 1 กล่อง
+  QTY_BOX:        number;   //// ยอดสะสมทั้งพาเลทที่ API คืนมา (ใบปะหน้าไม่ได้ใช้ ใช้ยอดทั้ง group แทน)
   PRINT_DATE:     string;
   REMOTE_ERROR:   string;   //// ว่าง = sync ไปเครื่อง conveyor สำเร็จ
+
+  //// ── ตัวเลขสำหรับบล็อกรายละเอียดใต้บาร์โค้ด ──
+  //// ยอดของทั้ง GROUP_PICK (ทุก transport ทุก sub) — ไว้เทียบว่าพาเลทนี้เป็นส่วนไหนของงาน
+  GROUP_ORDERS:   number;
+  GROUP_QTY:      number;
+  GROUP_UOM:      string;   //// หน่วยนับของทั้ง group — ถ้าปนหลายหน่วยจะได้ทุกตัวคั่นด้วย /
+  //// ยอดของการ์ดที่พิมพ์รอบนี้ = transport + sub group คู่นี้เท่านั้น
+  //// (sub เดียวกันอยู่ได้หลาย transport แต่คนละพาเลท เลขจึงต้องนับแยกตาม transport
+  //// ไม่งั้นจำนวน order บนใบจะไม่ตรงกับจำนวนกล่องบนพาเลทจริง)
+  SUB_GROUP_PICK: string;
+  SUB_ORDERS:     number;
+  SUB_QTY:        number;
+  QTY_PER_BOX:    string;   //// จำนวนต่อกล่อง — 1 order = 1 กล่อง จึงเท่ากับจำนวนต่อ order
+  UOM:            string;   //// หน่วยนับ (ชิ้น / แพ็ก) ว่างได้ถ้าข้อมูลยังไม่มา
 }
+
+//// 1 บรรทัดของบล็อกรายละเอียดใต้บาร์โค้ดในใบปะหน้า ('divider' = เส้นกั้น)
+type CoverLine = 'divider' | { label: string, value: string, big?: boolean };
 
 //// ใบ track (running) 1 ใบ ต่อ 1 REF_INDEX — โครงเดียวกับ dataprint ใน audit-check-tracking
 interface TrackSheet {
@@ -282,6 +306,11 @@ export class ReportPrintTrackingGroupSkuComponent implements OnInit {
   // ── สรุปจำนวนต่อ TRANSPORT_CODE + SUB_GROUP_PICK ────────────
   buildTransportSummary(rows: TrackingRow[]): TransportSummary[] {
     const map = new Map<string, TransportSummary>();
+    //// QTY รวมของแต่ละ SHIPMENT_ID แยกตามการ์ด — ต้องรวมก่อนแล้วค่อยหาค่าที่ไม่ซ้ำ
+    //// เพราะ 1 order มีได้หลาย SKU (หลายแถว) จะอ่าน QTY ของแถวเดียวมาตอบตรงๆ ไม่ได้
+    const qtyByCard = new Map<string, Map<string, number>>();
+    //// หน่วยนับที่เจอในแต่ละการ์ด — ห้าม hardcode ว่า "ชิ้น" เพราะมีทั้งชิ้นและแพ็ก
+    const uomByCard = new Map<string, Set<string>>();
 
     rows.forEach(r => {
       const code = this.codeOf(r);
@@ -296,13 +325,40 @@ export class ReportPrintTrackingGroupSkuComponent implements OnInit {
       let s = map.get(key);
       if (!s) {
         s = { code: code, subGroup: sub, kind: kind, total: 0, pending: 0, noFile: 0,
-              isCancel: kind === 3, isDocP: kind === 2 };
+              isCancel: kind === 3, isDocP: kind === 2,
+              qtyText: '—', qtyMixed: false, uom: '' };
         map.set(key, s);
       }
       s.total++;
       if (this.isPending(r)) { s.pending++; }
       //// Cancel/DocP พิมพ์จากข้อมูลใน DB ไม่ได้ใช้ FILE_PACKING จึงไม่นับว่า "ไม่มีไฟล์"
       if (!r.FILE_PACKING && s.kind === 1) { s.noFile++; }
+
+      const shipment = (r.SHIPMENT_ID || '').trim();
+      if (shipment) {
+        let byOrder = qtyByCard.get(key);
+        if (!byOrder) { byOrder = new Map<string, number>(); qtyByCard.set(key, byOrder); }
+        byOrder.set(shipment, (byOrder.get(shipment) || 0) + this.qtyOf(r));
+      }
+
+      const unit = (r.UOM === null || r.UOM === undefined ? '' : String(r.UOM)).trim();
+      if (unit) {
+        let units = uomByCard.get(key);
+        if (!units) { units = new Set<string>(); uomByCard.set(key, units); }
+        units.add(unit);
+      }
+    });
+
+    //// จำนวนชิ้นต่อ order ของแต่ละการ์ด — ปกติ sub group เดียวกันต้องได้เลขเดียว
+    //// (การแบ่ง sub ก็เพื่อแยกของที่ต่อ order ไม่เท่ากันออกจากกัน) ถ้าได้หลายเลข
+    //// แปลว่าข้อมูลผิดปกติ ต้องโชว์เป็นช่วงพร้อมเตือน ไม่ใช่หยิบเลขเดียวมาโชว์
+    map.forEach((s, key) => {
+      const byOrder = qtyByCard.get(key);
+      const values  = byOrder ? Array.from(new Set(byOrder.values())).sort((a, b) => a - b) : [];
+      s.qtyMixed = values.length > 1;
+      s.qtyText  = this.qtyRangeText(values);
+      const units = uomByCard.get(key);
+      s.uom      = units ? Array.from(units).join(' / ') : '';
     });
 
     //// เรียงตาม STATUS_PRINT → TRANSPORT_CODE → SUB_GROUP_PICK ให้ตรงกับลำดับในตาราง
@@ -332,6 +388,11 @@ export class ReportPrintTrackingGroupSkuComponent implements OnInit {
 
   get activeRows(): TrackingRow[] {
     return this.activeCode ? this.rowsOf(this.activeCode, this.activeSubGroup) : [];
+  }
+
+  //// หน่วยนับของการ์ดที่เลือกอยู่ — ใช้บน modal แทนการ fix ว่า "ชิ้น"
+  get activeUom(): string {
+    return this.uomOf(this.activeRows);
   }
 
   //// ชื่อการ์ดที่เลือกอยู่ สำหรับข้อความบนจอ เช่น "Lex / SUB-01"
@@ -439,6 +500,32 @@ export class ReportPrintTrackingGroupSkuComponent implements OnInit {
     return isNaN(n) ? 0 : n;
   }
 
+  //// จำนวน order — นับ SHIPMENT_ID ที่ไม่ซ้ำ ไม่ใช่จำนวนแถว (เผื่อวันหนึ่ง 1 order มีหลาย SKU)
+  countOrders(rows: TrackingRow[]): number {
+    const ids = new Set<string>();
+    rows.forEach(r => {
+      const id = (r.SHIPMENT_ID || '').trim();
+      if (id) { ids.add(id); }
+    });
+    return ids.size;
+  }
+
+  //// จำนวนชิ้นรวมของกลุ่มแถวที่ให้มา
+  sumQty(rows: TrackingRow[]): number {
+    return rows.reduce((sum, r) => sum + this.qtyOf(r), 0);
+  }
+
+  //// หน่วยนับของกลุ่มแถว — ปกติทั้งกลุ่มใช้หน่วยเดียว
+  //// ถ้าเจอหลายหน่วยให้โชว์ทุกตัว จะได้เห็นว่าข้อมูลปนกัน ไม่ใช่เลือกมาโชว์ตัวเดียว
+  uomOf(rows: TrackingRow[]): string {
+    const set = new Set<string>();
+    rows.forEach(r => {
+      const u = (r.UOM === null || r.UOM === undefined ? '' : String(r.UOM)).trim();
+      if (u) { set.add(u); }
+    });
+    return Array.from(set).join(' / ');
+  }
+
   //// จำนวนชิ้นต่อ 1 order — รวม QTY ของแถวที่เป็น order เดียวกันก่อน
   //// (1 order มีได้หลาย SKU จึงห้ามอ่าน QTY ของแถวเดียวมาตอบตรงๆ)
   //// คืนค่าที่ไม่ซ้ำกัน ปกติจะได้ตัวเดียว ถ้าได้หลายตัวแปลว่าแต่ละ order มีของไม่เท่ากัน
@@ -454,9 +541,15 @@ export class ReportPrintTrackingGroupSkuComponent implements OnInit {
 
   //// ข้อความจำนวนชิ้นต่อ order สำหรับโชว์บน modal
   get qtyPerOrderText(): string {
-    const values = this.qtyPerOrderValues;
+    return this.qtyRangeText(this.qtyPerOrderValues);
+  }
+
+  //// แปลงจำนวนชิ้นต่อ order เป็นข้อความ — ใช้ทั้งบนการ์ดและใน modal จะได้ไม่เขียนคนละแบบ
+  //// 0 คือ job ต้นทางยังไม่เติม QTY มาให้ ต้องโชว์ '—' ไม่ใช่เลข 0
+  //// (order ที่มีของ 0 ชิ้นไม่มีจริง ถ้าโชว์ 0 คนอ่านจะนึกว่าเป็นจำนวนที่ถูกต้อง)
+  qtyRangeText(values: number[]): string {
     if (values.length === 0) { return '—'; }
-    if (values.length === 1) { return String(values[0]); }
+    if (values.length === 1) { return values[0] > 0 ? String(values[0]) : '—'; }
     //// ไม่เท่ากันทุก order — โชว์ช่วงไว้ให้เห็นว่าข้อมูลผิดปกติ จะได้ไม่เผลอเชื่อเลขเดียว
     return values[0] + ' - ' + values[values.length - 1];
   }
@@ -725,10 +818,11 @@ export class ReportPrintTrackingGroupSkuComponent implements OnInit {
 
       //// จับไว้ก่อน — markPrinted() เรียก getdata() ซึ่งจะล้าง activeCode ทิ้ง
       const transport = this.activeCode;
+      const subGroup  = this.activeSubGroup;
 
       //// confirm outbound ก่อน จะได้เลขพาเลทมาทำเป็นหน้าแรกของเล่ม
       //// print dialog จึงเด้งครั้งเดียว ไม่ต้องแยกพิมพ์ใบปะหน้าด้วย window.print()
-      return this.confirmOutbound(printedRows, transport).then(pallet => {
+      return this.confirmOutbound(printedRows, transport, subGroup).then(pallet => {
         return this.mergePdf(okBytes, pallet).then(merged => {
           this.sendToPrinter(merged);
           this.markPrinted(printedRows);
@@ -850,7 +944,150 @@ export class ReportPrintTrackingGroupSkuComponent implements OnInit {
       .replace(/[^\x20-\x7E]/g, '');
   }
 
-  //// ใบปะหน้าพาเลทเป็นหน้าแรกของเล่ม — ป้ายเป็นอังกฤษเพราะฟอนต์มาตรฐานไม่รองรับไทย
+  //// จำนวนแบบมีลูกน้ำคั่นหลักพัน — ยอดทั้ง group เป็นหลักพันได้
+  numText(value: number): string {
+    return (Number(value) || 0).toLocaleString('en-US');
+  }
+
+  //// ตัวเลขสรุปบนใบปะหน้า — ใช้ร่วมกันระหว่างตอนพิมพ์จริงกับตอนกดดูตัวอย่าง
+  //// จะได้ไม่มีทางที่ใบตัวอย่างกับใบจริงคิดเลขคนละแบบ
+  coverTotals(transport: string, subGroup: string) {
+    const groupRows = this.data_list;
+    const subRows   = this.rowsOf(transport, subGroup);
+    const card      = this.transportList.find(
+      x => x.code === transport && x.subGroup === subGroup
+    );
+
+    return {
+      GROUP_ORDERS:   this.countOrders(groupRows),
+      GROUP_QTY:      this.sumQty(groupRows),
+      GROUP_UOM:      this.uomOf(groupRows),
+      SUB_GROUP_PICK: subGroup,
+      SUB_ORDERS:     this.countOrders(subRows),
+      SUB_QTY:        this.sumQty(subRows),
+      QTY_PER_BOX:    card ? card.qtyText : '—',
+      UOM:            this.uomOf(subRows)
+    };
+  }
+
+  //// เปิดดูใบปะหน้าเฉย ๆ ไม่แตะข้อมูลเลย
+  //// ไม่ยิง confirm outbound (ไม่เกิดเลขพาเลทใหม่) ไม่อัปเดต PRINT_STATUS
+  //// ไม่โหลดไฟล์ label ของใคร — ได้ PDF หน้าเดียวเปิดในแท็บใหม่ ไม่เด้ง print dialog
+  //// ตัวเลขทุกตัวเป็นของจริงจากกลุ่มที่โหลดอยู่ ยกเว้นเลขพาเลทที่ยังไม่มีจึงใส่ PREVIEW ไว้
+  async previewPalletCover(): Promise<void> {
+    try {
+      const sheet: PalletSheet = Object.assign({
+        PALLET_NO:      'PREVIEW',
+        GROUP_PICK:     this.loadedGroupPick,
+        TRANSPORT_CODE: this.activeCode,
+        QTY_SHIPMENT:   this.activePendingRows.length,
+        QTY_BOX:        0,
+        PRINT_DATE:     this.timeService.getNow(),
+        REMOTE_ERROR:   ''
+      }, this.coverTotals(this.activeCode, this.activeSubGroup));
+
+      const doc = await PDFDocument.create();
+      await this.addPalletCover(doc, sheet);
+      const bytes = await doc.save();
+
+      //// copy ลง ArrayBuffer ตรง ๆ เหมือน sendToPrinter (Uint8Array ของ TS ใหม่ไม่ใช่ BlobPart)
+      const buffer = new ArrayBuffer(bytes.byteLength);
+      new Uint8Array(buffer).set(bytes);
+
+      const url = URL.createObjectURL(new Blob([buffer], { type: 'application/pdf' }));
+      window.open(url, '_blank');
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+
+    } catch (e) {
+      console.log('preview pallet cover failed', e);
+      Swal.fire({ icon: 'error', title: 'สร้างตัวอย่างใบปะหน้าไม่สำเร็จ',
+                  showConfirmButton: false, timer: 2500 });
+    }
+  }
+
+  //// รายละเอียดใต้บาร์โค้ด เรียงตามที่หน้างานขอ
+  //// บล็อกบน = ภาพรวมทั้ง group + ตัวพาเลท · บล็อกล่าง = ของ sub group ที่พิมพ์รอบนี้
+  //// บรรทัดสุดท้ายซ้ำ "จำนวนชิ้นต่อกล่องที่บรรจุ" ด้วยตัวใหญ่ ตั้งใจให้เห็นแต่ไกลตอนแพ็ก
+  coverLines(sheet: PalletSheet): CoverLine[] {
+    const uom      = sheet.UOM ? ' ' + sheet.UOM : '';
+    //// ทั้ง group อาจมีหลาย sub ที่คนละหน่วย ตรงนี้จึงเป็นหน่วยของทั้ง group ไม่ใช่ของ sub
+    const groupUom = sheet.GROUP_UOM ? ' ' + sheet.GROUP_UOM : '';
+    return [
+      { label: 'Group Pick',                value: sheet.GROUP_PICK },
+      { label: 'จำนวน order ทั้งหมด',       value: this.numText(sheet.GROUP_ORDERS) + ' order' },
+      //// 0 = job ต้นทางยังไม่เติม QTY มาให้ โชว์ '—' เหมือนที่อื่น ไม่ใช่เลข 0
+      { label: 'จำนวนชิ้นทั้งหมด',          value: sheet.GROUP_QTY > 0 ? this.numText(sheet.GROUP_QTY) + groupUom : '—' },
+      { label: 'Pallet No',                 value: sheet.PALLET_NO },
+      //// 1 order = 1 กล่อง จำนวนกล่องของทั้ง group จึงเป็นเลขเดียวกับจำนวน order ด้านบน
+      //// (ไม่ได้ใช้ QTY_BOX ที่ API คืนมา ตัวนั้นเป็นยอดสะสมเฉพาะพาเลทใบนั้น)
+      { label: 'จำนวนกล่อง',                value: this.numText(sheet.GROUP_ORDERS) + ' กล่อง' },
+      'divider',
+      { label: 'ขนส่ง',                     value: sheet.TRANSPORT_CODE, big: true },
+      { label: 'Sub Group Pick',            value: sheet.SUB_GROUP_PICK || '—' },
+      { label: 'จำนวน order ใน sub group',  value: this.numText(sheet.SUB_ORDERS) + ' order' },
+      { label: 'จำนวนชิ้นใน sub group',     value: sheet.SUB_QTY > 0 ? this.numText(sheet.SUB_QTY) + uom : '—' },
+      { label: 'จำนวนชิ้นต่อกล่องที่บรรจุ', value: sheet.QTY_PER_BOX + uom },
+      'divider',
+      { label: 'จำนวนชิ้นต่อกล่องที่บรรจุ', value: sheet.QTY_PER_BOX + uom, big: true }
+    ];
+  }
+
+  //// วาดบล็อกรายละเอียดลง canvas แล้วคืนเป็น PNG พร้อมขนาดที่จะวางบนกระดาษ (pt)
+  ////
+  //// ทำไมไม่เขียนด้วย pdf-lib ตรง ๆ: ฟอนต์มาตรฐานของ PDF เป็น WinAnsi ไม่มีตัวอักษรไทย
+  //// (ของเดิมจึงต้องใช้ป้ายภาษาอังกฤษ) ถ้าจะเขียนไทยต้องลง @pdf-lib/fontkit เพิ่ม
+  //// แล้วแนบไฟล์ฟอนต์ไทยไปกับแอปด้วย วาดผ่าน canvas ใช้ฟอนต์ไทยของเครื่องที่มีอยู่แล้ว
+  //// ไม่ต้องเพิ่ม dependency และไม่ต้องเพิ่มไฟล์ฟอนต์ (แนวเดียวกับ barcodePng)
+  coverDetailPng(sheet: PalletSheet): { dataUrl: string, wPt: number, hPt: number } {
+    const S      = 3;      //// วาดใหญ่กว่าขนาดจริง 3 เท่า พอย่อลงกระดาษตัวหนังสือจะคม
+    const wPt    = 455;    //// เท่าความกว้างระหว่าง margin ของ A4
+    const labelX = 6;
+    const valueX = 250;    //// คอลัมน์ค่า — เผื่อป้ายยาวสุด ('จำนวนชิ้นต่อกล่องที่บรรจุ')
+    const rowH   = 30;
+    const bigH   = 46;
+    const gapH   = 20;
+    const FONT   = '"Leelawadee UI","Segoe UI",Tahoma,sans-serif';
+
+    const lines = this.coverLines(sheet);
+    let hPt = 10;
+    lines.forEach(l => { hPt += (l === 'divider' ? gapH : (l.big ? bigH : rowH)); });
+
+    const canvas  = document.createElement('canvas');
+    canvas.width  = Math.round(wPt * S);
+    canvas.height = Math.round(hPt * S);
+
+    const ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
+    ctx.scale(S, S);
+    //// พื้นขาวทึบ ไม่ใช้พื้นโปร่ง — เครื่องพิมพ์บางตัวตีความพื้นโปร่งเป็นสีดำ
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, wPt, hPt);
+    ctx.textBaseline = 'alphabetic';
+
+    let y = 0;
+    lines.forEach(l => {
+      if (l === 'divider') {
+        y += gapH / 2;
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth   = 1;
+        ctx.beginPath();
+        ctx.moveTo(labelX, y);
+        ctx.lineTo(wPt - labelX, y);
+        ctx.stroke();
+        y += gapH / 2;
+        return;
+      }
+      y += (l.big ? bigH : rowH);
+      ctx.fillStyle = '#000000';
+      ctx.font = '15px ' + FONT;
+      ctx.fillText(l.label, labelX, y - 7);
+      ctx.font = (l.big ? 'bold 34px ' : 'bold 17px ') + FONT;
+      ctx.fillText(l.value, valueX, y - 7);
+    });
+
+    return { dataUrl: canvas.toDataURL('image/png'), wPt: wPt, hPt: hPt };
+  }
+
+  //// ใบปะหน้าพาเลทเป็นหน้าแรกของเล่ม
   async addPalletCover(doc: PDFDocument, sheet: PalletSheet): Promise<void> {
     const font     = await doc.embedFont(StandardFonts.Helvetica);
     const fontBold = await doc.embedFont(StandardFonts.HelveticaBold);
@@ -865,11 +1102,6 @@ export class ReportPrintTrackingGroupSkuComponent implements OnInit {
       page.drawText(t, { x: (W - f.widthOfTextAtSize(t, size)) / 2, y: y, size: size, font: f });
     };
 
-    const drawRow = (label: string, value: string, size: number) => {
-      page.drawText(this.asciiOnly(label), { x: 70,  y: y, size: 14,   font: font });
-      page.drawText(this.asciiOnly(value), { x: 260, y: y, size: size, font: fontBold });
-    };
-
     drawCenter('PALLET COVER SHEET', 24, fontBold);
     y -= 40;
 
@@ -878,17 +1110,15 @@ export class ReportPrintTrackingGroupSkuComponent implements OnInit {
     y -= scaled.height;
     page.drawImage(png, { x: (W - scaled.width) / 2, y: y, width: scaled.width, height: scaled.height });
 
-    y -= 60;
-    drawRow('GROUP PICK', sheet.GROUP_PICK, 16);
-    y -= 32;
-    drawRow('TRANSPORT', sheet.TRANSPORT_CODE, 16);
-    y -= 40;
-    drawRow('SHIPMENTS (this print)', String(sheet.QTY_SHIPMENT), 30);
-    y -= 40;
-    //// 1 shipment = 1 กล่อง ยอดนี้จึงเป็นทั้งจำนวน shipment และจำนวนกล่องบนพาเลท
-    drawRow('TOTAL ON PALLET', String(sheet.QTY_BOX) + ' box', 30);
-    y -= 50;
+    //// รายละเอียดเป็นรูปที่วาดจาก canvas เพราะมีตัวอักษรไทย
+    const detail    = this.coverDetailPng(sheet);
+    const detailImg = await doc.embedPng(detail.dataUrl);
+    y -= 40 + detail.hPt;
+    page.drawImage(detailImg, {
+      x: (W - detail.wPt) / 2, y: y, width: detail.wPt, height: detail.hPt
+    });
 
+    y -= 30;
     page.drawText(this.asciiOnly('Printed: ' + sheet.PRINT_DATE), { x: 70, y: y, size: 10, font: font });
   }
 
@@ -1067,7 +1297,7 @@ export class ReportPrintTrackingGroupSkuComponent implements OnInit {
   // ── confirm outbound + ใบปะหน้าพาเลท (เฉพาะ STATUS_PRINT = 1) ──
 
   //// ยิง confirm outbound ยกชุด แล้วคืนข้อมูลใบปะหน้า (null = ล้ม → ข้ามใบปะหน้าไป)
-  confirmOutbound(rows: TrackingRow[], transport: string): Promise<PalletSheet | null> {
+  confirmOutbound(rows: TrackingRow[], transport: string, subGroup: string): Promise<PalletSheet | null> {
     const trackings = new Set<string>();
     const shipments = new Set<string>();
 
@@ -1107,7 +1337,7 @@ export class ReportPrintTrackingGroupSkuComponent implements OnInit {
           console.log('confirmOutbound remote sync failed', remoteError);
         }
 
-        resolve({
+        resolve(Object.assign({
           PALLET_NO:      d.PALLET_NO,
           GROUP_PICK:     d.GROUP_PICK,
           TRANSPORT_CODE: d.TRANSPORT_CODE,
@@ -1115,7 +1345,8 @@ export class ReportPrintTrackingGroupSkuComponent implements OnInit {
           QTY_BOX:        Number(d.QTY_BOX) || 0,
           PRINT_DATE:     this.timeService.getNow(),
           REMOTE_ERROR:   remoteError
-        });
+        //// ยอดทั้ง group / ยอดของการ์ดนี้ — ต้องอ่านตอนนี้ ก่อน markPrinted() จะ refresh ข้อมูลทิ้ง
+        }, this.coverTotals(transport, subGroup)));
 
       }, (err: any) => {
         console.log('confirmOutbound error', err);

@@ -119,7 +119,7 @@ const routes: Routes = [
   },
   {
     path: 'report-printTrackingGroupSku', component: ReportPrintTrackingGroupSkuComponent,
-    data: { menubar: 'Print Tracking Group SKU', version: '1.1.0', lastupdate: '2026-08-29' }
+    data: { menubar: 'Print Tracking Group SKU', version: '1.2.0', lastupdate: '2026-09-05' }
   },
   {
     path: 'monitor-waveorde', component: MonitorWaveOrdeComponent,
