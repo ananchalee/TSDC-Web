@@ -44,3 +44,9 @@ testem.log
 # System Files
 .DS_Store
 Thumbs.db
+
+# IDE - Visual Studio (workspace state ของแต่ละเครื่อง ไม่ใช่โค้ด)
+.vs/
+
+# log จากการ build/serve เช่น ng-serve.log, build-check.log
+*.log
