@@ -164,6 +164,16 @@
                   </p>
                 </a>
               </li>
+              <li class="nav-item" (click)="Onclick_menu('confirmqtygroupsku')" >
+                <a class="nav-link" [ngClass]='{active:page.audit_confirmqtygroupsku}' >
+                  <i class="fas fa-clipboard-check nav-icon"></i>
+                  <p>
+                    {{routeData['confirm-qty-groupsku']?.menubar || 'Confirm Qty Group SKU'}}
+                    <br>
+                    <small *ngIf="routeData['confirm-qty-groupsku']?.version" style="font-size:0.65rem; opacity:0.75; display:block; text-align:center;">v{{routeData['confirm-qty-groupsku'].version}} | {{routeData['confirm-qty-groupsku'].lastupdate}}</small>
+                  </p>
+                </a>
+              </li>
             </ul>
           </li>
 

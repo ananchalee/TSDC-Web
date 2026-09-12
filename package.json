@@ -7,6 +7,7 @@
     "build": "set NODE_OPTIONS=--openssl-legacy-provider && ng build",
     "build:tsdc": "set NODE_OPTIONS=--openssl-legacy-provider && ng build --prod --deploy-url /TSDC/ --base-href /TSDC/",
     "build:beta": "set NODE_OPTIONS=--openssl-legacy-provider && ng build --prod --deploy-url /beta/ --base-href /beta/",
+    "build:beta2": "set NODE_OPTIONS=--openssl-legacy-provider && ng build --prod --deploy-url /beta2/ --base-href /beta2/",
     "build:dev": "set NODE_OPTIONS=--openssl-legacy-provider && ng build --prod --deploy-url /dev/ --base-href /dev/",
     "test": "ng test",
     "lint": "ng lint",

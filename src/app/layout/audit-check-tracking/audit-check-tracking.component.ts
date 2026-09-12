@@ -1,4 +1,4 @@
-import { Component, OnInit, ElementRef, ViewChild ,OnDestroy } from '@angular/core';
+import { Component, OnInit, ElementRef, ViewChild ,OnDestroy, NgZone } from '@angular/core';
 import { DataService,TimeService } from '../../services/index'
 import Swal from 'sweetalert2';
 import { Subscription } from 'rxjs';
@@ -182,6 +182,7 @@ showRecordingFinished(fileName: string) {
     private router: Router,
     private http: HttpClient, // Inject HttpClient
     private route: ActivatedRoute,
+    private zone: NgZone,
     private videoRecordingService: VideoRecordingService,
   ) { }
 
@@ -202,7 +203,7 @@ showRecordingFinished(fileName: string) {
     this.LOAD_USERCheckin();
     this.loadVas()
     setTimeout(() => { this.focusInput_con() }, 200)
-    this.interval = setInterval(() => this.focusInput_item(), 2000);
+    this.setFocusInterval(() => this.focusInput_item(), 2000);
     this.btn.Box = true;
     this.btn.Re = true;
 
@@ -593,9 +594,7 @@ ngOnDestroy(): void {
     this.closeRecordingToast();
     this.videoRecordingService.closeConnection();
 
-    if (this.interval) {
-        clearInterval(this.interval);
-    }
+    this.clearFocusInterval();
 }
 
 private didDestroy(): void {
@@ -729,17 +728,45 @@ private closeRecordingToast(): void {
   }
 
 
+  /**
+   * ตั้ง interval สำหรับดึง focus โดยเคลียร์ตัวเก่าทิ้งเสมอ
+   * ก่อนหน้านี้แต่ละจุดเขียนทับ this.interval เฉยๆ ตัวเก่าจึงวิ่งค้างสะสมทั้งกะจนหน้าจอหน่วง
+   * และรันนอก NgZone เพราะ .focus() ไม่ต้องการ change detection
+   */
+  private setFocusInterval(fn: () => void, ms: number) {
+    this.clearFocusInterval();
+    this.zone.runOutsideAngular(() => {
+      this.interval = setInterval(fn, ms);
+    });
+  }
+
+  private clearFocusInterval() {
+    if (this.interval) {
+      clearInterval(this.interval);
+      this.interval = null;
+    }
+  }
+
+  /** trackBy ของตารางบนหน้าสแกน เพื่อให้ Angular reuse DOM แทนที่จะสร้างใหม่ทุกรอบ change detection */
+  trackByIndex(index: number) {
+    return index;
+  }
+
+  trackByTrackingId(index: number, item: TrackingItem) {
+    return item.id;
+  }
+
   focusInput_item() {
 
 
     if (this.scanItemPage === false) {
-      this.inputItem.nativeElement.focus();
+      this.inputItem?.nativeElement?.focus();
     }
     if (this.pagePrint === false){
-      this.Btn_printTrack.nativeElement.focus();
+      this.Btn_printTrack?.nativeElement?.focus();
     }
-    
-   
+
+
   }
 
   focusInput_con() {
@@ -965,7 +992,7 @@ private closeRecordingToast(): void {
             jQuery(this.myModalBOX.nativeElement).modal('show');
           }
           
-          this.interval = setInterval(() => { if (!this.isZoneModalOpen) { this.inputbox.nativeElement.focus(); } }, 500);   
+          this.setFocusInterval(() => { if (!this.isZoneModalOpen) { this.inputbox?.nativeElement?.focus(); } }, 500);
 
           this.check_size();
          
@@ -1052,7 +1079,7 @@ private closeRecordingToast(): void {
     this.LOAD_USERTABLECHECK();
     setTimeout(() => { this.focusInput_item() }, 3000);
     setTimeout(() => { this.focusInput_con() }, 1000);
-    this.interval = setInterval(() => this.focusInput_item(), 3000);
+    this.setFocusInterval(() => this.focusInput_item(), 3000);
     //console.log(this.input)
   }
 
@@ -1088,11 +1115,15 @@ private closeRecordingToast(): void {
     })
   }
 
+  lastCheckedInKey = '';
+
   tablecheck_user() {
     /*  const user = JSON.parse(localStorage.getItem('currentUser') || '');
      this.input.USER_CHECK = user.WORKER_ID;
      this.input.TABLE_CHECK = this.input.USER_CHECK */
     this.input.WORKING_TYPE = 'Check';
+    const key = this.input.PIN_CODE + '|' + new Date().toDateString();
+    if (this.input.PIN_CODE && key === this.lastCheckedInKey) { return; }
     this.dataService.insert_user_tablecheck2(this.input).subscribe(res => {
       ////console.log(res);
       this.user = res
@@ -1106,6 +1137,7 @@ private closeRecordingToast(): void {
           timer: 2500
         });
       } else if (this.user.status === 'success') {
+        this.lastCheckedInKey = key;
         this.LOAD_USERTABLECHECK();
       }
 
@@ -3279,7 +3311,7 @@ private closeRecordingToast(): void {
             this.input.BOX_SIZE = ''
             jQuery(this.myModalBOX.nativeElement).modal('show');
 
-            this.interval = setInterval(() => { if (!this.isZoneModalOpen) { this.inputbox.nativeElement.focus(); } }, 500);
+            this.setFocusInterval(() => { if (!this.isZoneModalOpen) { this.inputbox?.nativeElement?.focus(); } }, 500);
             //this.inputbox.nativeElement.focus()
             //this.interval = setInterval(() => this.inputItem.nativeElement.focus(), 100000000);
 

@@ -72,6 +72,8 @@ export class MenuComponent implements OnInit {
               break;
             case 'Check fullcarton' : this.page.audit_fullcarton = true;
               break;
+            case 'Confirm Qty Group SKU' : this.page.audit_confirmqtygroupsku = true;
+              break;
           }
           break;
         case 'AWB':
@@ -166,6 +168,9 @@ export class MenuComponent implements OnInit {
       break;
       case 'checkfullcarton':
           this.router.navigate(["/audit-check-fullcarton"]);
+        break;
+      case 'confirmqtygroupsku':
+          this.router.navigate(["/confirm-qty-groupsku"]);
         break;
       case 'AWB':
           this.router.navigate(["/AWB"]);
