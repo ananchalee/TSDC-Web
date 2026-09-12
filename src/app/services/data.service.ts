@@ -77,6 +77,22 @@ insert_video_hd(data:any){
   return this.http.post('http://10.26.1.21:1661/api/insert_video_hd', data)
 }
 
+// endpoint ของหน้าค้นหาวิดีโอ แยกตัวแปรไว้เพราะตอน dev ต้องชี้ไป API ที่รันในเครื่อง
+// (api.js ตัวจริงบน 1661 ยังไม่มี endpoint พวกนี้จนกว่าจะ deploy)
+private readonly VIDEO_API = 'http://10.26.1.21:1661';
+
+// ค้นหาวิดีโอด้วยเลขออเดอร์ / รหัสร้าน / เลขพัสดุ / ช่วงวันที่
+search_video_hd(data:any){
+  return this.http.post(this.VIDEO_API + '/api/search_video_hd', data)
+}
+
+/* ตัวไฟล์วิดีโอต้องผ่าน API เพราะไฟล์จริงอยู่บน share \\10.26.1.26 ซึ่งเบราว์เซอร์เปิดเองไม่ได้
+   คืนเป็น URL ไม่ใช่ Observable ตั้งใจให้เอาไปใส่ <video src> กับ <a href> ตรงๆ
+   ถ้าดึงเป็น blob ผ่าน HttpClient จะเสียความสามารถ seek และกินแรมเท่าขนาดคลิป (หลักร้อย MB) */
+video_hd_file_url(videoId: number, download = false): string {
+  return this.VIDEO_API + '/api/video_hd_file/' + videoId + (download ? '?download=1' : '');
+}
+
 load_checkinPack(data:any){
   return this.http.post('http://10.26.1.21:1661/api/load_checkinPack', data)
 }

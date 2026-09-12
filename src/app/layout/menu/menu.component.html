@@ -355,6 +355,21 @@
 
           </li>
 
+          <!-- แยกออกมาเป็นเมนูใหญ่ของตัวเอง ไม่ซ่อนอยู่ใต้ treeview ของ Report
+               เพราะเป็นงานคนละแบบ (ตามหาหลักฐานการแพ็ค ไม่ใช่ออกรายงาน)
+               และคนที่ใช้ต้องเข้าถึงเร็วตอนมีเคสร้องเรียนเข้ามา -->
+          <li class="nav-header" >Video Packings</li>
+          <li class="nav-item"  (click)="Onclick_menu('video_search') ">
+            <a class="nav-link"  [ngClass]='{active:page.videopakings}'>
+              <i class="nav-icon fas fa-video"></i>
+              <p>
+                {{routeData['video-search']?.menubar || 'Video Packings'}}
+                <br>
+                <small *ngIf="routeData['video-search']?.version" style="font-size:0.65rem; opacity:0.75; display:block; text-align:center;">v{{routeData['video-search'].version}} | {{routeData['video-search'].lastupdate}}</small>
+              </p>
+            </a>
+          </li>
+
           <li class="nav-header" >Outbound</li>
           <li class="nav-item ">
             <a class="nav-link" [ngClass]='{active:page.outbound}'  >

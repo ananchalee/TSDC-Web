@@ -1,0 +1,573 @@
+// video-search.component.scss
+
+.flex-content {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ซ้าย = รายการ · ขวา = จอดูคลิป
+   เดิมจัดเต็มความกว้างแล้วฝั่งขวาโล่ง เอาที่ตรงนั้นมาใช้เป็นจอดูวิดีโอแทน
+   จอขวายืดตามความกว้างจอ (30vw) แต่ไม่เล็กกว่า 380 และไม่เกิน 680
+   จอยิ่งกว้างยิ่งได้ดูคลิปใหญ่ ส่วนรายการด้านซ้ายกว้างพออยู่แล้วไม่ต้องแย่งที่
+
+   คอลัมน์ซ้ายต้อง minmax(0,1fr) ไม่ใช่ 1fr เฉยๆ ไม่งั้นชื่อไฟล์ยาวๆ
+   จะดันคอลัมน์บวมจนเบียดจอด้านขวาหาย (grid item ค่าเริ่มต้น min-width:auto) */
+.vs-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) clamp(380px, 30vw, 680px);
+  gap: 16px;
+  align-items: start;
+}
+
+// ยังไม่มีผลลัพธ์ = ไม่มีกรอบขวา ต้องยุบเหลือคอลัมน์เดียว
+// ไม่งั้นที่ว่างฝั่งขวายังถูกจองไว้ ข้อความ "กรอกเลขออเดอร์..." จะไม่อยู่กลางจอจริง
+.vs-layout.no-preview {
+  grid-template-columns: 1fr;
+}
+
+.vs-results { min-width: 0; }
+
+/* ข้อความชวนให้เริ่มค้นหา — กลางจอทั้งแนวนอนและแนวตั้ง
+   45vh คือความสูงที่เหลือคร่าวๆ หลังหักส่วนหัวกับการ์ดค้นหาด้านบน
+   ใช้ min-height ไม่ใช่ height เผื่อจอเตี้ยจะได้ไม่ดันจนต้องเลื่อน */
+.vs-empty {
+  min-height: 45vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: #adb5bd;
+
+  i {
+    font-size: 3rem;
+    display: block;
+    margin-bottom: 14px;
+    opacity: 0.3;
+  }
+}
+
+// ติดหนึบไว้ ให้ยังเห็นวิดีโอขณะเลื่อนไล่ดูรายการด้านซ้าย
+// 66px คือความสูงของ navbar ด้านบนที่ลอยทับอยู่
+.vs-preview {
+  position: sticky;
+  top: 66px;
+}
+
+.preview-box {
+  background: #fff;
+  border: 1px solid #e3e6ea;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+
+  // กันกรณีจอเตี้ย (โน้ตบุ๊กเล็ก / ซูมเบราว์เซอร์)
+  // จอวิดีโอที่ยืดตามความกว้างอาจสูงจนดันปุ่ม "ดูเต็มจอ" ตกขอบล่าง
+  // แล้วกดไม่ได้เลย เพราะกล่องนี้ sticky จึงเลื่อนหน้าตามลงไปหาไม่ได้
+  max-height: calc(100vh - 84px);
+  overflow-y: auto;
+}
+
+.preview-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-bottom: 1px solid #eef0f3;
+
+  .t {
+    font-weight: 600;
+    color: #1b2838;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.preview-video {
+  display: block;
+  width: 100%;
+  background: #000;
+  // คลิปเป็น 4:3 (640x480) ล็อกสัดส่วนไว้กันกรอบกระตุกตอนสลับคลิป
+  aspect-ratio: 4 / 3;
+  // บนจอเตี้ยอย่าให้วิดีโอกินความสูงจนไม่เหลือที่ให้ปุ่มด้านล่าง
+  // contain เพื่อให้ใส่กรอบแบบไม่บีบภาพเพี้ยนตอนโดน max-height บังคับ
+  max-height: 58vh;
+  object-fit: contain;
+}
+
+.preview-info {
+  padding: 9px 12px;
+
+  .row-1 {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #1b2838;
+  }
+
+  .row-2 {
+    font-size: 0.78rem;
+    color: #8a939c;
+  }
+
+  .row-track {
+    margin-top: 4px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #b9470e;
+
+    label {
+      margin: 0 5px 0 0;
+      font-weight: 400;
+      font-size: 0.74rem;
+      color: #c8a97e;
+    }
+  }
+
+  .row-3 {
+    margin-top: 3px;
+    font-size: 0.7rem;
+    color: #b6bdc4;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.preview-actions {
+  display: flex;
+  gap: 8px;
+  padding: 10px 12px;
+  border-bottom: 1px solid #eef0f3;
+
+  .btn-act {
+    flex: 1;
+    margin-left: 0;   // ทับ + .btn-act ที่ตั้ง margin ไว้ ตรงนี้ใช้ gap แทน
+  }
+}
+
+.preview-empty {
+  padding: 40px 20px;
+  text-align: center;
+  color: #adb5bd;
+  font-size: 0.85rem;
+  line-height: 1.7;
+
+  i {
+    font-size: 2.4rem;
+    display: block;
+    margin-bottom: 10px;
+    opacity: 0.45;
+  }
+}
+
+// จอไม่กว้างพอจะวางสองคอลัมน์ — เอาจอเล็กขึ้นบนสุด
+// ไม่งั้นกด "เปิดดู" แล้ววิดีโอไปโผล่ใต้รายการทั้งหมด มองไม่เห็นว่ามีอะไรเกิดขึ้น
+@media (max-width: 1099.98px) {
+  .vs-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .vs-preview {
+    position: static;
+    order: -1;
+  }
+
+  .preview-video { max-height: 46vh; }
+}
+
+// ทุกตัวเลขบนหน้านี้ (เวลา ขนาด ความยาว) ความกว้างเท่ากันทุกหลัก
+// ไม่งั้นคอลัมน์เวลาจะขยับไปมาระหว่างแถว อ่านเทียบกันยาก
+.order-card,
+.clip {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* ===================== การ์ดของหนึ่งออเดอร์ ===================== */
+.order-card {
+  background: #fff;
+  border: 1px solid #e3e6ea;
+  border-radius: 6px;
+  margin-bottom: 14px;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.order-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px 16px 10px;
+  border-bottom: 1px solid #eef0f3;
+}
+
+.order-head-main { min-width: 0; }
+
+// เลขออเดอร์คือสิ่งที่คนค้นหา ต้องเด่นที่สุดบนการ์ดและกวาดตาหาเจอจากบนลงล่าง
+.order-no {
+  font-size: 1.2rem;
+  font-weight: 600;
+  line-height: 1.25;
+  color: #1b2838;
+  word-break: break-all;
+}
+
+/* สีของข้อมูลร้าน
+   ให้แต่ละชนิดมีสีประจำตัว คนจะได้กวาดตาหาเจอโดยไม่ต้องอ่านป้ายกำกับ
+   คุมไว้ที่โทนเข้มพอให้ผ่านความคมชัดบนพื้นขาว ไม่ใช้สีสดจนแสบตาเพราะ
+   หน้านี้พนักงานเปิดค้างทั้งกะ */
+.order-sub {
+  margin-top: 3px;
+  font-size: 0.82rem;
+  color: #6c757d;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+
+  // ลูกค้า = ระดับบนสุดของสายข้อมูล ใช้ม่วงคราม เด่นแต่ไม่ตะโกน
+  .cust {
+    font-weight: 700;
+    color: #5b3fa8;
+    background: #f3efff;
+    border-radius: 4px;
+    padding: 1px 7px;
+  }
+
+  // ชื่อร้าน = ตัวที่คนจำได้จริง ให้เป็นเขียวน้ำทะเลเข้ม อ่านสบายกว่าดำล้วน
+  .shop {
+    color: #0f6e63;
+    font-weight: 600;
+  }
+
+  .chip {
+    background: #f1f3f5;
+    border: 1px solid #e3e6ea;
+    border-radius: 10px;
+    padding: 1px 8px;
+    font-size: 0.73rem;
+    color: #5a6570;
+    white-space: nowrap;
+  }
+}
+
+.order-head-meta {
+  text-align: right;
+  white-space: nowrap;
+
+  .date {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #2c3e50;
+  }
+
+  .counts {
+    font-size: 0.78rem;
+    color: #8a939c;
+  }
+}
+
+/* ===================== หนึ่งคลิป ===================== */
+.clip {
+  display: grid;
+  // เลข | เวลา | ชื่อไฟล์ (ยืดเต็มที่ว่าง) | สถานะ | ปุ่ม
+  // ชื่อไฟล์กินที่ตรงกลางไว้ ไม่งั้นแถวจะโล่งเป็นช่องว่างยาวระหว่างเวลากับปุ่ม
+  grid-template-columns: 34px auto 1fr auto auto;
+  grid-template-areas: "no time file status actions";
+  align-items: center;
+  gap: 2px 14px;
+  padding: 9px 16px;
+  border-bottom: 1px solid #f1f3f5;
+
+  &:last-child { border-bottom: 0; }
+  &:hover { background: #fafcff; }
+}
+
+.clip-no {
+  grid-area: no;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #eef1f4;
+  color: #6c757d;
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.clip-time { grid-area: time; min-width: 0; }
+
+// ช่วงเวลา start – end คือข้อมูลที่คนใช้ตัดสินว่าคลิปไหนคือคลิปที่ต้องการ
+// จึงให้เป็นตัวเด่นของแถว ส่วนความยาว/ขนาดเป็นตัวประกอบใต้มัน
+.clip-time .range {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1b2838;
+  letter-spacing: 0.2px;
+}
+
+.clip-time .sub {
+  font-size: 0.76rem;
+  color: #8a939c;
+
+  // คลิปที่ข้ามไปวันอื่น ต้องสะดุดตา ไม่งั้นจะเข้าใจผิดว่าเป็นวันเดียวกับหัวการ์ด
+  .otherday {
+    background: #fff3cd;
+    border: 1px solid #ffe69c;
+    border-radius: 3px;
+    padding: 0 5px;
+    color: #8a6d3b;
+    margin-right: 5px;
+  }
+}
+
+.clip-status {
+  grid-area: status;
+  text-align: right;
+
+  .ok { color: #28a745; font-size: 0.95rem; }
+
+  // แถวที่เปิดไม่ได้ต้องบอกเหตุผลเป็นคำพูด ไม่ใช่แค่ปุ่มจาง
+  // "ไฟล์ถูกลบแล้ว" กับ "ยังไม่อัปโหลด" เป็นคนละเรื่องสำหรับคนที่ตามหาหลักฐาน
+  .bad {
+    display: inline-block;
+    font-size: 0.73rem;
+    padding: 2px 8px;
+    border-radius: 10px;
+  }
+}
+
+.clip-actions {
+  grid-area: actions;
+  white-space: nowrap;
+}
+
+/* ปุ่มของแถวคลิป
+   ไม่ใช้ .btn-sm เพราะ line-height 21px ของมันบีบ**สระใต้ของไทย** (◌ู ใน "ดู")
+   จนตัวอักษรอ่านไม่ออก — วัดจริงได้ ข้อความสูง 19.1px ในปุ่ม เทียบกับ 21px เมื่ออยู่อิสระ
+   ที่นี่จึงกำหนด line-height กับ padding เองให้สระใต้มีที่พอ
+
+   และ "ดู" สั้นเกินไปจนดูเป็นรอยด่างข้างไอคอน (กว้างแค่ 8.6px เพราะสระเป็น
+   combining mark ไม่กินความกว้าง) เปลี่ยนเป็น "เปิดดู" / "โหลด" ให้อ่านออกจริง */
+.btn-act {
+  font-size: 0.85rem;
+  line-height: 1.7;
+  padding: 3px 12px;
+  min-width: 74px;
+
+  i { margin-right: 5px; }
+  + .btn-act { margin-left: 6px; }
+
+  /* ปุ่มที่กดไม่ได้ต้องดูไม่ออกว่ากดได้ตั้งแต่แรก
+     opacity .65 ของ bootstrap ยังทำให้ปุ่มน้ำเงินดูสดพอจะชวนให้กด
+     คนจะกดแล้วเจอ popup แทนที่จะรู้ตั้งแต่มองเห็น จึงล้างสีเป็นเทาแบนไปเลย */
+  &:disabled,
+  &.disabled {
+    background: #f1f3f5 !important;
+    border-color: #e3e6ea !important;
+    color: #b6bdc4 !important;
+    opacity: 1;
+    box-shadow: none;
+    cursor: not-allowed;
+  }
+}
+
+.clip-mid {
+  grid-area: file;
+  min-width: 0;
+}
+
+// เลขพัสดุของคลิปนี้ — ข้อมูลที่คนตามหาพัสดุใช้จริง ต้องอ่านออกชัด
+// ใช้สีส้มอำพันชุดเดียวกับที่ใช้บนหัวการ์ด จะได้โยงกันได้ว่าเป็นเรื่องเดียวกัน
+.clip-track {
+  font-size: 0.82rem;
+  color: #b9470e;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  label {
+    margin: 0 5px 0 0;
+    font-weight: 400;
+    font-size: 0.72rem;
+    color: #c8a97e;
+  }
+}
+
+/* โต๊ะ / คนแพ็ค / container ของคลิปนี้
+   ขึ้นเฉพาะตอนที่ในออเดอร์ไม่ตรงกัน จึงเป็นข้อมูลที่ "ต้องอ่าน" ไม่ใช่ของประดับ
+   ใช้ดำปกติเหมือนแถบบนหัวการ์ด เพื่อไม่ไปแย่งสายตาจากเลข Tracking ที่เป็นสีส้ม */
+.clip-who {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 14px;
+  margin-top: 1px;
+  font-size: 0.78rem;
+  color: #212529;
+
+  label {
+    margin: 0 4px 0 0;
+    font-weight: 400;
+    font-size: 0.71rem;
+    color: #8f979e;
+  }
+}
+
+// ชื่อไฟล์ — ของประกอบ ตัดท้ายเอา ไม่ให้ดันคอลัมน์อื่นแตก
+.clip-file {
+  font-size: 0.72rem;
+  color: #b4bbc2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.clip-off {
+  background: #fcfcfd;
+
+  .clip-time .range { color: #8a939c; font-weight: 500; }
+  .clip-no { background: #f4f5f7; color: #adb5bd; }
+}
+
+// แถวที่กำลังเล่นอยู่ในกรอบขวา — ต้องเห็นได้ทันทีว่าวิดีโอที่ดูอยู่คือแถวไหน
+// โดยเฉพาะตอนออเดอร์มีหลาย segment ที่เวลาใกล้กันมาก
+.clip-active {
+  background: #eefaf1 !important;
+  box-shadow: inset 3px 0 0 #28a745;
+
+  .clip-no { background: #28a745; color: #fff; }
+}
+
+/* ---------- หน้าต่างเล่นวิดีโอ ---------- */
+.video-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  // สูงกว่า sidebar ของ AdminLTE (1038) และ navbar เพื่อไม่ให้เมนูทับจอเล่น
+  z-index: 2000;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.video-box {
+  background: #fff;
+  border-radius: 6px;
+  width: 100%;
+  max-width: 960px;
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+
+.video-box-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 15px;
+  border-bottom: 1px solid #dee2e6;
+  min-width: 0;
+}
+
+.video-box-title {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+
+  // เลขออเดอร์ไม่ยอมหด
+  > b { flex: 0 0 auto; }
+
+  // ชื่อไฟล์เป็นตัวเดียวที่ยอมตัดท้าย
+  .fname {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+/* เลขพัสดุบนหัวจอเต็ม — ใช้สีชุดเดียวกับที่กรอบขวาและรายคลิปใช้
+   จะได้รู้ว่าเป็นข้อมูลตัวเดียวกัน ไม่ต้องอ่านป้ายซ้ำ
+   ทำเป็นป้ายพื้นอ่อนเพราะหัวจอมีทั้งเลขออเดอร์กับชื่อไฟล์อยู่แล้ว
+   ถ้าเป็นตัวหนังสือเปล่าจะกลืนไปกับสองตัวนั้น */
+.full-track {
+  flex: 0 0 auto;     // ห้ามหด ห้ามถูกตัด
+  display: inline-block;
+  margin-left: 10px;
+  padding: 1px 9px;
+  border-radius: 4px;
+  background: #fdf1e7;
+  border: 1px solid #f5dcc6;
+  color: #b9470e;
+  font-weight: 700;
+  font-size: 0.88rem;
+  white-space: nowrap;
+
+  label {
+    margin: 0 5px 0 0;
+    font-weight: 400;
+    font-size: 0.72rem;
+    color: #c08a5e;
+  }
+}
+
+.video-el {
+  width: 100%;
+  // กันคลิปแนวตั้งดันกล่องจนล้นจอ
+  max-height: 70vh;
+  background: #000;
+  display: block;
+}
+
+.video-box-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  padding: 10px 15px;
+  border-top: 1px solid #dee2e6;
+  gap: 8px;
+}
+
+/* ---------- จอแคบ ---------- */
+// จอกลาง — ชื่อไฟล์ยาวเกินจะเบียดปุ่ม ย้ายลงบรรทัดล่าง
+@media (max-width: 1199.98px) {
+  .clip {
+    grid-template-columns: 34px 1fr auto auto;
+    grid-template-areas:
+      "no time   status actions"
+      ".  file   file   file";
+    gap: 3px 12px;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .clip {
+    grid-template-columns: 28px 1fr;
+    grid-template-areas:
+      "no  time"
+      ".   status"
+      ".   actions"
+      ".   file";
+    gap: 4px 8px;
+  }
+
+  .clip-status,
+  .clip-actions { text-align: left; }
+
+  .order-head-meta { text-align: left; }
+}

@@ -1,0 +1,316 @@
+<body class="hold-transition sidebar-mini layout-navbar">
+  <div class="wrapper full-page">
+
+    <app-header id="page" [Pageactive]="pageactive"></app-header>
+    <app-menu id="page" [Pageactive]="pageactive"></app-menu>
+
+    <div class="content-wrapper flex-content">
+      <section class="content-header">
+        <div class="container-fluid">
+          <div class="row mb-2">
+            <div class="col-sm-12">
+              <ol class="breadcrumb">
+                <!-- ไม่ได้อยู่ใต้ Report แล้ว เป็นเมนูใหญ่ของตัวเอง และชื่อหมวดกับชื่อหน้า
+                     เป็นตัวเดียวกัน จึงไม่ต้องมีชั้นบนอีกชั้น ไม่งั้นขึ้นซ้ำสองครั้ง -->
+                <li class="breadcrumb-item active">
+                  {{pageactive && pageactive[0]?.menubar || 'Video Packings'}}
+                  <small *ngIf="pageactive && pageactive[0]?.version" style="font-size:0.7rem; opacity:0.75;">v{{pageactive[0].version}} | {{pageactive[0].lastupdate}}</small>
+                </li>
+              </ol>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="content">
+        <div class="container-fluid">
+
+          <!-- ============ ช่องค้นหา ============ -->
+          <div class="card card-primary card-outline">
+            <div class="card-header py-2">
+              <h5 class="card-title mb-0">
+                <i class="fas fa-search mr-2"></i>ค้นหาวิดีโอการแพ็ค
+              </h5>
+            </div>
+            <div class="card-body">
+              <div class="form-row">
+
+                <div class="col-lg-4 col-md-6 mb-2">
+                  <label class="mb-1 small font-weight-bold">เลขออเดอร์</label>
+                  <input #inputOrder type="text" class="form-control"
+                         placeholder=""
+                         [(ngModel)]="filter.ORDER_NUMBER"
+                         (keyup.enter)="search()">
+                </div>
+
+                <div class="col-lg-4 col-md-6 mb-2">
+                  <label class="mb-1 small font-weight-bold">รหัสร้าน (Seller)</label>
+                  <input type="text" class="form-control"
+                         placeholder=""
+                         [(ngModel)]="filter.SELLER_NO"
+                         (keyup.enter)="search()">
+                </div>
+
+                <div class="col-lg-4 col-md-6 mb-2">
+                  <label class="mb-1 small font-weight-bold">เลขพัสดุ (Tracking)</label>
+                  <input type="text" class="form-control"
+                         placeholder=""
+                         [(ngModel)]="filter.TRACKING_ID"
+                         (keyup.enter)="search()">
+                </div>
+
+              </div>
+
+
+              <div class="mt-2">
+                <button class="btn btn-primary mr-2" (click)="search()" [disabled]="isLoading">
+                  <i class="fas" [ngClass]="isLoading ? 'fa-spinner fa-spin' : 'fa-search'"></i>
+                  <span class="ml-1">{{ isLoading ? 'กำลังค้นหา...' : 'ค้นหา' }}</span>
+                </button>
+                <button class="btn btn-outline-secondary" (click)="clear()" [disabled]="isLoading">
+                  <i class="fas fa-eraser mr-1"></i>ล้าง
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- ซ้าย = รายการผลค้นหา · ขวา = จอดูคลิปที่เลือกไว้
+               ตอนยังไม่มีผลลัพธ์ กรอบขวาถูกซ่อน ต้องยุบคอลัมน์ทิ้งด้วย
+               ไม่งั้น grid ยังกันที่ว่างไว้ ข้อความตรงกลางจะเยื้องไปทางซ้าย -->
+          <div class="vs-layout" [class.no-preview]="!(hasSearched && groups.length)">
+          <div class="vs-results">
+
+          <!-- ============ สรุปผล ============ -->
+          <div *ngIf="hasSearched && !isLoading" class="mb-3">
+            <div *ngIf="groups.length" class="alert alert-light border py-2 mb-2">
+              พบ <b>{{ groups.length }}</b> ออเดอร์ · <b>{{ totalClips }}</b> คลิป
+              <span *ngIf="truncated" class="text-danger ml-2">
+                <i class="fas fa-exclamation-triangle mr-1"></i>
+                แสดงได้สูงสุด 200 คลิป อาจมีมากกว่านี้ กรุณากรองให้แคบลง
+              </span>
+            </div>
+
+            <div *ngIf="!groups.length" class="alert alert-warning mb-0">
+              <i class="fas fa-info-circle mr-1"></i>
+              ไม่พบวิดีโอตามเงื่อนไขที่ค้นหา
+            </div>
+          </div>
+
+          <!-- ============ ผลลัพธ์ จัดกลุ่มตามออเดอร์ ============ -->
+          <div class="order-card" *ngFor="let g of groups; trackBy: trackByOrder">
+
+            <!-- หัว: เลขออเดอร์เด่นที่สุด เพราะเป็นสิ่งที่คนค้นหา -->
+            <div class="order-head">
+              <div class="order-head-main">
+                <div class="order-no">{{ g.orderNumber }}</div>
+                <div class="order-sub">
+                  <span class="cust" *ngIf="g.customerId">{{ g.customerId }}</span>
+                  <span *ngIf="g.shopName" class="shop">{{ g.shopName }}</span>
+                  <span *ngIf="g.sellerNo" class="chip">ร้าน {{ g.sellerNo }}</span>
+                  <span *ngIf="g.channelId" class="chip">{{ g.channelId }}</span>
+                  <span *ngIf="!g.customerId && !g.shopName && !g.sellerNo" class="text-muted">
+                    ไม่มีข้อมูลร้าน
+                  </span>
+                </div>
+              </div>
+              <div class="order-head-meta">
+                <div class="date">{{ groupDateLabel(g) }}</div>
+                <div class="counts">
+                  {{ g.clips.length }} คลิป · {{ fmtSize(g.totalSizeMb) }}
+                  <span class="text-danger ml-1" *ngIf="g.playableCount === 0">· เปิดไม่ได้</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- รายการคลิป -->
+            <div class="clip" *ngFor="let c of g.clips; let i = index; trackBy: trackByVideoId"
+                 [class.clip-off]="!c.CAN_PLAY"
+                 [class.clip-active]="isSelected(c)">
+
+              <div class="clip-no">{{ i + 1 }}</div>
+
+              <div class="clip-time">
+                <div class="range">{{ timeRange(c) }}</div>
+                <div class="sub">
+                  <span *ngIf="clipDateIfDifferent(c, g)" class="otherday">
+                    {{ clipDateIfDifferent(c, g) }}
+                  </span>
+                  {{ duration(c) }} · {{ fmtSize(c.FCFile_size) }}
+                </div>
+              </div>
+
+              <!-- ตรงกลาง: เลขพัสดุของคลิปนี้ + ชื่อไฟล์
+                   เลขพัสดุต้องอยู่ระดับคลิป ไม่ใช่ระดับออเดอร์ เพราะออเดอร์เดียว
+                   อัดหลายรอบแล้วผูกคนละเลขได้ (เช่นแพ็คเป็นหลายกล่อง)
+                   ชื่อไฟล์เป็นของประกอบ ไว้ตามหาไฟล์บน server ไม่ต้องอ่านทุกแถว -->
+              <div class="clip-mid">
+                <div class="clip-track" *ngIf="c.FTTracking_id">
+                  <label>Tracking</label>{{ c.FTTracking_id }}
+                </div>
+
+                <!-- โต๊ะ / คนแพ็ค / container ของคลิปนี้ — โชว์ทุกแถว
+                     หัวการ์ดไม่มีแถบสรุปพวกนี้แล้ว (เหลือแค่เลขออเดอร์กับลูกค้า)
+                     ข้อมูลจึงต้องอยู่ครบที่รายคลิป ซึ่งเป็นระดับที่ถูกต้องอยู่แล้ว
+                     เพราะออเดอร์เดียวอัดคนละโต๊ะ คนละคน คนละ container ได้
+                     (วัด 12 ก.ย. 2026: โต๊ะต่างกัน 8 ออเดอร์ · PIN 2 · container 1) -->
+                <div class="clip-who">
+                  <span *ngIf="c.FTTable_id"><label>โต๊ะ</label>{{ c.FTTable_id }}</span>
+                  <span *ngIf="c.FTPin_code"><label>PIN</label>{{ c.FTPin_code }}</span>
+                  <span *ngIf="c.FTContainer_id"><label>Container</label>{{ c.FTContainer_id }}</span>
+                </div>
+
+                <div class="clip-file" [title]="c.FTVideo_name">{{ c.FTVideo_name }}</div>
+              </div>
+
+              <div class="clip-status">
+                <span class="ok" *ngIf="c.CAN_PLAY" title="ไฟล์อยู่บน server เปิดดูได้">
+                  <i class="fas fa-check-circle"></i>
+                </span>
+                <span class="bad" *ngIf="!c.CAN_PLAY" [ngClass]="statusClass(c.FILE_STATUS)">
+                  {{ statusText(c.FILE_STATUS) }}
+                </span>
+              </div>
+
+              <div class="clip-actions">
+                <button class="btn btn-act"
+                        [ngClass]="isSelected(c) ? 'btn-success' : 'btn-primary'"
+                        (click)="play(c, g)" [disabled]="!c.CAN_PLAY"
+                        [title]="c.CAN_PLAY ? 'เล่นในกรอบด้านขวา' : statusText(c.FILE_STATUS)">
+                  <i class="fas" [ngClass]="isSelected(c) ? 'fa-volume-up' : 'fa-play'"></i>
+                  <span>{{ isSelected(c) ? 'กำลังดู' : 'เปิดดู' }}</span>
+                </button>
+                <button class="btn btn-outline-secondary btn-act"
+                        (click)="download(c)" [disabled]="!c.CAN_PLAY"
+                        [title]="c.CAN_PLAY ? 'ดาวน์โหลดไฟล์' : statusText(c.FILE_STATUS)">
+                  <i class="fas fa-download"></i><span>โหลด</span>
+                </button>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- สถานะก่อนค้นครั้งแรก — จัดกลางจอทั้งแนวนอนและแนวตั้ง -->
+          <div *ngIf="!hasSearched" class="vs-empty">
+            <div>
+              <i class="fas fa-video"></i>
+              <div>กรอกเลขออเดอร์ รหัสร้าน หรือเลขพัสดุ แล้วกดค้นหา</div>
+            </div>
+          </div>
+
+          </div><!-- /vs-results -->
+
+          <!-- ============ กรอบเล็กด้านขวา ============
+               sticky ไว้ ให้ยังเห็นวิดีโอขณะเลื่อนไล่ดูรายการด้านซ้าย -->
+          <aside class="vs-preview" *ngIf="hasSearched && groups.length">
+            <div class="preview-box">
+
+              <ng-container *ngIf="selected; else noPick">
+                <div class="preview-head">
+                  <div class="t">{{ selected.FTOrder_number }}</div>
+                  <button type="button" class="close" (click)="clearSelection()" title="ปิด">
+                    <span>&times;</span>
+                  </button>
+                </div>
+
+                <!-- ไม่ autoplay ที่กรอบเล็ก ให้ผู้ใช้กดเอง
+                     คนมักกดไล่หลายคลิปเพื่อหาอันที่ใช่ ถ้าเล่นเองทุกครั้งจะมีเสียงดังรัวๆ -->
+                <video #sidePlayer class="preview-video" [src]="selectedUrl"
+                       controls preload="metadata"></video>
+
+                <!-- ปุ่มอยู่ติดใต้วิดีโอ ไม่ใช่ล่างสุดของกล่อง
+                     กล่องนี้ sticky และเริ่มต้นอยู่ค่อนล่างของหน้า ถ้าเอาปุ่มไว้ท้ายสุด
+                     พอกด "เปิดดู" ปุ่มจะตกขอบจอทันที ต้องเลื่อนหน้าลงไปหาถึงจะเจอ
+                     ยุบเป็นแถวเดียวด้วย ประหยัดความสูงไปอีกราว 45px -->
+                <div class="preview-actions">
+                  <button class="btn btn-primary btn-act" (click)="expand()">
+                    <i class="fas fa-expand"></i><span>ดูเต็มจอ</span>
+                  </button>
+                  <button class="btn btn-outline-secondary btn-act" (click)="download(selected)">
+                    <i class="fas fa-download"></i><span>ดาวน์โหลด</span>
+                  </button>
+                </div>
+
+                <div class="preview-info">
+                  <div class="row-1">{{ timeRange(selected) }}</div>
+                  <div class="row-2">
+                    {{ fmtDate(selected.FDStartdate) }} · {{ duration(selected) }} ·
+                    {{ fmtSize(selected.FCFile_size) }}
+                    <!-- โต๊ะกับคนแพ็คเป็นของ "คลิปนี้" ไม่ใช่ของออเดอร์
+                         โชว์ตรงนี้เสมอ เพราะคนดูวิดีโอมักอยากรู้ว่าใครแพ็คใบนี้ -->
+                    <span *ngIf="selected.FTTable_id"> · โต๊ะ {{ selected.FTTable_id }}</span>
+                    <span *ngIf="selected.FTPin_code"> · PIN {{ selected.FTPin_code }}</span>
+                  </div>
+                  <!-- เลขพัสดุของคลิปที่กำลังดู — คนเปิดวิดีโอเพื่อตรวจพัสดุใบไหน
+                       ต้องเห็นเลขคู่กับภาพ ไม่ต้องเลื่อนกลับไปดูในรายการ -->
+                  <div class="row-track" *ngIf="selected.FTTracking_id">
+                    <label>Tracking : </label>{{ selected.FTTracking_id }}
+                  </div>
+                  <div class="row-3" [title]="selected.FTVideo_name">{{ selected.FTVideo_name }}</div>
+                </div>
+              </ng-container>
+
+              <ng-template #noPick>
+                <div class="preview-empty">
+                  <i class="fas fa-play-circle"></i>
+                  <div>กด <b>เปิดดู</b> ที่คลิปด้านซ้าย<br>วิดีโอจะมาเล่นตรงนี้</div>
+                </div>
+              </ng-template>
+
+            </div>
+          </aside>
+
+          </div><!-- /vs-layout -->
+
+        </div>
+      </section>
+    </div>
+
+  </div>
+
+  <!-- ============ หน้าต่างเล่นวิดีโอ ============
+       ทำเป็น overlay เองแทน modal ของ bootstrap เพื่อไม่ต้องพึ่ง jQuery
+       และคุมจังหวะหยุดเล่น/ล้าง src ตอนปิดได้แน่นอน -->
+  <div class="video-overlay" *ngIf="expanded && selected" (click)="closeExpanded()">
+    <div class="video-box" (click)="$event.stopPropagation()">
+
+      <div class="video-box-header">
+        <!-- เลขออเดอร์กับเลขพัสดุห้ามถูกตัด ให้ชื่อไฟล์เป็นตัวที่ยอมตัดท้ายแทน
+             (เดิมครอบ text-truncate ไว้ทั้งก้อน ป้ายพัสดุจะหายถ้าชื่อไฟล์ยาว) -->
+        <div class="video-box-title mr-3">
+          <b>{{ selected.FTOrder_number }}</b>
+          <!-- เลขพัสดุต้องเห็นคู่กับภาพตอนดูเต็มจอด้วย เพราะนี่คือจังหวะที่คนกำลัง
+               ตรวจว่าพัสดุใบนี้แพ็คอะไรลงไป ถ้าต้องย่อกลับไปดูเลขก็เสียจังหวะ
+               ออเดอร์เดียวมีหลายเลขได้ จึงต้องเป็นเลขของคลิปนี้ ไม่ใช่ของออเดอร์ -->
+          <span class="full-track" *ngIf="selected.FTTracking_id">
+            <label>Tracking</label>{{ selected.FTTracking_id }}
+          </span>
+          <span class="fname text-muted small ml-2">{{ selected.FTVideo_name }}</span>
+        </div>
+        <button type="button" class="close" (click)="closeExpanded()" aria-label="ปิด">
+          <span>&times;</span>
+        </button>
+      </div>
+
+      <video #fullPlayer class="video-el" [src]="selectedUrl" controls autoplay preload="metadata"></video>
+
+      <div class="video-box-footer">
+        <div class="small text-muted">
+          <i class="far fa-clock mr-1"></i>{{ fmtDateTime(selected.FDStartdate) }}
+          <span class="ml-3">ความยาว {{ duration(selected) }}</span>
+          <span class="ml-3">{{ fmtSize(selected.FCFile_size) }}</span>
+          <span class="ml-3" *ngIf="selected.FTTable_id">โต๊ะ {{ selected.FTTable_id }}</span>
+          <span class="ml-3" *ngIf="selected.FTPin_code">PIN {{ selected.FTPin_code }}</span>
+          <span class="ml-3" *ngIf="selected.FTContainer_id">Container {{ selected.FTContainer_id }}</span>
+        </div>
+        <div>
+          <button class="btn btn-sm btn-success mr-2" (click)="download(selected)">
+            <i class="fas fa-download mr-1"></i>ดาวน์โหลด
+          </button>
+          <button class="btn btn-sm btn-secondary" (click)="closeExpanded()">ย่อกลับ</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</body>

@@ -126,6 +126,10 @@ export class MenuComponent implements OnInit {
               break;
           }
         break;
+        // แยกออกมาเป็นเมนูใหญ่ของตัวเอง ไม่อยู่ใต้ Reports แล้ว
+        case 'VideoPackings':
+          this.page.videopakings = true;
+        break;
         case 'Moniter':
           this.page.moniter = true;
           switch (this.Pageactive[0].pagename){
@@ -204,6 +208,9 @@ export class MenuComponent implements OnInit {
         break;
       case 'report_printtrackgroupsku':
         this.router.navigate(["/report-printTrackingGroupSku"]);
+        break;
+      case 'video_search':
+        this.router.navigate(["/video-search"]);
         break;
       case 'report_printordercancel':
         this.router.navigate(["/report-printordercancel"]);

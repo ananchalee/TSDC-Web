@@ -45,6 +45,7 @@ import {ReportPrintWaveOrderComponent} from './layout/reports/report-print-waveo
 import {ReportPrintTrackingGroupSkuComponent} from './layout/reports/report-print-tracking-groupsku/report-print-tracking-groupsku.component';
 import {MonitorWaveOrdeComponent} from './layout/monitor-waveorde/monitor-waveorde.component';
 import {ConfirmQtyGroupSkuComponent} from './layout/confirm-qty-groupsku/confirm-qty-groupsku.component';
+import {VideoSearchComponent} from './layout/video-search/video-search.component';
 
 
 @NgModule({
@@ -77,7 +78,8 @@ import {ConfirmQtyGroupSkuComponent} from './layout/confirm-qty-groupsku/confirm
     ReportPrintWaveOrderComponent,
     ReportPrintTrackingGroupSkuComponent,
     MonitorWaveOrdeComponent,
-    ConfirmQtyGroupSkuComponent
+    ConfirmQtyGroupSkuComponent,
+    VideoSearchComponent
 
   ],
   imports: [

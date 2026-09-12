@@ -27,6 +27,7 @@ import {ReportPrintWaveOrderComponent} from './layout/reports/report-print-waveo
 import {ReportPrintTrackingGroupSkuComponent} from './layout/reports/report-print-tracking-groupsku/report-print-tracking-groupsku.component';
 import {MonitorWaveOrdeComponent} from './layout/monitor-waveorde/monitor-waveorde.component';
 import {ConfirmQtyGroupSkuComponent} from './layout/confirm-qty-groupsku/confirm-qty-groupsku.component';
+import {VideoSearchComponent} from './layout/video-search/video-search.component';
 
 const routes: Routes = [
 
@@ -128,6 +129,10 @@ const routes: Routes = [
   {
     path: 'confirm-qty-groupsku', component: ConfirmQtyGroupSkuComponent,
     data: { menubar: 'Confirm Qty Group SKU', version: '1.0.0', lastupdate: '2026-08-29' }
+  },
+  {
+    path: 'video-search', component: VideoSearchComponent,
+    data: { menubar: 'Video Packings', version: '1.0.0', lastupdate: '2026-09-12' }
   },
   { path: '**', redirectTo: 'login' } ,
 

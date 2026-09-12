@@ -385,6 +385,13 @@ captureVideoContext() {
     FTContainer_id: this.input.CONTAINER_ID || this.videoCtx.FTContainer_id || '',
     FTPin_code:     this.input.PIN_CODE     || this.videoCtx.FTPin_code     || '',
 
+    // รหัสร้าน — ต้องติดไปกับแถววิดีโอตั้งแต่ตอนบันทึก จะย้อนมา join ทีหลังไม่ได้
+    // เพราะตารางกลางที่ถือ SELLER_NO ถูกล้างเป็นรอบ (วัด 12 ก.ย. 2026: วิดีโอเก่า
+    // 639 แถว ย้อนได้แค่ 87) หน้าค้นหาวิดีโอใช้ค่านี้เป็นตัวกรอง
+    // API เก็บลง TSDC_VIDEO_HD.FTShop_id (คอลัมน์เดียวกับ SELLER_NO) แล้วเปิด
+    // TSDC_WMS_CUSTOMER_CHANNEL ด้วยค่าเดียวกันต่อเพื่อหา FTCustomer_id มาเก็บคู่กัน
+    FTSeller_no:    this.input.SELLER_NO    || this.videoCtx.FTSeller_no    || '',
+
     // ลำดับสำคัญมาก: เลขขนส่งสดใหม่ > เลขขนส่งที่จับไว้ก่อนหน้า > REF_INDEX
     // REF_INDEX ต้องอยู่ท้ายสุดเพราะมันถูกสร้างตอนปิดกล่อง (หลังเลือก tracking)
     // ถ้าเอามาก่อนค่าที่เก็บไว้ มันจะทับเลขขนส่งจริงทิ้งตอน input.TRACKING ถูกล้าง
@@ -473,6 +480,7 @@ saveVideoToDb(status: any, renameAfter = false) {
     FTOrder_number: status.orderCode || this.input.shipment_id || '',
     FTTracking_id: this.videoCtx.FTTracking_id || '',
     FTPin_code: this.videoCtx.FTPin_code || '',
+    FTSeller_no: this.videoCtx.FTSeller_no || '',
     // ตามแบบระบบเดิม (Tsdc Camera vision) คอลัมน์นี้เก็บชื่อโปรแกรมที่เขียนแถว ไม่ใช่ชื่อคน
     // ตัวคนแพ็คดูได้จาก FTPin_code
     FTUser_create: 'TSDC Recording Agent 1.0',
