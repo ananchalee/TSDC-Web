@@ -73,3 +73,74 @@ hr.style19 {
   }
 }
  
+/* ==== ยกมาจาก audit-check-tracking.component.scss ทั้งบล็อก ====
+   ป้ายนี้ใช้ร่วมกับหน้า Print Track แต่ scss ของ Angular เป็น scoped ต่อ component
+   จึงต้องมีสำเนาในไฟล์นี้ด้วย ไม่งั้นป้ายจะไม่มีสไตล์เลย
+   ถ้าแก้สีหรือตำแหน่ง ต้องแก้ทั้งสองไฟล์ */
+/* ไฟสถานะโปรแกรมบันทึกวิดีโอ — ลอยมุมขวาบน ไม่แตะ layout เดิม */
+.video-agent-badge {
+  position: fixed;
+  top: 62px;               /* ใต้ navbar ของ AdminLTE */
+  right: 16px;
+  z-index: 1035;           /* เหนือเนื้อหา แต่ต่ำกว่า Swal (1060) จึงไม่บัง dialog */
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 12px;
+  border-radius: 16px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1;
+  color: #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  pointer-events: none;    /* ไม่ให้บังการคลิกของเนื้อหาข้างหลัง */
+  user-select: none;
+
+  .dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: currentColor;
+    flex: none;
+  }
+
+  /* เวลาที่อัดมาแล้ว — ตัวเลขความกว้างเท่ากันทุกหลัก ป้ายจะได้ไม่ขยับตอนวินาทีเปลี่ยน */
+  .elapsed {
+    margin-left: 6px;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
+  }
+
+  /* เวลาที่เริ่มอัด — เบากว่าข้อความหลักเพื่อไม่ให้ป้ายดูรก */
+  .since {
+    margin-left: 6px;
+    font-weight: 400;
+    opacity: 0.85;
+  }
+
+  &.is-ready     { background: #28a745; }   /* เขียว = agent ทำงาน + กล้องพร้อม */
+  &.is-recording { background: #dc3545; }   /* แดง = กำลังอัด */
+  &.is-warning   { background: #fd7e14; }   /* ส้ม = agent ทำงานแต่กล้องไม่พร้อม */
+  &.is-down      { background: #6c757d; }   /* เทา = เคยต่อได้แต่ตอนนี้หลุด */
+
+  /* ปกติป้ายไม่รับเมาส์ (กันบังปุ่มข้างหลัง) เปิดให้ชี้ได้เฉพาะตอนกล้องมีปัญหา
+     เพื่อให้ hover อ่าน title ว่าไม่พร้อมเพราะอะไร */
+  &.is-warning { pointer-events: auto; }
+
+  /* กะพริบเฉพาะตอนกำลังอัด ให้สังเกตเห็นจากระยะไกล */
+  &.is-recording .dot {
+    animation: video-agent-blink 1s steps(1, end) infinite;
+  }
+}
+
+@keyframes video-agent-blink {
+  0%, 50%   { opacity: 1; }
+  50.01%, 100% { opacity: 0.15; }
+}
+
+/* ไม่ต้องติดไปกับเอกสารที่พิมพ์ */
+@media print {
+  .video-agent-badge {
+    display: none !important;
+  }
+}

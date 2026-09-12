@@ -1,9 +1,10 @@
-import { Component, OnInit, ElementRef, ViewChild } from '@angular/core';
+import { Component, OnInit, ElementRef, ViewChild, OnDestroy } from '@angular/core';
 //import {MatButton} from '@angular/material/button';
 import { DataService,TimeService } from '../../services/index'
 import Swal from 'sweetalert2';
 import { Subscription } from 'rxjs';
 import { Router, ActivatedRoute } from '@angular/router';
+import { VideoRecordingService } from '../../services/video-recording.service';
 
 declare var jQuery: any;
 
@@ -12,7 +13,7 @@ declare var jQuery: any;
   templateUrl: './audit-check.component.html',
   styleUrls: ['./audit-check.component.scss']
 })
-export class AuditCheckComponent implements OnInit {
+export class AuditCheckComponent implements OnInit, OnDestroy {
   busy!: Subscription;
   @ViewChild('myModalBOX') myModalBOX!: ElementRef;
   @ViewChild('myModalSt') myModalSt!: ElementRef;
@@ -96,6 +97,7 @@ export class AuditCheckComponent implements OnInit {
     private timeService:TimeService,
     private router: Router,
     private route: ActivatedRoute,
+    private videoRecordingService: VideoRecordingService,
   ) { }
 
   ngOnInit(): void {
@@ -123,6 +125,27 @@ export class AuditCheckComponent implements OnInit {
     this.btn.CoverSheet = true;
     this.btn.CFOrder = true;
     this.btn.Printbill = true;
+
+    // ngOnDestroy รอบก่อนปิด socket ทิ้งไปแล้ว (service เป็น singleton ไม่ได้ถูกสร้างใหม่)
+    // ต้องสั่งต่อใหม่ทุกครั้งที่เข้าหน้านี้ ไม่งั้นเปิดหน้าเช็คซ้ำจะไม่มีไฟสถานะขึ้นเลย
+    this.videoRecordingService.ensureConnected();
+
+    this.connectionStatusSubscription = this.videoRecordingService.getConnectionStatus().subscribe(isConnected => {
+      this.videoAgentConnected = isConnected;
+      // จำไว้ว่าเครื่องนี้เคยต่อ agent ได้ = เป็นเครื่องที่ลง agent ไว้แล้ว
+      // เครื่องที่ยังไม่ได้ลงจะไม่เคยเป็น true จึงซ่อนป้ายไปเลย ไม่กวนระหว่างทยอย deploy
+      if (isConnected) {
+        this.videoAgentEverConnected = true;
+      }
+    });
+
+    // สถานะกล้องแยกมาจาก agent ต่างหาก — ต่อ agent ติดไม่ได้แปลว่าอัดได้
+    this.cameraStatusSubscription = this.videoRecordingService.getCameraStatus().subscribe((camera: any) => {
+      this.videoCameraReady = camera.ready;
+      this.videoCameraMessage = camera.message || '';
+    });
+
+    this.getRecordingStatus();
     this.input.OnclickCoverSheet = false;
 
 
@@ -447,6 +470,21 @@ export class AuditCheckComponent implements OnInit {
 
 
   scanCon() {
+    /* จุดหยุดอัดจุดเดียวของหน้านี้ — ทุกทางออกจากงานวิ่งผ่านตรงนี้หมด
+         printTracking() -> scanCon()   ปิดกล่องแล้วพิมพ์เสร็จ
+         Newscan()       -> scanCon()   ปิดกล่องแบบไม่พิมพ์
+         ผู้ใช้กดถอยเอง   -> scanCon()
+
+       ต้อง captureVideoContext() ก่อนเสมอ เพราะบรรทัดล่างล้าง this.input = {}
+       ทิ้งก่อนที่ agent จะส่งสถานะ stopped กลับมา ถ้าไม่จับไว้ก่อน
+       แถววิดีโอจะไม่มีเลขออเดอร์/โต๊ะ/คนแพ็คเลย */
+    const orderCodeForVideo = this.input.shipment_id || this.input.CONTAINER_ID || '';
+    if (orderCodeForVideo) {
+      this.captureVideoContext();
+      this.videoRecordingService.sendCommand('stop', orderCodeForVideo);
+      this.closeRecordingToast();
+    }
+
     this.view = true;
     this.scanConPage = false;
     this.scanItemPage = true;
@@ -676,6 +714,8 @@ export class AuditCheckComponent implements OnInit {
                               });
 
                               this.summaryConCheck();
+                              // เริ่มอัดตอนผู้ใช้ยืนยันเริ่มงาน — จุดเดียวกับหน้า Print Track
+                              this.videoRecordingService.sendCommand('start', this.input.shipment_id, this.input.TABLE_CHECK);
                               this.CHECK_tracksum_qty();
                               this.scanConPage = true;
                               this.scanItemPage = false;
@@ -707,6 +747,8 @@ export class AuditCheckComponent implements OnInit {
                           });
 
                           this.summaryConCheck();
+                          // เริ่มอัดตอนผู้ใช้ยืนยันเริ่มงาน — จุดเดียวกับหน้า Print Track
+                          this.videoRecordingService.sendCommand('start', this.input.shipment_id, this.input.TABLE_CHECK);
                           this.CHECK_tracksum_qty();
                           this.scanConPage = true;
                           this.scanItemPage = false;
@@ -782,6 +824,8 @@ export class AuditCheckComponent implements OnInit {
                   }).then((result) => {
                     if (result.value) {
                       this.summaryConCheck();
+                      // เริ่มอัดตอนผู้ใช้ยืนยันเริ่มงาน — จุดเดียวกับหน้า Print Track
+                      this.videoRecordingService.sendCommand('start', this.input.shipment_id, this.input.TABLE_CHECK);
                       this.CHECK_tracksum_qty();
                       this.scanConPage = true;
                       this.scanItemPage = false;
@@ -838,6 +882,8 @@ export class AuditCheckComponent implements OnInit {
                     if (result.isConfirmed) {
 
                       this.summaryConCheck();
+                      // เริ่มอัดตอนผู้ใช้ยืนยันเริ่มงาน — จุดเดียวกับหน้า Print Track
+                      this.videoRecordingService.sendCommand('start', this.input.shipment_id, this.input.TABLE_CHECK);
                       this.scanConPage = true;
                       this.scanItemPage = false;
                       this.summaryPage = true;
@@ -905,6 +951,8 @@ export class AuditCheckComponent implements OnInit {
                   }).then((result) => {
                     if (result.value) {
                       this.summaryConCheck();
+                      // เริ่มอัดตอนผู้ใช้ยืนยันเริ่มงาน — จุดเดียวกับหน้า Print Track
+                      this.videoRecordingService.sendCommand('start', this.input.shipment_id, this.input.TABLE_CHECK);
                       this.CHECK_tracksum_qty();
                       this.scanConPage = true;
                       this.scanItemPage = false;
@@ -1647,6 +1695,12 @@ console.log(this.input.check_QTY_PICK,this.res_QTY_equal,this.Status_Print_Track
         }
         a.push(array)
         this.dataprint = a
+
+        // ปิดกล่องสำเร็จและได้เลข running จริงแล้ว
+        // หน้านี้ไม่มี this.input.TRACKING (ไม่ได้เลือกเลขขนส่งก่อนแพ็คแบบหน้า Print Track)
+        // จึงใช้ REF_INDEX เป็น FTTracking_id ของแถววิดีโอแทน ไม่งั้นจะว่างเปล่า
+        this.videoRefIndex = data.data[0].REF_INDEX || '';
+
         //console.log(this.dataprint)
         jQuery(this.myModalBOX.nativeElement).modal('hide');
         this.pagePrint = false
@@ -2058,5 +2112,511 @@ console.log(this.input.check_QTY_PICK,this.res_QTY_equal,this.Status_Print_Track
     audio.play();
 
   }
+
+
+  /* หน้านี้เดิมไม่มี ngOnDestroy เลย — ต้องเพิ่มพร้อมกับงานวิดีโอ
+     ไม่งั้นออกจากหน้าแล้ว subscription 3 ตัวกับ websocket ของ agent ค้างอยู่
+     พอเข้าออกหน้าหลายรอบจะซ้อนกันเรื่อยๆ และ setInterval โฟกัสช่องสแกนก็ไม่เคยถูกเคลียร์ */
+  ngOnDestroy(): void {
+    if (this.recordingStatusSubscription) {
+      this.recordingStatusSubscription.unsubscribe();
+    }
+    if (this.connectionStatusSubscription) {
+      this.connectionStatusSubscription.unsubscribe();
+    }
+    if (this.cameraStatusSubscription) {
+      this.cameraStatusSubscription.unsubscribe();
+    }
+    this.stopElapsedClock();
+    this.closeRecordingToast();
+    this.videoRecordingService.closeConnection();
+
+    if (this.interval) {
+      clearInterval(this.interval);
+    }
+  }
+
+  /* =====================================================================
+     บันทึกวิดีโอตอนแพ็ค — ยกมาจาก audit-check-tracking ทั้งชุด
+     ---------------------------------------------------------------------
+     หน้านี้กับหน้า Print Track ใช้ flow เดียวกัน ต่างกันแค่หน้านั้นเลือก
+     เลขขนส่งก่อนแพ็ค ส่วนหน้านี้ไม่มี จึงไม่มี this.input.TRACKING
+     captureVideoContext() จะตกไปใช้ videoRefIndex (เลข running ตอนปิดกล่อง) แทน
+
+     ⚠️ โค้ดชุดนี้ซ้ำกับ audit-check-tracking แบบคำต่อคำ ถ้าแก้บั๊กต้องแก้ทั้งสองที่
+     (ตามแนวเดิมของ repo ที่ 5 หน้า audit-check-* ก็ซ้ำกันอยู่แล้ว)
+     ===================================================================== */
+
+  private recordingToast: any = null; 
+  private toastTimerId: any = null;
+  private currentToastMessage: string = '';
+  private recordingToastTimeout: any = null;
+  private recordingStatusSubscription!: Subscription;
+  private connectionStatusSubscription!: Subscription;
+  private cameraStatusSubscription!: Subscription;
+  private lastRecordingStatus: any = null;
+  
+  showRecordingStarted(fileName: string) {
+  const Toast = Swal.mixin({
+    toast: true,
+    position: 'top-end',
+    showConfirmButton: false,
+    timer: 1500,
+    timerProgressBar: true
+  });
+  
+  setTimeout(() => {
+    if (!Swal.isVisible()) {
+      Toast.fire({
+        icon: 'info',
+        title: 'เริ่มบันทึก: ' + fileName
+      });
+    } else {
+      setTimeout(() => {
+        Toast.fire({
+          icon: 'info',
+          title: 'เริ่มบันทึก: ' + fileName
+        });
+      }, 1500); //หน่วง 1.5 วิ 
+    }
+  }, 1000);  //หน่วง 1 วิ
+}
+
+showRecordingFinished(fileName: string) {
+  const Toast = Swal.mixin({
+    toast: true,
+    position: 'top-end',
+    showConfirmButton: false,
+    timer: 3000,
+    timerProgressBar: true
+  });
+
+  setTimeout(() => {
+    if (!Swal.isVisible()) {
+      Toast.fire({
+        icon: 'success',
+        title: 'บันทึกเสร็จ: ' + fileName
+      });
+    } else {
+      setTimeout(() => {
+        Toast.fire({
+          icon: 'success',
+          title: 'บันทึกเสร็จ: ' + fileName
+        });
+      }, 1500);
+    }
+  }, 1000);
+}
+
+getRecordingStatus(){
+    this.recordingStatusSubscription = this.videoRecordingService.getRecordingStatus().subscribe((status: any) => {
+  this.lastRecordingStatus = status;
+  this.videoRecordingNow = (status.status === 'recording' || status.status === 'segment');
+
+  if (this.recordingToastTimeout) {
+    clearTimeout(this.recordingToastTimeout);
+    this.recordingToastTimeout = null;
+  }
+
+  if (status.status === 'recording') {
+    // ไม่เด้ง toast ระหว่างอัดแล้ว — ใช้ไฟสถานะมุมขวาบนแทน เพราะ toast บังหน้าจอตอนทำงาน
+    // เวลาเริ่มอัดไปโชว์ในป้ายนั้นแทน
+    this.videoRecordingStartedAt = this.shortTime(status.startedAtLocal);
+    this.startElapsedClock(status.elapsedSeconds || 0);
+
+    // เขียนแถวตั้งต้นตั้งแต่เริ่มอัด (FNStaUpload = 2) เพื่อให้มีร่องรอยแม้เครื่องดับกลางทาง
+    this.saveVideoToDb(status);
+    this.videoErrorPrompted = false;
+
+  } else if (status.status === 'segment') {
+    // ffmpeg ตัดไฟล์ใหม่ = ไฟล์ก่อนหน้าปิดสมบูรณ์แล้ว
+    // ปิดแถวเดิมเป็น 0 (พร้อมอัปโหลด) และเปิดแถวใหม่เป็น 2 โดยไม่รอให้ทั้งออเดอร์จบ
+    this.saveVideoToDb(status);
+
+  } else if (status.status === 'stopped') {
+    // getRecordingStatus() เป็น BehaviorSubject มันจะรีเพลย์สถานะล่าสุดให้ผู้ subscribe รายใหม่
+    // ทุกครั้งที่กลับเข้าหน้านี้ ถ้าไม่กันไว้ จะเด้ง toast "บันทึกวิดีโอเรียบร้อย" และเขียน DB ซ้ำ
+    // ทั้งที่ไม่ได้เพิ่งอัดจบ
+    const stopKey = this.videoFilesKey(status);
+    if (this.lastVideoStopKey === stopKey) {
+      return;
+    }
+    this.lastVideoStopKey = stopKey;
+
+    this.closeRecordingToast();
+    this.videoRecordingStartedAt = '';
+    this.stopElapsedClock();
+    // อัดจบแล้ว ปิดท้ายทุก segment เป็น 0 ให้ตัวอัปโหลดมาเก็บ
+    this.saveVideoToDb(status, true);   // อัดจบแล้ว ไฟล์ปิดหมดแล้ว เปลี่ยนชื่อเติม FNVideo_id ได้
+    Swal.fire({
+      toast: true,
+      position: 'top-end',
+      icon: 'success',
+      title: '<br>บันทึกวิดีโอเรียบร้อยแล้ว!',
+      showConfirmButton: false,
+      timerProgressBar: true,
+    });
+    setTimeout(() => {
+      Swal.close();
+    },500);
+
+  } else if (status.status === 'renamed') {
+    // agent เติม FNVideo_id ไว้หน้าชื่อไฟล์เรียบร้อย ส่งชื่อใหม่กลับไปแก้แถวใน DB
+    this.applyRenamedVideos(status);
+
+  } else if (status.status === 'error') {
+    // status error มาจากตัว agent เท่านั้น แปลว่าเครื่องนี้ "ลง agent ไว้แล้วแต่บันทึกไม่ได้"
+    // เครื่องที่ยังไม่ได้ลง agent จะไม่มีทางเข้าเงื่อนไขนี้ จึงไม่ถูกกวนระหว่างทยอย deploy
+    console.error('video agent error:', status.message);
+    this.closeRecordingToast();
+    this.videoRecordingStartedAt = '';
+    this.stopElapsedClock();
+    this.confirmContinueWithoutVideo(status.message);
+  }
+},);
+}
+
+// กันยิงซ้ำตอน agent ส่งสถานะ recording เดิมมาใหม่ (เช่นหน้าเว็บ reconnect ระหว่างที่ยังอัดอยู่)
+lastVideoStartKey = '';
+
+// กันสถานะ stopped ตัวเดิมถูกรีเพลย์ซ้ำตอนกลับเข้าหน้าเช็คใหม่
+lastVideoStopKey = '';
+
+// คีย์ระบุ "รอบการอัด" จากรายชื่อไฟล์ ใช้เทียบว่าเป็นสถานะเดิมที่เคยจัดการไปแล้วหรือไม่
+videoFilesKey(status: any): string {
+  const files = status.files || [];
+  return files.length ? files.map((f: any) => f.name).join('|') : (status.orderCode || '');
+}
+
+// กันเด้งซ้ำถ้า agent ส่ง error ติดๆ กันหลายครั้งในการเช็ครอบเดียว
+videoErrorPrompted = false;
+
+// สถานะสำหรับไฟบอกสถานะมุมขวาบน
+videoAgentConnected = false;       // ต่อ agent อยู่ตอนนี้ไหม
+videoAgentEverConnected = false;   // เครื่องนี้ลง agent ไว้ไหม (เคยต่อติดสักครั้ง)
+videoRecordingNow = false;         // กำลังอัดอยู่ไหม
+videoRecordingStartedAt = '';      // เวลาที่เริ่มอัด โชว์ในป้ายแทน toast เดิม
+
+// สถานะกล้องที่ agent ตรวจให้ — true/false = ตรวจแล้ว, null = ยังไม่รู้ (agent รุ่นเก่ายังไม่ส่งค่านี้)
+// ป้ายจะเขียวก็ต่อเมื่อ "ต่อ agent ได้ และกล้องไม่ได้แจ้งว่าไม่พร้อม" เท่านั้น
+videoCameraReady: boolean | null = null;
+videoCameraMessage = '';           // เหตุผลที่กล้องไม่พร้อม โชว์ตอนเอาเมาส์ชี้ป้าย
+
+videoRecordingElapsed = '';        // นาฬิกาที่เดินระหว่างอัด (mm:ss) ให้เห็นว่าอัดมานานแค่ไหนแล้ว
+private videoElapsedTimer: any = null;
+private videoElapsedBase = 0;      // วินาทีที่ agent บอกว่าอัดไปแล้วตอนได้รับสถานะ
+private videoElapsedFrom = 0;      // เวลาเครื่องตอนรับสถานะนั้น ใช้บวกต่อเอง ไม่ต้องถาม agent ซ้ำ
+
+// นับเวลาต่อจากค่าที่ agent ส่งมา ไม่ได้เริ่มนับจาก 0 เสมอ
+// เพราะถ้าหน้าเว็บรีเฟรชกลางคันระหว่างที่ยังอัดอยู่ ต้องโชว์เวลาที่อัดมาแล้วจริงๆ ไม่ใช่เริ่มใหม่
+startElapsedClock(baseSeconds: number) {
+  this.videoElapsedBase = baseSeconds;
+  this.videoElapsedFrom = Date.now();
+  this.tickElapsedClock();
+
+  if (this.videoElapsedTimer) {
+    return;   // เดินอยู่แล้ว (เช่นสถานะ recording ถูกส่งซ้ำตอน reconnect) ไม่ต้องตั้งซ้อน
+  }
+  this.videoElapsedTimer = setInterval(() => this.tickElapsedClock(), 1000);
+}
+
+stopElapsedClock() {
+  if (this.videoElapsedTimer) {
+    clearInterval(this.videoElapsedTimer);
+    this.videoElapsedTimer = null;
+  }
+  this.videoRecordingElapsed = '';
+}
+
+tickElapsedClock() {
+  const seconds = this.videoElapsedBase + Math.floor((Date.now() - this.videoElapsedFrom) / 1000);
+  const p = (n: number) => String(n).padStart(2, '0');
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  this.videoRecordingElapsed = h ? `${h}:${p(m)}:${p(s)}` : `${p(m)}:${p(s)}`;
+}
+
+// สำเนาข้อมูลออเดอร์สำหรับเขียน DB
+// จำเป็นเพราะ scanCon() สั่ง this.input = {} ทันทีหลัง sendCommand('stop')
+// แต่ agent ใช้เวลาอีกราวครึ่งวินาทีกว่าจะส่ง stopped กลับมา ถ้าอ่าน input ตอนนั้นจะได้ค่าว่าง
+videoCtx: any = {};
+
+// REF_INDEX ของ "รอบการอัดนี้" เท่านั้น เซ็ตตอน tracking_running สร้างเลขสำเร็จ (ปิดกล่องจริง)
+// ห้ามอ่านจาก this.dataprint ตรงๆ เพราะตัวนั้นค้างข้ามออเดอร์ จะทำให้ REF_INDEX ของออเดอร์ก่อน
+// ติดไปกับวิดีโอของออเดอร์ถัดไปที่ยังไม่ได้ปิดกล่อง
+videoRefIndex = '';
+
+// เก็บเฉพาะค่าที่ "มี" — ค่าที่จับได้แล้วจะไม่ถูกล้างทับด้วยค่าว่างที่มาทีหลัง
+captureVideoContext() {
+  const refIndex = this.videoRefIndex || '';
+
+  this.videoCtx = {
+    FTTable_id:     this.input.TABLE_CHECK  || this.videoCtx.FTTable_id     || '',
+    FTZone:         this.input.Zone         || this.videoCtx.FTZone         || '',
+    FTContainer_id: this.input.CONTAINER_ID || this.videoCtx.FTContainer_id || '',
+    FTPin_code:     this.input.PIN_CODE     || this.videoCtx.FTPin_code     || '',
+
+    // รหัสร้าน — ต้องติดไปกับแถววิดีโอตั้งแต่ตอนบันทึก จะย้อนมา join ทีหลังไม่ได้
+    // เพราะตารางกลางที่ถือ SELLER_NO ถูกล้างเป็นรอบ (วัด 12 ก.ย. 2026: วิดีโอเก่า
+    // 639 แถว ย้อนได้แค่ 87) หน้าค้นหาวิดีโอใช้ค่านี้เป็นตัวกรอง
+    // API เก็บลง TSDC_VIDEO_HD.FTShop_id (คอลัมน์เดียวกับ SELLER_NO) แล้วเปิด
+    // TSDC_WMS_CUSTOMER_CHANNEL ด้วยค่าเดียวกันต่อเพื่อหา FTCustomer_id มาเก็บคู่กัน
+    FTSeller_no:    this.input.SELLER_NO    || this.videoCtx.FTSeller_no    || '',
+
+    // หน้านี้ไม่มีการเลือกเลขขนส่งก่อนแพ็ค this.input.TRACKING จึง undefined เสมอ
+    // ค่าที่ได้จริงคือ REF_INDEX ที่เกิดตอนปิดกล่องสำเร็จ
+    // คงลำดับเดิมไว้เหมือนหน้า Print Track เผื่อวันหลังหน้านี้มีเลขขนส่งขึ้นมา
+    // จะได้ไม่ต้องมาไล่แก้ลำดับใหม่ และ REF_INDEX ต้องอยู่ท้ายสุดเสมอ
+    FTTracking_id:  this.input.TRACKING || this.videoCtx.FTTracking_id || refIndex || '',
+  };
+}
+
+// startedAtLocal มาเป็น "15/8/2569 11:38:49" — เอาเฉพาะเวลาไปโชว์บนป้ายให้สั้น
+shortTime(localDateTime: string): string {
+  if (!localDateTime) {
+    return '';
+  }
+  const parts = String(localDateTime).trim().split(' ');
+  return parts.length > 1 ? parts[parts.length - 1] : String(localDateTime);
+}
+
+// เครื่องที่ลง agent ไว้แล้วแต่บันทึกวิดีโอไม่ได้ (เช่นหากล้องไม่เจอ) — ให้พนักงานตัดสินใจว่าจะเช็คต่อไหม
+// ไม่ปิดกั้นงานเอง เพราะของอาจต้องส่งออกตามรอบ แต่ต้องไม่ให้ "ไม่มีวิดีโอ" ผ่านไปโดยไม่มีใครรู้
+confirmContinueWithoutVideo(message: string) {
+  if (this.videoErrorPrompted) {
+    return;
+  }
+  this.videoErrorPrompted = true;
+
+  Swal.fire({
+    icon: 'warning',
+    title: 'บันทึกวิดีโอไม่สำเร็จ',
+    html: (message || 'ไม่สามารถเริ่มบันทึกวิดีโอได้')
+      + '<br><br><b>ต้องการทำงานต่อโดยไม่มีวิดีโอหรือไม่?</b>',
+    showCancelButton: true,
+    confirmButtonText: 'ทำงานต่อ',
+    cancelButtonText: 'ยกเลิก',
+    allowOutsideClick: false,
+    allowEscapeKey: false,
+  }).then((result) => {
+    if (result.value) {
+      console.warn('ผู้ใช้เลือกทำงานต่อโดยไม่มีวิดีโอ');
+    } else {
+      // พนักงานเลือกไปตามคนแก้กล้องก่อน — โหลดหน้าใหม่เพื่อกลับสู่สถานะตั้งต้น
+      window.location.reload();
+    }
+  });
+}
+
+// เขียน TSDC_VIDEO_HD — 1 ไฟล์ = 1 แถว
+// แต่ละไฟล์พก staUpload มาจาก agent เอง: 2 = กำลังเขียนอยู่, 0 = ปิดไฟล์แล้วพร้อมอัปโหลด
+// เรียกได้ 3 จังหวะ: เริ่มอัด / ffmpeg ตัด segment ใหม่ / อัดจบ
+saveVideoToDb(status: any, renameAfter = false) {
+  const files = status.files || [];
+  if (!files.length) {
+    console.warn('saveVideoToDb: agent ไม่ได้ส่งรายการไฟล์มา ข้ามการบันทึก DB');
+    return;
+  }
+
+  // สถานะ recording ถูกส่งซ้ำได้ทุกครั้งที่ WebSocket ต่อใหม่ระหว่างที่ยังอัดอยู่
+  if (status.status === 'recording') {
+    const key = files[0].name;
+    if (this.lastVideoStartKey === key) {
+      return;
+    }
+    this.lastVideoStartKey = key;
+    // ขึ้นรอบอัดใหม่ ล้างสำเนาและ REF_INDEX ของรอบก่อนทิ้ง
+    this.videoCtx = {};
+    this.videoRefIndex = '';
+  }
+
+  // เก็บค่าล่าสุดที่มีก่อนสร้าง payload เสมอ
+  this.captureVideoContext();
+
+  const payload = {
+    VIDEO_LIST: files.map((f: any) => ({
+      FTVideo_name: f.name,
+      // ชื่อก่อนถูกเปลี่ยน (ไฟล์เดียวจะถูกตัด -001 ออกตอนอัดจบ) — API ใช้หาแถวเดิม
+      FTVideo_name_old: f.nameOld || '',
+      FTPath: f.path,
+      // คอลัมน์เป็น decimal(18,2) และของเดิมในตารางเก็บเป็น "MB" ไม่ใช่ไบต์
+      FCFile_size: Number((f.sizeBytes / (1024 * 1024)).toFixed(2)),
+      FNStaUpload: f.staUpload,
+      FTStaDesc: f.staUpload === 2 ? 'Recording' : 'Insert success',
+      FDStartdate: f.startedAt,
+      FDEnddate: f.endedAt || ''      // ว่าง = ยังเขียนไม่จบ ฝั่ง API จะไม่แตะคอลัมน์นี้
+    })),
+    FTTable_id: this.videoCtx.FTTable_id || '',
+    FTZone: this.videoCtx.FTZone || '',
+    FTContainer_id: this.videoCtx.FTContainer_id || '',
+    FTOrder_number: status.orderCode || this.input.shipment_id || '',
+    FTTracking_id: this.videoCtx.FTTracking_id || '',
+    FTPin_code: this.videoCtx.FTPin_code || '',
+    FTSeller_no: this.videoCtx.FTSeller_no || '',
+    // ตามแบบระบบเดิม (Tsdc Camera vision) คอลัมน์นี้เก็บชื่อโปรแกรมที่เขียนแถว ไม่ใช่ชื่อคน
+    // ตัวคนแพ็คดูได้จาก FTPin_code
+    FTUser_create: 'TSDC Recording Agent 1.0',
+    FTIp_address_local: status.ipLocal || ''
+  };
+
+  this.dataService.insert_video_hd(payload).subscribe((res: any) => {
+    if (res && res.status === 'success') {
+      console.log('saveVideoToDb: บันทึก', payload.VIDEO_LIST.length, 'แถว');
+      if (renameAfter) {
+        this.renameVideosWithId(payload, res);
+      }
+    } else {
+      console.error('saveVideoToDb: API ตอบกลับไม่สำเร็จ', res);
+    }
+  }, (err: any) => {
+    // ไม่ขวาง flow การแพ็ค — ไฟล์ยังอยู่ในเครื่องโต๊ะเช็ค ตามเก็บย้อนหลังได้
+    console.error('saveVideoToDb: เรียก API ไม่สำเร็จ', err);
+  });
+}
+
+// payload ที่เพิ่งส่งไป เก็บไว้ใช้ตอน update ชื่อไฟล์ใหม่ จะได้ส่งค่าคอลัมน์อื่นเดิมไปครบ
+// ไม่ต้องไปดึงค่าจากหน้าจอใหม่ ซึ่งตอนนั้นถูก check_closeShipment ล้างไปแล้ว
+private videoLastPayload: any = null;
+
+// เอา FNVideo_id ที่ API คืนมา ไปเติมไว้หน้าชื่อไฟล์
+//
+// ทำตอนนี้ไม่ได้ทำตั้งแต่แรก เพราะ FNVideo_id เป็น IDENTITY ที่เกิดตอน insert
+// ส่วนไฟล์ถูก ffmpeg สร้างก่อนหน้านั้นเสมอ
+//
+// สั่งเฉพาะหลังอัดจบ (stopped) เท่านั้น ถ้าไปเปลี่ยนชื่อระหว่างยังอัดอยู่
+// ไฟล์จะหลุดจากการ scan ด้วย prefix ของ agent ทันที แล้วรายการไฟล์ตอนจบจะขาดไป
+renameVideosWithId(payload: any, res: any) {
+  // API รุ่นที่ยังไม่คืน ids มาให้ = ข้ามไปเฉยๆ ชื่อไฟล์คงรูปแบบเดิม ทุกอย่างทำงานต่อได้ปกติ
+  const ids = (res && res.ids) || [];
+  if (!ids.length) {
+    return;
+  }
+
+  const idByName: any = {};
+  for (const row of ids) {
+    if (row && row.FTVideo_name) {
+      idByName[row.FTVideo_name] = row.FNVideo_id;
+    }
+  }
+
+  const renames: Array<{ name: string, newName: string }> = [];
+  for (const row of payload.VIDEO_LIST) {
+    const id = idByName[row.FTVideo_name];
+    if (!id) {
+      continue;
+    }
+    // เติมไปแล้วไม่ต้องเติมซ้ำ — กันวนไม่รู้จบ เพราะรอบ update ชื่อใหม่ API ก็คืน id มาอีก
+    if (String(row.FTVideo_name).startsWith(id + '-')) {
+      continue;
+    }
+    renames.push({ name: row.FTVideo_name, newName: `${id}-${row.FTVideo_name}` });
+  }
+
+  this.videoLastPayload = payload;
+  this.videoRecordingService.sendRename(renames);
+}
+
+// agent เปลี่ยนชื่อไฟล์ให้แล้ว ส่ง update กลับไปให้ API แก้ FTVideo_name/FTPath ของแถวเดิม
+// หาแถวเดิมด้วย FTVideo_name_old เหมือนกลไกตอนตัด -001 ที่มีอยู่ก่อนแล้ว
+applyRenamedVideos(status: any) {
+  const files = status.files || [];
+  const last = this.videoLastPayload;
+  if (!files.length || !last) {
+    return;
+  }
+
+  const rowByName: any = {};
+  for (const row of last.VIDEO_LIST) {
+    rowByName[row.FTVideo_name] = row;
+  }
+
+  const list = [];
+  for (const f of files) {
+    const before = rowByName[f.nameOld];
+    if (!before) {
+      continue;   // ไม่ใช่ไฟล์ของรอบที่เพิ่งส่งไป ไม่ต้องยุ่ง
+    }
+    list.push(Object.assign({}, before, {
+      FTVideo_name: f.name,
+      FTVideo_name_old: f.nameOld,
+      FTPath: f.path,
+    }));
+  }
+
+  if (!list.length) {
+    return;
+  }
+
+  // รอบนี้ห้ามสั่ง rename ต่ออีก ไม่งั้นวนไม่จบ
+  this.videoLastPayload = null;
+  this.dataService.insert_video_hd(Object.assign({}, last, { VIDEO_LIST: list })).subscribe((res: any) => {
+    if (res && res.status === 'success') {
+      console.log('applyRenamedVideos: อัปเดตชื่อไฟล์', list.length, 'แถว');
+    } else {
+      console.error('applyRenamedVideos: API ตอบกลับไม่สำเร็จ', res);
+    }
+  }, (err: any) => {
+    console.error('applyRenamedVideos: เรียก API ไม่สำเร็จ', err);
+  });
+}
+
+
+private didDestroy(): void {
+    if (this.toastTimerId) {
+        clearTimeout(this.toastTimerId);
+        this.toastTimerId = null;
+    }
+
+    const delayMilliseconds = 10000;
+
+    this.toastTimerId = setTimeout(() => {
+        if (Swal.isVisible()) {
+            this.toastTimerId = setTimeout(() => {
+                this.didDestroy();
+            }, 10000);
+            return;
+        }
+
+        if (this.lastRecordingStatus && this.lastRecordingStatus.status === 'recording') {
+            this.showRecordingToast(this.currentToastMessage);
+        } else {
+            this.recordingToast = null;
+            clearTimeout(this.toastTimerId);
+            this.toastTimerId = null;
+        }
+    }, delayMilliseconds);
+}
+
+private showRecordingToast(message: string): void {
+    this.currentToastMessage = message;
+    this.recordingToast = Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: 'warning',
+        html: message,
+        showConfirmButton: false,
+        timer: undefined,
+        timerProgressBar: true,
+        customClass: {
+            container: 'my-custom-toast',
+        },
+        didOpen: (toast) => {
+            toast.onmouseenter = Swal.stopTimer;
+            toast.onmouseleave = Swal.resumeTimer;
+        },
+        didDestroy: () => {
+            this.didDestroy();
+        }
+    });
+}
+
+private closeRecordingToast(): void {
+    if (this.recordingToast) {
+        Swal.close();
+        this.recordingToast = null;
+    }
+}
+
 
 }
