@@ -88,6 +88,14 @@ export class VideoSearchComponent implements OnInit {
     TRACKING_ID:  ''
   };
 
+  /* รายชื่อร้านใน dropdown — โหลดครั้งเดียวตอนเข้าหน้า
+     เป็น "ร้านที่มีวิดีโออยู่จริง" ไม่ใช่ทะเบียนร้านทั้งหมด
+     (วัด 12 ก.ย. 2026: มีวิดีโอ 13 ร้าน จากทะเบียน 143 ร้าน)
+     ถ้าเอามาทั้งหมด ผู้ใช้จะเจอตัวเลือกที่กดแล้วไม่เจออะไรเลย 130 ตัว */
+  //// LABEL ถูกประกอบตอนโหลด ไม่ใช่ในเทมเพลต เพราะ ng-select ใช้ค่านี้ทั้ง "แสดง"
+  //// และ "ค้นหา" — พิมพ์ชื่อร้านหรือรหัสก็เจอเหมือนกัน
+  sellerOptions: { FTShop_id: string, FTShop_name_th: string, CLIPS: number, LABEL: string }[] = [];
+
   isLoading  = false;
   hasSearched = false;
   truncated  = false;
@@ -125,6 +133,24 @@ export class VideoSearchComponent implements OnInit {
     }];
 
     setTimeout(() => this.inputOrder?.nativeElement?.focus(), 200);
+    this.loadSellerOptions();
+  }
+
+  /* โหลดรายชื่อร้าน — ล้มเหลวก็ไม่ขวางการใช้งาน
+     ช่องอื่น (เลขออเดอร์ / เลขพัสดุ) ยังค้นได้ตามปกติ แค่ dropdown ว่างเท่านั้น */
+  private loadSellerOptions(): void {
+    this.dataService.video_seller_options().subscribe((res: any) => {
+      const rows = (res && res.status === 'success') ? (res.data || []) : [];
+      this.sellerOptions = rows.map((o: any) => {
+        // บางร้านไม่มีชื่อในทะเบียน (7 จาก 13 ณ 12 ก.ย. 2026) ให้เหลือแค่รหัส
+        // ไม่ทิ้ง " - " ค้างไว้ให้ดูเหมือนข้อมูลขาด
+        const name = String(o.FTShop_name_th || '').trim();
+        return { ...o, LABEL: name ? `${o.FTShop_id} - ${name}` : String(o.FTShop_id) };
+      });
+    }, (err: any) => {
+      console.error('video_seller_options error:', err);
+      this.sellerOptions = [];
+    });
   }
 
   /* =====================================================================
@@ -239,9 +265,17 @@ export class VideoSearchComponent implements OnInit {
     }
   }
 
+  /* อ่านค่าจากช่องกรอกให้ปลอดภัยเสมอ
+     ห้ามเรียก .trim() บนค่าในฟอร์มตรงๆ — ng-select ของช่องรหัสร้านเซ็ตค่าเป็น null
+     (ไม่ใช่ '') ตอนผู้ใช้กดกากบาทล้าง ทำให้ทั้งหน้าพังด้วย
+     "Cannot read properties of null (reading 'trim')" แล้วผลค้างครึ่งทาง */
+  private txt(v: any): string {
+    return (v === null || v === undefined) ? '' : String(v).trim();
+  }
+
   hasFilter(): boolean {
-    return !!(this.filter.ORDER_NUMBER.trim() || this.filter.SELLER_NO.trim()
-           || this.filter.TRACKING_ID.trim());
+    return !!(this.txt(this.filter.ORDER_NUMBER) || this.txt(this.filter.SELLER_NO)
+           || this.txt(this.filter.TRACKING_ID));
   }
 
   search(): void {
@@ -257,9 +291,9 @@ export class VideoSearchComponent implements OnInit {
     this.clearSelection();
 
     this.dataService.search_video_hd({
-      ORDER_NUMBER: this.filter.ORDER_NUMBER.trim(),
-      SELLER_NO:    this.filter.SELLER_NO.trim(),
-      TRACKING_ID:  this.filter.TRACKING_ID.trim(),
+      ORDER_NUMBER: this.txt(this.filter.ORDER_NUMBER),
+      SELLER_NO:    this.txt(this.filter.SELLER_NO),
+      TRACKING_ID:  this.txt(this.filter.TRACKING_ID),
       LIMIT:        200
     }).subscribe((res: any) => {
       this.isLoading = false;

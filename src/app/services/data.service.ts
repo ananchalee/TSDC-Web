@@ -86,6 +86,11 @@ search_video_hd(data:any){
   return this.http.post(this.VIDEO_API + '/api/search_video_hd', data)
 }
 
+// รายชื่อร้านสำหรับ dropdown — เฉพาะร้านที่มีวิดีโออยู่จริง ไม่ใช่ทะเบียนทั้งหมด
+video_seller_options(){
+  return this.http.get(this.VIDEO_API + '/api/video_seller_options')
+}
+
 /* ตัวไฟล์วิดีโอต้องผ่าน API เพราะไฟล์จริงอยู่บน share \\10.26.1.26 ซึ่งเบราว์เซอร์เปิดเองไม่ได้
    คืนเป็น URL ไม่ใช่ Observable ตั้งใจให้เอาไปใส่ <video src> กับ <a href> ตรงๆ
    ถ้าดึงเป็น blob ผ่าน HttpClient จะเสียความสามารถ seek และกินแรมเท่าขนาดคลิป (หลักร้อย MB) */

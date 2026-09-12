@@ -45,10 +45,20 @@
 
                 <div class="col-lg-4 col-md-6 mb-2">
                   <label class="mb-1 small font-weight-bold">รหัสร้าน (Seller)</label>
-                  <input type="text" class="form-control"
-                         placeholder=""
-                         [(ngModel)]="filter.SELLER_NO"
-                         (keyup.enter)="search()">
+                  <!-- ใช้ ng-select ไม่ใช่ select ธรรมดา เพราะต้องพิมพ์ค้นในรายการได้
+                       รหัสร้านเป็นรหัสที่คนจำไม่ได้ (73953673428, THLC7RLLWW) แต่จำ
+                       "ชื่อร้าน" ได้ พิมพ์ชื่อแล้วให้มันกรองหารหัสให้
+                       รายการมีเฉพาะร้านที่มีวิดีโออยู่จริง เลือกแล้วเจอผลแน่ -->
+                  <ng-select
+                    [items]="sellerOptions"
+                    bindLabel="LABEL"
+                    bindValue="FTShop_id"
+                    [(ngModel)]="filter.SELLER_NO"
+                    name="sellerNo"
+                    placeholder="— ทุกร้าน —"
+                    [searchable]="true"
+                    [clearable]="true">
+                  </ng-select>
                 </div>
 
                 <div class="col-lg-4 col-md-6 mb-2">
