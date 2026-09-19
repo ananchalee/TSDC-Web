@@ -87,15 +87,19 @@ export class AuditCheckFullcartonComponent implements OnInit {
   constructor(
     private dataService: DataService,
     private router: Router,
+    private route: ActivatedRoute,
     //private busy: Subscription,
   ) { }
 
   ngOnInit(): void {
-
+    const d = this.route.snapshot.data;
     var page = Array();
     let array = {
       pagename: 'Check fullcarton',
       active: 'Audit&Check',
+      menubar: d['menubar'],
+      version: d['version'],
+      lastupdate: d['lastupdate'],
     }
     page.push(array)
     this.pageactive = page;
@@ -420,8 +424,15 @@ export class AuditCheckFullcartonComponent implements OnInit {
     })
   }
 
+  /* คนเดิมที่โต๊ะเดิม ไม่ต้องบันทึกซ้ำทุกกล่อง — บันทึกเฉพาะตอนเปลี่ยนคน
+     เดิมยิงทุกครั้งที่สแกน CONTAINER วันหนึ่งได้ 16,000 แถวจากคนจริงแค่ 176 ชุด
+     ติดวันที่ไว้ด้วย เผื่อเปิดหน้าค้างข้ามวัน วันใหม่จะได้บันทึกใหม่ */
+  lastCheckedInKey = '';
+
   tablecheck_user() {
     this.input.WORKING_TYPE = 'Check';
+    const key = this.input.PIN_CODE + '|' + new Date().toDateString();
+    if (this.input.PIN_CODE && key === this.lastCheckedInKey) { return; }
     this.dataService.insert_user_tablecheck2(this.input).subscribe(res => {
       ////console.log(res);
       this.user = res
@@ -435,6 +446,7 @@ export class AuditCheckFullcartonComponent implements OnInit {
           timer: 2500
         });
       } else if (this.user.status === 'success') {
+      this.lastCheckedInKey = key;
       this.LOAD_USERTABLECHECK();
       }
 

@@ -1,0 +1,238 @@
+<body class="hold-transition sidebar-mini layout-navbar">
+  <div class="wrapper full-page">
+
+    <app-header id="page" [Pageactive]="pageactive"></app-header>
+    <app-menu id="page" [Pageactive]="pageactive"></app-menu>
+
+    <div class="content-wrapper flex-content">
+      <section class="content-header">
+        <div class="container-fluid">
+          <div class="row mb-2">
+            <div class="col-sm-6">
+              <ol class="breadcrumb">
+                <li class="breadcrumb-item">Audit&Check</li>
+                <li class="breadcrumb-item active">
+                  {{pageactive && pageactive[0]?.menubar || 'Confirm Qty Group SKU'}}
+                  <small *ngIf="pageactive && pageactive[0]?.version" style="font-size:0.7rem; opacity:0.75;">v{{pageactive[0].version}} | {{pageactive[0].lastupdate}}</small>
+                </li>
+              </ol>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="content h-100">
+        <div class="container-fluid h-100 d-flex flex-column">
+          <div class="screen-wrapper">
+
+            <div class="row">
+
+              <!-- ซ้าย: ช่องกรอกตามลำดับ PIN → Group Pick → Scan Item -->
+              <div class="col-lg-5">
+                <div class="card">
+                  <div class="card-header">
+                    <h5 class="card-title mb-0">
+                      <i class="fas fa-barcode mr-2"></i>ยืนยันจำนวนตอนเบิกของ
+                    </h5>
+                  </div>
+                  <div class="card-body">
+
+                    <!-- 1. ผู้เบิก — ดึง PIN เดิมที่ login นี้เคยเช็คอินไว้มาให้เลย
+                         ไม่ต้องพิมพ์ซ้ำทุกครั้ง เหมือนหน้า audit check -->
+                    <label class="mb-1"><b>1. ผู้ยืนยัน</b></label>
+
+                    <div class="card mb-3" *ngIf="isPinOk" style="border-left:3px solid #28a745">
+                      <div class="card-body py-2 px-3 d-flex align-items-center">
+                        <div class="mr-3">
+                          <div style="font-size:11px;color:#6c757d">ผู้ยืนยัน</div>
+                          <div style="font-size:18px;font-weight:500;line-height:1.3">
+                            <i class="fas fa-user-check mr-1" style="color:#28a745"></i>
+                            {{ userLabel }}
+                          </div>
+                        </div>
+                        <!-- ml-auto ดันปุ่มไปชิดขอบขวาของการ์ด ไม่ว่าชื่อจะสั้นยาวแค่ไหน -->
+                        <button type="button" class="btn btn-sm btn-outline-danger ml-auto flex-shrink-0"
+                                (click)="changeUser()">เปลี่ยนคน</button>
+                      </div>
+                    </div>
+
+                    <!-- หา PIN เดิมไม่เจอ (ยังไม่เคยเช็คอิน / กดเปลี่ยนคน) ค่อยให้กรอกเอง -->
+                    <div *ngIf="!isPinOk">
+                      <div class="input-group mb-1">
+                        <input #inputPin type="text" class="form-control form-control-lg"
+                               placeholder="ใส่ PIN CODE" name="PIN_CODE"
+                               [(ngModel)]="input.PIN_CODE"
+                               (keyup.enter)="checkPin()">
+                        <div class="input-group-append">
+                          <button type="button" class="btn btn-outline-secondary"
+                                  (click)="checkPin()">ตกลง</button>
+                        </div>
+                      </div>
+                      <div class="mb-3" style="font-size:12px;color:#6c757d">
+                        ไม่พบ PIN ที่เคยใช้ของผู้ใช้นี้ กรุณาใส่ PIN CODE
+                      </div>
+                    </div>
+
+                    <!-- 2. Group Pick -->
+                    <label class="mb-1"><b>2. Group Pick</b></label>
+                    <div class="input-group mb-3">
+                      <input #inputGroupPick type="text" class="form-control form-control-lg"
+                             placeholder="สแกน Group Pick" name="GROUP_PICK"
+                             [(ngModel)]="input.GROUP_PICK"
+                             [disabled]="!isPinOk || isLoading"
+                             (keyup.enter)="loadGroup()">
+                      <div class="input-group-append">
+                        <button type="button" class="btn btn-outline-secondary"
+                                [disabled]="!isPinOk || isLoading" (click)="loadGroup()">
+                          <i class="fas" [ngClass]="isLoading ? 'fa-spinner fa-spin' : 'fa-search'"></i>
+                        </button>
+                      </div>
+                    </div>
+
+                    <!-- 3. Scan Item — ปิดเฉพาะตอนกลุ่มนี้ยืนยันไปแล้วเท่านั้น
+                         ข้อมูลไม่มี barcode ห้ามซ่อน ต้องไปแก้ที่ข้อมูล ไม่งั้นยืนยันจำนวน
+                         โดยไม่ได้ตรวจของ แล้วสินค้าจะตกหล่น -->
+                    <ng-container *ngIf="hasGroup && !confirmed">
+                      <label class="mb-1"><b>3. Barcode Item</b></label>
+                      <div class="mb-1" style="font-size:12px;color:#6c757d">
+                        สินค้าในกลุ่มนี้ : <b class="text-dark">{{ itemText }}</b>
+                      </div>
+
+                      <!-- ข้อมูลไม่มี barcode = ตรวจไม่ได้ = ยืนยันไม่ได้ -->
+                      <div class="alert alert-warning py-2 px-3 mb-2" *ngIf="!hasBarcodeData"
+                           style="font-size:13px">
+                        <i class="fas fa-exclamation-triangle mr-1"></i>
+                        <b>กลุ่มนี้ไม่มีข้อมูล barcode สินค้า</b>
+                      </div>
+
+                      <div class="input-group">
+                        <input #inputScanItem type="text" maxlength="50" class="form-control form-control-lg"
+                               placeholder="สแกน barcode สินค้า" name="ITEM_BARCODE"
+                               [(ngModel)]="input.ITEM_BARCODE"
+                               [disabled]="itemScanned"
+                               (keyup.enter)="scanItem()" (change)="scanItem()">
+                        <div class="input-group-append">
+                          <span class="input-group-text"
+                                [ngClass]="itemScanned ? 'bg-success text-white' : 'bg-light'">
+                            <i class="fas" [ngClass]="itemScanned ? 'fa-check' : 'fa-barcode'"></i>
+                          </span>
+                        </div>
+                      </div>
+                      <div class="mt-2" style="font-size:13px">
+                        <i *ngIf="!itemScanned" style="color:rgb(216, 120, 10)">
+                          สแกน barcode สินค้า 1 ครั้ง เพื่อทำการยืนยัน
+                        </i>
+                        <i *ngIf="itemScanned" style="color:#28a745">
+                          <i class="fas fa-check-circle mr-1"></i>
+                          Item ถูกต้อง : <b>{{ scannedBarcode }}</b>
+                        </i>
+                      </div>
+                    </ng-container>
+
+                  </div>
+                </div>
+              </div>
+
+              <!-- ขวา: สรุปจำนวนของกลุ่มที่สแกนมา -->
+              <div class="col-lg-7">
+
+                <!-- ยังไม่ได้สแกนกลุ่ม -->
+                <div class="card" *ngIf="!hasGroup">
+                  <div class="card-body text-center text-muted py-5">
+                    <i class="fas fa-boxes fa-2x mb-2 d-block"></i>
+                    — สแกน Group Pick เพื่อดูจำนวนที่ต้องเบิก —
+                  </div>
+                </div>
+
+                <div class="card" *ngIf="hasGroup">
+                  <div class="card-header d-flex align-items-center justify-content-between">
+                    <h5 class="card-title mb-0">
+                      <i class="fas fa-layer-group mr-2"></i>
+                      <span class="badge badge-info">{{ loadedGroupPick }}</span>
+                    </h5>
+                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                            (click)="nextGroup()">
+                      <i class="fas fa-redo mr-1"></i>กลุ่มถัดไป
+                    </button>
+                  </div>
+
+                  <div class="card-body">
+
+                    <!-- ยืนยันไปแล้ว — โชว์รายละเอียดแทนปุ่มยืนยัน -->
+                    <div class="alert alert-warning" *ngIf="confirmed">
+                      <h5 class="mb-2">
+                        <i class="fas fa-check-circle mr-2"></i><b>ยืนยันแล้ว</b>
+                      </h5>
+                      ยืนยันโดย : <b>{{ userLabelOfPin(confirmed.USER_CONFIRM) }}</b><br>
+                      วันเวลา : <b>{{ confirmed.CONFIRM_DATE || '-' }}</b>
+                      <div class="mt-2" style="font-size:13px">
+                        กลุ่มนี้ยืนยันไปแล้ว ยืนยันซ้ำไม่ได้ — กด "กลุ่มถัดไป" เพื่อยืนยันกลุ่มอื่น
+                      </div>
+                    </div>
+
+                    <!-- แถวบน: รหัสสินค้า + จำนวน order — 2 ตัวนี้อ่านคู่กันว่า "ของอะไร กี่ order"
+                         ไม่มีการ์ด "ต่อ 1 order" — ฝั่งนี้นับ QTY กับ order ตาม GROUP_PICK ทั้งก้อน
+                         ไม่สน SUB_GROUP_PICK ซึ่งเป็นตัวแยกของที่จำนวนไม่เท่ากัน
+                         เลข "ต่อ order" จึงไม่มีความหมายตรงนี้ โชว์ไปมีแต่จะทำให้เข้าใจผิด -->
+                    <div class="row">
+                      <div class="col-7">
+                        <div class="card mb-3" style="border-left:3px solid #17a2b8">
+                          <div class="card-body py-2 px-3">
+                            <div style="font-size:11px;color:#6c757d">รหัสสินค้า</div>
+                            <div style="font-size:20px;font-weight:500">{{ itemText }}</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="col-5">
+                        <div class="card mb-3" style="border-left:3px solid #6c757d">
+                          <div class="card-body py-2 px-3">
+                            <div style="font-size:11px;color:#6c757d">จำนวน order</div>
+                            <div style="font-size:20px;font-weight:500">
+                              {{ orderCount }}
+                              <small style="font-size:13px;color:#6c757d"> order</small>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- จำนวนรวม — ตัวเลขหลักของหน้านี้ ทำให้ใหญ่ที่สุด -->
+                    <div class="card mb-3" style="border-left:3px solid #28a745">
+                      <div class="card-body py-3 px-3 text-center">
+                        <div style="font-size:12px;color:#6c757d">จำนวนที่ต้องเบิกทั้งหมด</div>
+                        <div style="font-size:52px;font-weight:600;line-height:1.1">
+                          {{ totalQty }}
+                          <small style="font-size:18px;color:#6c757d"> ชิ้น</small>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- ปุ่มยืนยัน — ยืนยันแล้วจะไม่แสดงปุ่มนี้อีก -->
+                    <button #btnConfirm type="button"
+                            class="btn btn-success btn-lg btn-block"
+                            *ngIf="!confirmed"
+                            [disabled]="!canConfirm"
+                            (click)="confirmQty()">
+                      <i class="fas" [ngClass]="isConfirming ? 'fa-spinner fa-spin' : 'fa-check'"></i>
+                      {{ isConfirming ? 'กำลังยืนยัน...' : 'ยืนยันจำนวน ' + totalQty + ' ชิ้น' }}
+                    </button>
+
+                    <div class="text-center text-muted mt-2" style="font-size:13px"
+                         *ngIf="!confirmed && !isItemScanOk">
+                    </div>
+
+                  </div>
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
+        </div>
+      </section>
+    </div>
+
+  </div>
+</body>

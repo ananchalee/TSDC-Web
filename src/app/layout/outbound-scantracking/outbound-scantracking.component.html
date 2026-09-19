@@ -14,8 +14,11 @@
               <a class="m-0">
                 <ol class="breadcrumb">
                   <li class="breadcrumb-item">Outbound</li>
-                  <li class="breadcrumb-item active" type="button" >Scan Tracking <i
-                      class="fas fa-shopping-cart nav-icon"></i></li>
+                  <li class="breadcrumb-item active" type="button">
+                    {{pageactive && pageactive[0]?.menubar || 'Tracking Order'}}
+                    <small *ngIf="pageactive && pageactive[0]?.version" style="font-size:0.7rem; opacity:0.75;">v{{pageactive[0].version}} | {{pageactive[0].lastupdate}}</small>
+                    <i class="fas fa-shopping-cart nav-icon"></i>
+                  </li>
                 </ol>
               </a>
             </div>
@@ -23,6 +26,22 @@
             <div class="container-fluid" >
               <div class="container-fluid barbar">
 
+                <!-- Tab Navigation -->
+                <ul class="nav nav-tabs mb-3">
+                  <li class="nav-item">
+                    <a class="nav-link" [class.active]="activeTab === 'scan'" (click)="switchTab('scan')" style="cursor:pointer;">
+                      <i class="fas fa-barcode"></i> Scan Tracking
+                    </a>
+                  </li>
+                  <li class="nav-item">
+                    <a class="nav-link" [class.active]="activeTab === 'report'" (click)="switchTab('report')" style="cursor:pointer;">
+                      <i class="fas fa-list-alt"></i> Report สรุปรายการ
+                    </a>
+                  </li>
+                </ul>
+
+                <!-- Tab: Scan (เดิม) -->
+                <div [hidden]="activeTab !== 'scan'">
                 <div class="card card-secondary">
                   <div class="card-header">
                     <h5 class="card-title"><strong>{{input.USER_NAME}} : </strong> {{input.WORKER_NAME}}
@@ -36,7 +55,7 @@
                     <div class="col-1"> 
 
                       <button type="button" class="btn btn-info btn-sm float-left" (click)="Get_TRANSPORTATION_NAME()" >
-                        Master <i class="fas fa-sync-alt"></i> 
+                        รีโหลดขนส่ง <i class="fas fa-sync-alt"></i> 
                       </button>
                       
                     </div>
@@ -50,10 +69,32 @@
                       </div>
       
                       <div class="form-group row">
+                        <label class="col-2 col-form-label">เลือกขนส่ง</label>
+                        <div class="col-10">
+                          <div>
+                            <button *ngFor="let name of transportNames" type="button"
+                                    class="btn btn-sm mr-2 mb-2"
+                                    [class.btn-primary]="selectedTransport === name"
+                                    [class.btn-outline-secondary]="selectedTransport !== name"
+                                    (click)="selectTransport(name)">
+                              {{name}}
+                            </button>
+                          </div>
+                          <small *ngIf="!selectedTransport" class="text-danger">
+                            * กรุณาเลือกขนส่งก่อน จึงจะระบุ Pallet / Tracking ได้
+                          </small>
+                          <small *ngIf="selectedTransport" class="text-success">
+                            เลือกขนส่ง: <b>{{selectedTransport}}</b>
+                          </small>
+                        </div>
+                      </div>
+
+                      <div class="form-group row">
                         <label for="Pallet NO" class="col-2 col-form-label">Pallet NO </label>
                         <div class="col-10">
                           <input type="text" class="form-control" name="Pallet_NO" placeholder="เลขพาเลทไม่สามารถใช้ซ้ำได้ภายในวัน"
                             [(ngModel)]="input.Pallet_NO" (keyup.enter)="check_Pallet();" minlength="1" maxlength="4" required
+                            [disabled]="!selectedTransport"
                             #inputPallet>
                         </div>
                       </div>
@@ -63,6 +104,7 @@
                         <div class="col-10">
                           <input type="text" class="form-control" name="Tracking" placeholder="SCAN เลข Tracking Order"
                             [(ngModel)]="input.TRACK_CODE" (keyup.enter)="check_Tracking();" minlength="10" maxlength="30" required
+                            [disabled]="!selectedTransport"
                             #inputTrack>
                         </div>
                       </div>
@@ -72,6 +114,7 @@
                         <div class="col-10">
                           <input type="text" class="form-control is-invalid" name="Tracking2" placeholder="เลข Tracking Order(ยิงซ้ำบวกเพิ่ม)"
                             [(ngModel)]="input.TRACK_CODE" (keyup.enter)="check_Tracking2();" minlength="10" maxlength="30" required
+                            [disabled]="!selectedTransport"
                             #inputTrack>
                         </div>
                       </div>
@@ -244,11 +287,138 @@
                 </div>
 
 
+                </div><!-- end tab scan -->
+
+                <!-- Tab: Report -->
+                <div [hidden]="activeTab !== 'report'">
+                  <div class="card card-secondary">
+                    <div class="card-header">
+                      <h5 class="card-title">สรุปรายการที่ยิงขึ้น Pallet</h5>
+                    </div>
+                    <div class="card-body">
+                      <div class="row">
+                        <div class="col-md-3">
+                          <div class="form-group">
+                            <label>Pallet NO</label>
+                            <input type="text" class="form-control" placeholder="เลข Pallet"
+                                   [(ngModel)]="report_input.Pallet_NO" maxlength="4"
+                                   (keyup.enter)="loadReport()">
+                          </div>
+                        </div>
+                        <div class="col-md-3">
+                          <div class="form-group">
+                            <label>วันที่</label>
+                            <input type="date" class="form-control" [(ngModel)]="report_input.report_date"
+                                   (keyup.enter)="loadReport()">
+                          </div>
+                        </div>
+                        <div class="col-md-3">
+                          <div class="form-group">
+                            <label>Tracking ID</label>
+                            <input type="text" class="form-control" placeholder="เลข Tracking"
+                                   [(ngModel)]="report_input.Tracking_No" 
+                                   (keyup.enter)="loadReport()">
+                          </div>
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                          <button type="button" class="btn btn-primary mb-3" (click)="loadReport()">
+                            <i class="fas fa-search"></i> ค้นหา
+                          </button>
+                        </div>
+                      </div>
+
+                      <div class="row justify-content-center" *ngIf="report_isLoading">
+                        <div class="col-12 text-center">Loading... <i class="fas fa-sync-alt fa-spin"></i></div>
+                      </div>
+
+                      <div *ngIf="!report_isLoading && report_list.length > 0">
+                        <div class="mb-2 d-flex justify-content-between align-items-center flex-wrap">
+                          <div>
+                            รวมในลิสต์: <strong>{{report_list.length}}</strong> รายการ
+                            &nbsp;|&nbsp; เลือกไว้: <strong class="text-danger">{{reportSelectedCount}}</strong> รายการ
+                          </div>
+                          <div>
+                            <button type="button" class="btn btn-danger btn-sm mr-2" (click)="deleteSelectedReport()"
+                                    [disabled]="reportSelectedCount === 0">
+                              <i class="fas fa-trash"></i> ลบรายการที่เลือก ({{reportSelectedCount}})
+                            </button>
+                            <button type="button" class="btn btn-secondary btn-sm mr-2" (click)="clearReportList()">
+                              <i class="fas fa-eraser"></i> เคลียรายการ
+                            </button>
+                            <button type="button" class="btn btn-success btn-sm" (click)="exportToExcel()">
+                              <i class="fas fa-file-excel"></i> Export Excel
+                            </button>
+                          </div>
+                        </div>
+                        <div class="table-responsive" style="max-height:500px; overflow-y:auto;">
+                          <table class="table table-bordered table-sm table-hover" style="font-size:14px;">
+                            <thead class="thead-sticky">
+                              <tr class="table-primary text-center">
+                                <th style="width:40px;">
+                                  <input type="checkbox" [(ngModel)]="report_allChecked"
+                                         (change)="toggleAllReport()"
+                                         [disabled]="reportDeletableCount === 0">
+                                </th>
+                                <th>ลำดับ</th>
+                                <th>Pallet</th>
+                                <th>Tracking</th>
+                                <th>Order</th>
+                                <th>ขนส่ง</th>
+                                <th>เวลาที่ Scan</th>
+                                <th>User</th>
+                                <th>Delivery No</th>
+                                <th>Driver</th>
+                                <th>ลายเซ็น</th>
+                                <th>สถานะ</th>
+                                <th>ลบ</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <tr *ngFor="let item of report_list; let i = index" [class.table-success]="item.STATUS_DELIVERY === 'S'">
+                                <td class="text-center">
+                                  <input type="checkbox" [(ngModel)]="item._checked"
+                                         (change)="syncReportAllChecked()"
+                                         [disabled]="item.STATUS_DELIVERY === 'S'">
+                                </td>
+                                <td class="text-center">{{i + 1}}</td>
+                                <td class="text-center">{{item.PALLET_NO}}</td>
+                                <td class="text-center">{{item.BILL_NO}}</td>
+                                <td class="text-center">{{item.ORDER_NO}}</td>
+                                <td class="text-center">{{item.SHIP_PROVIDER_OOD}}</td>
+                                <td class="text-center">{{item.scandate}}</td>
+                                <td class="text-center">{{item.PIN_ID}}</td>
+                                <td class="text-center">{{item.DELIVERY_NO || '-'}}</td>
+                                <td class="text-center">{{item.DRIVER_NAME || '-'}}</td>
+                                <td class="text-center">
+                                  <img *ngIf="item.DRIVER_SIGNATURE" [src]="item.DRIVER_SIGNATURE"
+                                    style="max-height:40px; max-width:80px;" alt="sig">
+                                  <span *ngIf="!item.DRIVER_SIGNATURE">-</span>
+                                </td>
+                                <td class="text-center">
+                                  <span *ngIf="item.STATUS_DELIVERY === 'S'" class="badge badge-success">ขนส่งเซ็นรับแล้ว</span>
+                                  <span *ngIf="item.STATUS_DELIVERY !== 'S'" class="badge badge-warning">ขนส่งยังไม่รับ</span>
+                                </td>
+                                <td class="text-center">
+                                  <span *ngIf="item.STATUS_DELIVERY !== 'S'" type="button"
+                                    class="badge badge-pill badge-danger"
+                                    (click)="deleteReportItem(item)">&emsp;ลบ&emsp;</span>
+                                  <span *ngIf="item.STATUS_DELIVERY === 'S'" class="text-muted" style="font-size:11px;">ไม่สามารถลบได้</span>
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+
+                      <div *ngIf="!report_isLoading && report_list.length === 0 && report_input.Pallet_NO" class="text-center text-muted mt-3">
+                        ไม่พบข้อมูล
+                      </div>
+                    </div>
+                  </div>
+                </div><!-- end tab report -->
+
               </div>
             </div>
-
-
-          
 
 
           </div><!-- /.row -->

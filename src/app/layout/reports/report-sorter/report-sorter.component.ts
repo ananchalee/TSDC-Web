@@ -4,6 +4,7 @@ import { Subscription, Subject } from 'rxjs';
 import { DataTableDirective } from 'angular-datatables';
 import Swal from 'sweetalert2';
 import { HttpClient } from '@angular/common/http';
+import { ActivatedRoute } from '@angular/router';
 declare var jQuery: any;
 
 @Component({
@@ -45,13 +46,17 @@ export class ReportSorterComponent implements OnInit, OnDestroy,AfterViewInit  {
 
   interval: any;
 
-  constructor(private dataService: DataService, private http: HttpClient) {}
+  constructor(private dataService: DataService, private http: HttpClient, private route: ActivatedRoute) {}
 
   ngOnInit(): void {
+    const d = this.route.snapshot.data;
     var a = Array();
     let array = {
       active: 'Reports',
-      pagename: 'Report Sorter'
+      pagename: 'Report Sorter',
+      menubar: d['menubar'],
+      version: d['version'],
+      lastupdate: d['lastupdate'],
     };
     a.push(array);
     this.pageactive = a;

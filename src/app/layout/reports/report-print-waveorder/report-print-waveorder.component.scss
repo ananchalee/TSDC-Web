@@ -1,0 +1,19 @@
+// report-print-waveorder.component.scss
+
+// ── Normal styles ──────────────────────────────────────────────
+.bg-purple {
+  background-color: #6f42c1 !important;
+  color: #fff !important;
+}
+
+.table-scroll-wrapper {
+  max-height: calc(100vh - 420px);
+  overflow-y: auto;
+
+  thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background-color: #f8f9fa;
+  }
+}

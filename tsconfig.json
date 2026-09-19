@@ -14,6 +14,8 @@
     "experimentalDecorators": true,
     "moduleResolution": "node",
     "importHelpers": true,
+    /* jsbarcode ใช้ `export =` — flag นี้ให้ import แบบ default ได้ (มีผลตอน type-check เท่านั้น ไม่กระทบ emit) */
+    "allowSyntheticDefaultImports": true,
     "target": "es2015",
     "module": "es2020",
     "lib": [

@@ -1,0 +1,171 @@
+/* =========================
+   FULL HEIGHT BASE
+========================= */
+html, body {
+  height: 100%;
+  margin: 0;
+}
+
+/* =========================
+   WRAPPER FLEX
+========================= */
+.wrapper.full-page {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+/* =========================
+   HEADER / MENU
+   (กินเท่าที่จำเป็น)
+========================= */
+app-header,
+app-menu {
+  flex: 0 0 auto;
+}
+
+/* =========================
+   CONTENT (พื้นที่ที่เหลือ)
+========================= */
+.flex-content {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* =========================
+   SECTION / CONTAINER
+========================= */
+.content,
+.container-fluid {
+  flex: 1;
+  min-height: 0;
+}
+
+/* =========================
+   CARD ตารางเต็มพื้นที่
+========================= */
+.full-height-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* =========================
+   SCROLL เฉพาะตาราง
+========================= */
+.table-scroll {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: auto;
+}
+
+/* =========================
+   TABLE STYLE
+========================= */
+.fixed-header-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.fixed-header-table th,
+.fixed-header-table td {
+  padding: 8px;
+  border: 1px solid #ddd;
+  white-space: nowrap;
+}
+
+/* =========================
+   STICKY HEADER
+========================= */
+.fixed-header-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background-color: #212529;
+  color: white;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+}
+
+/* ===== flatpickr align with input ===== */
+.flatpickr-calendar {
+  width: auto !important;
+  min-width: 160px;
+  box-sizing: border-box;
+}
+
+.flatpickr-time {
+  max-width: 160px;
+}
+
+.flatpickr-calendar.open {
+  left: auto !important;
+  right: auto !important;
+}
+
+
+/* =========================
+   PRINT MODE
+========================= */
+.print-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  font-weight: bold;
+}
+
+.print-header .title {
+  font-size: 18px;
+}
+
+.print-header .print-date {
+  font-size: 14px;
+}
+
+@media print {
+  .print-header {
+    display: flex;
+  }
+}
+
+@media screen {
+  .print-header {
+    display: none;
+  }
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  #print-area,
+  #print-area * {
+    visibility: visible;
+  }
+
+  #print-area {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+  }
+
+  button,
+  .card-header,
+  app-header,
+  app-menu {
+    display: none !important;
+  }
+  
+}
+
+.signature-box {
+  border: 1px solid #ccc;
+  width: 100%;
+  height: 250px;
+}
+

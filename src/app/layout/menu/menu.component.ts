@@ -14,6 +14,7 @@ export class MenuComponent implements OnInit {
   USER: any = {}
   menu_Moniter:boolean = false;
   menu_User:boolean = true;
+  routeData: { [key: string]: any } = {};
 
   constructor(private router: Router,) { }
 
@@ -22,8 +23,13 @@ export class MenuComponent implements OnInit {
 
   }
 
-  activeMenu(){  
-    
+  activeMenu(){
+
+    this.router.config.forEach(r => {
+      if (r.path && r.data) {
+        this.routeData[r.path] = r.data;
+      }
+    });
     if(!this.Pageactive){
 
     }else{
@@ -43,7 +49,8 @@ export class MenuComponent implements OnInit {
           this.menu_User = false;
         break;
         default:
-          throw Error('Invalid Menu');
+          this.menu_User = true;
+          //throw Error('Invalid Menu');
        }
 
        if(this.USER.CATEGORY == 'SuperAdmin' || this.USER.CATEGORY == 'Admin'){
@@ -61,7 +68,11 @@ export class MenuComponent implements OnInit {
           switch (this.Pageactive[0].pagename){
             case 'Check Order' : this.page.audit_CheckOrder = true;
               break;
+            case 'Check Order Print Track': this.page.audit_CheckOrderTrack = true;
+              break;
             case 'Check fullcarton' : this.page.audit_fullcarton = true;
+              break;
+            case 'Confirm Qty Group SKU' : this.page.audit_confirmqtygroupsku = true;
               break;
           }
           break;
@@ -105,6 +116,14 @@ export class MenuComponent implements OnInit {
           switch (this.Pageactive[0].pagename){
             case 'Report Sorter' : this.page.report_sorter = true;
               break;
+              case 'Reports Print Order Cancel' : this.page.report_printordercancel = true;
+              break;
+              case 'Report Packing List' :this.page.report_packinglist = true;
+              break;
+              case 'Report Print Wave Order' :this.page.report_printwave = true;
+              break;
+              case 'Print Tracking Group SKU' :this.page.report_printtrackgroupsku = true;
+              break;
           }
         break;
         case 'Moniter':
@@ -114,9 +133,21 @@ export class MenuComponent implements OnInit {
               break;
             case 'Moniter-InterfaceError' : this.page.monit_InterfaceError = true;
               break;
+            case 'Moniter-TrackOrderInternal' : this.page.monit_TrackorderInternal = true;
+              break;
+            case 'Monitor-WaveOrder' : this.page.monitor_waveorde = true;
+              break;
           }
           break; 
-
+        case 'Tsuruha' :
+          this.page.tsuruha = true;
+          switch (this.Pageactive[0].pagename){
+            case 'Tsuruha-Orderdetail' : this.page.Tsuruha_Orderdetail = true;
+            break;
+            case 'Tsuruha-MappingInvoice' : this.page.Tsuruha_MappingInvoice = true;
+            break;
+          }
+        break
         default:
           throw Error('Invalid Menu');
       }
@@ -132,8 +163,14 @@ export class MenuComponent implements OnInit {
       case 'checkorder':
           this.router.navigate(["/audit-check"]);
         break;
+      case 'checkordertrack':
+          this.router.navigate(["/audit-check-tracking"]);
+      break;
       case 'checkfullcarton':
           this.router.navigate(["/audit-check-fullcarton"]);
+        break;
+      case 'confirmqtygroupsku':
+          this.router.navigate(["/confirm-qty-groupsku"]);
         break;
       case 'AWB':
           this.router.navigate(["/AWB"]);
@@ -162,12 +199,36 @@ export class MenuComponent implements OnInit {
       case 'report_sorter':
         this.router.navigate(["/report-sorter"]);
         break;
+      case 'report_printwave':
+        this.router.navigate(["/report-printWaveOrder"]);
+        break;
+      case 'report_printtrackgroupsku':
+        this.router.navigate(["/report-printTrackingGroupSku"]);
+        break;
+      case 'report_printordercancel':
+        this.router.navigate(["/report-printordercancel"]);
+        break;
+      case 'report_packinglist':
+          this.router.navigate(["/report-packinglist"]);
+      break;
       case 'monit_statusRTS':
         this.router.navigate(["/monit-statusRTS"]);
         break;
       case 'monit_InterfaceError':
         this.router.navigate(["/monit-InterfaceError-ManH"]);
         break;
+      case 'monit_TrackOrderInternal':
+        this.router.navigate(["/monit-Trackorderinternal"]);
+        break;
+      case 'tsuruha_Orderdetail':
+        this.router.navigate(["/tsuruha-orderdetail"])
+        break
+      case 'tsuruha_MappingInvoice':
+        this.router.navigate(["/tsuruha-mappinginvoice"])
+        break
+      case 'monitor_waveorde':
+        this.router.navigate(["/monitor-waveorde"])
+        break
     }
   }
 

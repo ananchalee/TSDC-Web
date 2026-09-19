@@ -16,7 +16,11 @@
             <a class="m-0">
               <ol class="breadcrumb">
                 <li class="breadcrumb-item">Audit&Check</li>
-                <li class="breadcrumb-item active" type="button" (click)="scanCon();">Check fullcarton  <i class="fas fa-archive nav-icon"></i></li>
+                <li class="breadcrumb-item active" type="button" (click)="scanCon();">
+                  {{pageactive && pageactive[0]?.menubar || 'Check fullcarton'}}
+                  <small *ngIf="pageactive && pageactive[0]?.version" style="font-size:0.7rem; opacity:0.75;">v{{pageactive[0].version}} | {{pageactive[0].lastupdate}}</small>
+                  <i class="fas fa-archive nav-icon"></i>
+                </li>
               </ol>
             </a>
           </div>

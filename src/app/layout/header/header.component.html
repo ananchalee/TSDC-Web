@@ -4,8 +4,14 @@
           <a class="nav-link text-white" data-widget="pushmenu" href="#" role="button"><i class="fas fa-bars"></i></a>
         </li>
         <li class="nav-item ">
-          <h5  class="navbar-brand text-white" >{{page}}   <a [hidden]="!input.PageDashboard" style="font-size:70%;">Refresh Page &nbsp; {{Repage}}</a>   </h5>
-        </li> 
+          <div class="navbar-brand text-white" style="line-height:1.2;">
+            <div style="font-size:1rem; font-weight:600;">{{input.menubar || page}}</div>
+            <div *ngIf="input.version || input.lastupdate" style="font-size:0.65rem; opacity:0.8;">
+              v{{input.version}} &nbsp;|&nbsp; {{input.lastupdate}}
+            </div>
+          </div>
+          <a [hidden]="!input.PageDashboard" class="text-white" style="font-size:70%;">Refresh Page &nbsp; {{Repage}}</a>
+        </li>
     
       </ul>
  

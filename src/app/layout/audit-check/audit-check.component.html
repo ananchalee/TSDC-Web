@@ -12,8 +12,10 @@
             <a class="m-0">
               <ol class="breadcrumb">
                 <li class="breadcrumb-item">Audit&Check</li>
-                <li class="breadcrumb-item active" type="button" (click)="scanCon();">Check Order <i
-                    class="fas fa-shopping-cart nav-icon"></i></li>
+                <li class="breadcrumb-item active" type="button" (click)="scanCon();">
+                  {{pageactive && pageactive[0]?.menubar || 'Check Order'}}
+                  <small *ngIf="pageactive && pageactive[0]?.version" style="font-size:0.7rem; opacity:0.75;">v{{pageactive[0].version}} | {{pageactive[0].lastupdate}}</small>
+                </li>
               </ol>
             </a>
           </div>
@@ -173,7 +175,7 @@
                           </span> 
                           <span [hidden]='!ButtonprintCancel' style="color: #ccc; padding: 0 10px;">|</span>
                           <span [hidden]='!ButtonprintCancel' style="font-size:13px" type="button" class="badge badge-pill badge-warning" 
-                          (click)="printcancel()">
+                          (click)="selectZone()">
                             &emsp; Print Cancel &emsp;    
                           </span> 
                        
@@ -356,7 +358,7 @@
 
     </div>
 
-    <div class="container-fluid" [hidden]="pagePrintTrack">
+    <div class="container-fluid" *ngIf="!pagePrintTrack">
       <div style="page-break-after: always" class="page" *ngFor="let list of dataprint ;let i = index;">
         <div class="row ">
           <div class="col-3">
@@ -365,7 +367,7 @@
             </font>
           </div>
           <div class="col-9">
-            <ngx-barcode6 [bc-element-type]="'svg'" [bc-format]="'CODE128'" [bc-text-position]="'button'" [bc-width]="2"
+            <ngx-barcode6 [bc-element-type]="'img'" [bc-format]="'CODE128'" [bc-text-position]="'button'" [bc-width]="2"
               [bc-height]="50" [bc-font-size]="15" [bc-value]="list.REF_INDEX" [bc-display-value]="true">
             </ngx-barcode6>
           </div>
@@ -375,7 +377,7 @@
         <div class="row ">
           <div class="col-3">
             <font size="4">
-              Box Size :
+              Box Size
             </font>
           </div>
           <div class="col-9">
@@ -388,7 +390,7 @@
         <div class="row ">
           <div class="col-3">
             <font size="4">
-              Shipping Name :
+              Shipping Name
             </font>
           </div>
           <div class="col-9">
@@ -402,7 +404,7 @@
   
           <div class="col-3">
             <font size="4">
-              Channel :
+              Channel
             </font>
           </div>
           <div class="col-2">
@@ -413,7 +415,7 @@
 
           <div class="col-2">
             <font size="4">
-              Seller :
+              Seller
             </font>
           </div>
           <div >
@@ -428,7 +430,7 @@
 
           <div class="col-3">
             <font size="4">
-              Company :
+              Company
             </font>
           </div>
           <div class="col-2">
@@ -439,7 +441,7 @@
 
           <div class="col-3">
             <font size="4">
-              Order Date :
+              Order Date
             </font>
           </div>
           <div >
@@ -453,7 +455,7 @@
 
           <div class="col-3">
             <font size="4">
-              Table Check :
+              Table Check
             </font>
           </div>
           <div class="col-2">
@@ -464,7 +466,7 @@
 
           <div class="col-2">
             <font size="4">
-              Box No :
+              Box No
             </font>
           </div>
           <div >
@@ -492,30 +494,52 @@
         <div class="row ">
           <div class="col-3">
             <font size="4">
-              Shipment :
+              Shipment
             </font>
           </div>
           <div class="col-9">
-            <ngx-barcode6 [bc-element-type]="'svg'" [bc-format]="'CODE128'" [bc-text-position]="'button'" [bc-width]="2"
+            <ngx-barcode6 [bc-element-type]="'img'" [bc-format]="'CODE128'" [bc-text-position]="'button'" [bc-width]="2"
               [bc-height]="40" [bc-font-size]="15" [bc-value]="list.SHIPMENT_ID" [bc-display-value]="true">
             </ngx-barcode6>
           </div>
         </div>
+
+        <div class="row ">
+
+          <div class="col-3">
+            <font size="4">
+              BILL_NO_REF
+            </font>
+          </div>
+          <div class="col-2">
+            <font size="4"><b>
+                {{list.BILL_NO_REF}}</b>
+            </font>
+          </div>
+
+      </div>
+
+      <div class="row">
+        <div class="col-12" style="text-align:left; font-size:12px; color:#555;">
+          Print: {{printTimeShow}}
+        </div>
+      </div>
+      
   
       </div>
     </div>
   
     
-    <div class="container-fluid" [hidden]="pagePrintTrackAll">
+    <div class="container-fluid" *ngIf="!pagePrintTrackAll">
       <div style="page-break-after: always" class="page" *ngFor="let list of dataprint ;let i = index;">
         <div class="row ">
           <div class="col-3">
             <font size="4">
-              Tracking No :
+              Tracking No
             </font>
           </div>
           <div class="col-9">
-            <ngx-barcode6 [bc-element-type]="'svg'" [bc-format]="'CODE128'" [bc-text-position]="'button'" [bc-width]="2"
+            <ngx-barcode6 [bc-element-type]="'img'" [bc-format]="'CODE128'" [bc-text-position]="'button'" [bc-width]="2"
               [bc-height]="50" [bc-font-size]="15" [bc-value]="list.REF_INDEX" [bc-display-value]="true">
             </ngx-barcode6>
           </div>
@@ -525,7 +549,7 @@
         <div class="row ">
           <div class="col-3">
             <font size="4">
-              Box Size :
+              Box Size
             </font>
           </div>
           <div class="col-9">
@@ -552,7 +576,7 @@
         <div class="row ">
           <div class="col-3">
             <font size="4">
-              Shipping Name :
+              Shipping Name
             </font>
           </div>
           <div class="col-9">
@@ -566,7 +590,7 @@
   
           <div class="col-3">
             <font size="4">
-              Channel :
+              Channel
             </font>
           </div>
           <div class="col-2">
@@ -577,7 +601,7 @@
 
           <div class="col-2">
             <font size="4">
-              Seller :
+              Seller
             </font>
           </div>
           <div >
@@ -592,7 +616,7 @@
 
           <div class="col-3">
             <font size="4">
-              Company:
+              Company
             </font>
           </div>
           <div class="col-2">
@@ -603,7 +627,7 @@
 
           <div class="col-2">
             <font size="4">
-              OrderDate:
+              Order Date
             </font>
           </div>
           <div >
@@ -618,7 +642,7 @@
 
           <div class="col-3">
             <font size="4">
-              Table Check :
+              Table Check
             </font>
           </div>
           <div class="col-2">
@@ -629,7 +653,7 @@
 
           <div class="col-2">
             <font size="4">
-              Box No :
+              Box No
             </font>
           </div>
           <div >
@@ -655,21 +679,27 @@
         <div class="row ">
           <div class="col-3">
             <font size="4">
-              Shipment :
+              Shipment
             </font>
           </div>
           <div class="col-9">
-            <ngx-barcode6 [bc-element-type]="'svg'" [bc-format]="'CODE128'" [bc-text-position]="'button'" [bc-width]="2"
+            <ngx-barcode6 [bc-element-type]="'img'" [bc-format]="'CODE128'" [bc-text-position]="'button'" [bc-width]="2"
               [bc-height]="40" [bc-font-size]="15" [bc-value]="list.SHIPMENT_ID" [bc-display-value]="true">
             </ngx-barcode6>
           </div>
         </div>
-  
+
+      <div class="row">
+        <div class="col-12" style="text-align:left; font-size:12px; color:#555;">
+          Print: {{printTimeShow}}
+        </div>
+      </div>
+
       </div>
     </div>
 
 
-    <div class="container-fluid" [hidden]="pagePrintCoverSheet">
+    <div class="container-fluid" *ngIf="!pagePrintCoverSheet">
       <div style="page-break-after: always" class="page" *ngFor="let list of dataprintCoverSheet;let i = index;">
         <div class="row ">
           <div class="col" align="center">
@@ -703,7 +733,7 @@
           </div>
 
           <div class="col" align="center">
-            <ngx-barcode6 [bc-element-type]="'svg'" [bc-format]="'CODE128'" [bc-text-position]="'button'" [bc-width]="1"
+            <ngx-barcode6 [bc-element-type]="'img'" [bc-format]="'CODE128'" [bc-text-position]="'button'" [bc-width]="1"
               [bc-height]="43" [bc-font-size]="15" [bc-value]="list.BILL_NO" [bc-display-value]="true">
             </ngx-barcode6>
 
@@ -885,7 +915,7 @@
       </div>
     </div>
 
-    <div class="container-fluid" [hidden]="pagePrintCancel">
+    <div class="container-fluid" *ngIf="!pagePrintCancel">
       <div style="page-break-after: always" class="page" *ngFor="let list of dataprintcancel ; let i = index;">
         <div class="row">
           <div class="col-3">
@@ -894,7 +924,7 @@
             </font>
           </div>
           <div class="col-9">
-            <ngx-barcode6 [bc-element-type]="'svg'" [bc-format]="'CODE128'" [bc-text-position]="'button'" [bc-width]="2"
+            <ngx-barcode6 [bc-element-type]="'img'" [bc-format]="'CODE128'" [bc-text-position]="'button'" [bc-width]="2"
               [bc-height]="40" [bc-font-size]="15" [bc-value]="list.SHIPMENT_ID" [bc-display-value]="true">
             </ngx-barcode6>
           </div>
@@ -950,13 +980,44 @@
             <font size="4"><b> {{ list.ORDER_DATE }}</b></font>
           </div>
         </div>
+
+        <div class="row">
+          <div class="col-3">
+            <font size="4">
+              Zone:
+            </font>
+          </div>
+          <div class="col-2">
+            <font size="4"><b>{{ list.Zone }}</b></font>
+          </div>
     
+          <div class="col-3">
+            <font size="4">
+              Table:
+            </font>
+          </div>
+          <div>
+            <font size="4"><b> {{ list.Table }}</b></font>
+          </div>
+        </div>
+        <div class="row mt-1">
+          <div class="col-4"> <font size="2">version A.02 </font></div>
+          <div class="col-8 text-left">
+            <font size="4">
+              Print Date :
+              <b>
+                {{ list.PRINT_DATE | date:'dd/MM/yyyy HH:mm' }}
+              </b>
+            </font>
+          </div>
+        </div>
         <div class="row">
           <div class="col-5"></div>
           <div class="col-7">
             <qrcode
               [qrdata]="list.SHIPMENT_ID"
-              [width]="70"
+              [elementType]="'img'"
+              [width]="80"
               [errorCorrectionLevel]="'M'">
             </qrcode>
           </div>
@@ -965,13 +1026,63 @@
         <div class="row">
           <div class="col-4"></div>
           <div class="col-8">
-            <font size="9"><span>CANCEL</span></font>
+            <font size="8"><span>CANCEL</span></font>
           </div>
           </div>
     
       </div>
     </div>
     
+    <div #myModalZonePrint class="modal fade" id="myModalZonePrint" role="dialog">
+      <div class="modal-dialog modal-md"> <br> <br> <br> <br> <br> <br>
+        <div class="modal-content">
+          <div class="modal-header">
+            &emsp; <h5 class="modal-title" style="color:rgb(8, 83, 110)"><i class="fa fa-box"></i>
+              &emsp; <b> Zone</b> </h5>
+          </div>
+          <div class="card-body">
+
+            <form>
+              
+              <div class="row justify-content-md-center">
+                <div class="col-md-6">
+                  <label><b>Select Zone</b></label>
+              
+                  <ng-select
+                  [items]="zones"
+                  [(ngModel)]="input.Zone"
+                  name="zone"
+                  [searchable]="true"
+                  [clearable]="false"
+                  (change)="onZoneSelected()">
+                </ng-select>
+
+                <div class="row justify-content-md-center mt-3">
+                  <div class="col-md-6 text-center">
+                
+                    <button
+                      #okBtn
+                      type="button"
+                      class="btn btn-primary"
+                      (click)="printcancel()"
+                      [disabled]="!input.Zone">
+                      OK
+                    </button>
+                
+                  </div>
+                </div>
+                
+              
+                </div>
+              </div>
+              
+              
+
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
 
   </div>
 

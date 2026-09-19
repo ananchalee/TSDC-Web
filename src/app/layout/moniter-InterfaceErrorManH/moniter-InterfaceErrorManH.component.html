@@ -7,6 +7,21 @@
     <app-menu id="page" [Pageactive]="pageactive"></app-menu>
 
     <div class="content-wrapper " >
+      <section class="content-header">
+        <div class="container-fluid">
+          <div class="row mb-2">
+            <div class="col-sm-6">
+              <ol class="breadcrumb">
+                <li class="breadcrumb-item">Moniter</li>
+                <li class="breadcrumb-item active">
+                  {{pageactive && pageactive[0]?.menubar || 'Interface Error'}}
+                  <small *ngIf="pageactive && pageactive[0]?.version" style="font-size:0.7rem; opacity:0.75;">v{{pageactive[0].version}} | {{pageactive[0].lastupdate}}</small>
+                </li>
+              </ol>
+            </div>
+          </div>
+        </div>
+      </section>
 
       <div class="row justify-content-md-center">
         <div *ngIf="isLoading" class="loading-spinner">
