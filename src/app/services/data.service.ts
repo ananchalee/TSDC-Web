@@ -86,7 +86,7 @@ search_video_hd(data:any){
   return this.http.post(this.VIDEO_API + '/api/search_video_hd', data)
 }
 
-// รายชื่อร้านสำหรับ dropdown — เฉพาะร้านที่มีวิดีโออยู่จริง ไม่ใช่ทะเบียนทั้งหมด
+// รายชื่อร้านสำหรับ dropdown — เฉพาะร้านที่มีวิดีโอและมีใน master (ไม่มีใน master ไม่ดึงมา)
 video_seller_options(){
   return this.http.get(this.VIDEO_API + '/api/video_seller_options')
 }

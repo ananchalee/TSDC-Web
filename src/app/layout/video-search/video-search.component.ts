@@ -89,7 +89,7 @@ export class VideoSearchComponent implements OnInit {
   };
 
   /* รายชื่อร้านใน dropdown — โหลดครั้งเดียวตอนเข้าหน้า
-     เป็น "ร้านที่มีวิดีโออยู่จริง" ไม่ใช่ทะเบียนร้านทั้งหมด
+     เป็น "ร้านที่มีวิดีโออยู่จริง และมีใน master" ไม่ใช่ทะเบียนร้านทั้งหมด
      (วัด 12 ก.ย. 2026: มีวิดีโอ 13 ร้าน จากทะเบียน 143 ร้าน)
      ถ้าเอามาทั้งหมด ผู้ใช้จะเจอตัวเลือกที่กดแล้วไม่เจออะไรเลย 130 ตัว */
   //// LABEL ถูกประกอบตอนโหลด ไม่ใช่ในเทมเพลต เพราะ ng-select ใช้ค่านี้ทั้ง "แสดง"
@@ -142,7 +142,7 @@ export class VideoSearchComponent implements OnInit {
     this.dataService.video_seller_options().subscribe((res: any) => {
       const rows = (res && res.status === 'success') ? (res.data || []) : [];
       this.sellerOptions = rows.map((o: any) => {
-        // บางร้านไม่มีชื่อในทะเบียน (7 จาก 13 ณ 12 ก.ย. 2026) ให้เหลือแค่รหัส
+        // ร้านใน master ส่วนใหญ่มีชื่อ แต่ถ้าชื่อว่างให้เหลือแค่รหัส
         // ไม่ทิ้ง " - " ค้างไว้ให้ดูเหมือนข้อมูลขาด
         const name = String(o.FTShop_name_th || '').trim();
         return { ...o, LABEL: name ? `${o.FTShop_id} - ${name}` : String(o.FTShop_id) };
