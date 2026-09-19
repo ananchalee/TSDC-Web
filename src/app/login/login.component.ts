@@ -2,7 +2,6 @@ import { Component, OnInit,ElementRef, ViewChild  } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 
 import { DataService } from '../services/index';
-import { environment } from 'src/environments/environment';
 
 @Component({
   selector: 'app-login',
@@ -12,8 +11,7 @@ import { environment } from 'src/environments/environment';
 export class LoginComponent implements OnInit {
 
   @ViewChild('submit') submit!: ElementRef;
-  appVersion = environment.version;
-  
+
   public datalogin: any;
   public showmenu = true;
   loading = false;

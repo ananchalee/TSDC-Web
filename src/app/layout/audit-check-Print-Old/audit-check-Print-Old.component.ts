@@ -4,6 +4,7 @@ import { DataService } from '../../services/index'
 import Swal from 'sweetalert2';
 import { Subscription } from 'rxjs';
 import { Router, ActivatedRoute } from '@angular/router';
+//import { NgxQrcodeModule } from 'angularx-qrcode';
 
 declare var jQuery: any;
 
@@ -27,8 +28,16 @@ export class AuditCheckPrintOldComponent implements OnInit {
   //@ViewChild('myModalList') myModalList!: ElementRef;
   @ViewChild('myModalP') myModalP!: ElementRef;
 
-  isLoading = false;
+  // @NgModule({
+  //   imports: [
+  //     NgxQrcodeModule
+  //   ]
+  // })
   
+
+  isLoading = false;
+  isCoverSheetRunning = false; 
+
   pageactive: any;
 
   dtOptions: any = {};
@@ -104,15 +113,19 @@ export class AuditCheckPrintOldComponent implements OnInit {
   constructor(
     private dataService: DataService,
     private router: Router,
+    private route: ActivatedRoute,
     //private busy: Subscription,
   ) { }
 
   ngOnInit(): void {
-    
+    const d = this.route.snapshot.data;
     var a = Array();
     let array = {
       pagename: 'เช็คสินค้า&ปริ้น(แบบเก่า)',
       active: 'Audit_Offline',
+      menubar: d['menubar'],
+      version: d['version'],
+      lastupdate: d['lastupdate'],
     }
     a.push(array)
     this.pageactive = a
@@ -633,11 +646,18 @@ export class AuditCheckPrintOldComponent implements OnInit {
     })
   }
 
+  /* คนเดิมที่โต๊ะเดิม ไม่ต้องบันทึกซ้ำทุกกล่อง — บันทึกเฉพาะตอนเปลี่ยนคน
+     เดิมยิงทุกครั้งที่สแกน CONTAINER วันหนึ่งได้ 16,000 แถวจากคนจริงแค่ 176 ชุด
+     ติดวันที่ไว้ด้วย เผื่อเปิดหน้าค้างข้ามวัน วันใหม่จะได้บันทึกใหม่ */
+  lastCheckedInKey = '';
+
   tablecheck_user() {
     /*  const user = JSON.parse(localStorage.getItem('currentUser') || '');
      this.input.USER_CHECK = user.WORKER_ID;
      this.input.TABLE_CHECK = this.input.USER_CHECK */
     this.input.WORKING_TYPE = 'Check';
+    const key = this.input.PIN_CODE + '|' + new Date().toDateString();
+    if (this.input.PIN_CODE && key === this.lastCheckedInKey) { return; }
     this.dataService.insert_user_tablecheck2(this.input).subscribe(res => {
       ////console.log(res);
       this.user = res
@@ -651,6 +671,7 @@ export class AuditCheckPrintOldComponent implements OnInit {
           timer: 2500
         });
       } else if (this.user.status === 'success') {
+        this.lastCheckedInKey = key;
         this.LOAD_USERTABLECHECK();
       }
 
@@ -1710,14 +1731,17 @@ summaryConCheckPrint() {
 }
 
 coverSheet2() { //// ใบปะกล่อง
-  
+
+  if (this.isCoverSheetRunning) { return; } //// กำลังทำงานอยู่ ไม่ให้กดซ้ำ
+
   this.input.listbox = this.totalbox;
   console.log(this.input);
   if(this.input.listbox.length > 0){
 
     //this.pagePrintCoverSheet = false;
     //this.pagePrint = false;
-    this.isLoading = true; 
+    this.isCoverSheetRunning = true;
+    this.isLoading = true;
 
     this.dataService.UPDATE_CARTON_PRINT(this.input).subscribe(res => {
       var data: any = res
@@ -1729,9 +1753,11 @@ coverSheet2() { //// ใบปะกล่อง
           showConfirmButton: false,
           timer: 2500
         });
+        this.endCoverSheet();
       }else{
         this.dataService.loaddataToOut(this.input).subscribe(res => {
           var data: any = res
+          this.input.BILL_NO = data.data[0].BILL_NO;
           if (data.status === 'error') {
             Swal.fire({
               icon: 'error',
@@ -1739,6 +1765,7 @@ coverSheet2() { //// ใบปะกล่อง
               showConfirmButton: false,
               timer: 2500
             });
+            this.endCoverSheet();
           }else if (data.status === 'null') {
             Swal.fire({
               icon: 'error',
@@ -1750,13 +1777,14 @@ coverSheet2() { //// ใบปะกล่อง
             this.input.BILL_N8_BLH = '';
             this.input.CHUTENO = '';
             this.input.BOX_QTY = '';
-    
+            this.endCoverSheet();
+
           }else{
-  
+
            this.busy = this.dataService.tracking_running_Old2(this.input).subscribe(res => {
             var datatrack: any = res
             console.log(datatrack);
-  
+
             if(datatrack.status == 'success'){
               var a = Array();
               for (var i = 0; i < datatrack.data.length; i++) {
@@ -1803,13 +1831,14 @@ coverSheet2() { //// ใบปะกล่อง
                 timer: 5500
               });
             }
+            this.endCoverSheet();
             jQuery(this.myModalBOX.nativeElement).modal('hide');
-            setTimeout(() => { this.focusInput_item(); }, 1500) 
-            });
+            setTimeout(() => { this.focusInput_item(); }, 1500)
+            }, err => { console.log(err); this.endCoverSheet(); });
           }
-        });
+        }, err => { console.log(err); this.endCoverSheet(); });
       }
-    });
+    }, err => { console.log(err); this.endCoverSheet(); });
   }else{
     Swal.fire({
       icon: 'warning',
@@ -1818,6 +1847,12 @@ coverSheet2() { //// ใบปะกล่อง
       timer: 2500
     });
   }
+}
+
+endCoverSheet() {
+  this.isLoading = false;
+  //// หน่วง 800ms ก่อนปลดล็อกปุ่ม กันนิ้วเด้ง/กดซ้ำบนมือถือ กรณี API ตอบเร็วมาก
+  setTimeout(() => { this.isCoverSheetRunning = false; }, 800);
 }
 
 
@@ -1941,4 +1976,19 @@ coverSheet2() { //// ใบปะกล่อง
 
   }
 
+  getLineWidth(value: string): number {
+    if (value.length <= 13) return 2.3;
+    else return 2;
+  }
+  
+
+  getLineWidth2(value: string): number {
+    if (value.length <= 16) return 2;
+    else return 1.6;
+  }
+
+  showQr(billNo: string): boolean {
+    return !!billNo && billNo.length <= 13;
+  }
+  
 }

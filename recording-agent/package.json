@@ -1,0 +1,14 @@
+{
+  "name": "tsdc-recording-agent",
+  "version": "1.0.0",
+  "description": "Local webcam recording agent for TSDC audit-check desk (WebSocket + ffmpeg dshow)",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "devices": "node src/list-devices.js"
+  },
+  "private": true,
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}

@@ -13,8 +13,11 @@
             <div class="col-sm-6">
               <a class="m-0">
                 <ol class="breadcrumb">
-                  <li class="breadcrumb-item active" type="button" (click)="scanTrack();">แก้ไขขนาดกล่อง <i
-                      class="nav-icon fas fa-edit nav-icon"></i></li>
+                  <li class="breadcrumb-item active" type="button" (click)="scanTrack();">
+                    {{pageactive && pageactive[0]?.menubar || 'แก้ไขขนาดกล่อง'}}
+                    <small *ngIf="pageactive && pageactive[0]?.version" style="font-size:0.7rem; opacity:0.75;">v{{pageactive[0].version}} | {{pageactive[0].lastupdate}}</small>
+                    <i class="nav-icon fas fa-edit nav-icon"></i>
+                  </li>
                 </ol>
               </a>
             </div>

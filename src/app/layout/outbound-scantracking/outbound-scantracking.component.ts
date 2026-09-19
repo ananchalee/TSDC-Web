@@ -1,6 +1,7 @@
 import { Component, OnInit ,ElementRef, ViewChild} from '@angular/core';
 import { DataService } from '../../services/index';
-import { Subscription,Subject } from 'rxjs';
+import { Subscription,Subject, forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import Swal from 'sweetalert2';
 import { DataTableDirective } from 'angular-datatables';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -13,7 +14,7 @@ import { Router, ActivatedRoute } from '@angular/router';
 export class OutboundScantrackingComponent implements OnInit {
   @ViewChild('inputTrack') inputTrack!: ElementRef;
   @ViewChild('inputPallet') inputPallet!: ElementRef;
-  @ViewChild('inputPin') inputPin!: ElementRef; 
+  @ViewChild('inputPin') inputPin!: ElementRef;
 
   @ViewChild(DataTableDirective, { static: false })
   dtElement!: DataTableDirective;
@@ -45,7 +46,9 @@ export class OutboundScantrackingComponent implements OnInit {
   item_id: any = {};
 
   transport: any = {};
-  
+  transportNames: string[] = [];
+  selectedTransport: string | null = null;
+
   checkscan: any = [];
   
   public pagePrint = true;
@@ -58,16 +61,27 @@ export class OutboundScantrackingComponent implements OnInit {
 
   tracking_page = false;
 
+  activeTab = 'scan';
+  report_list: any[] = [];
+  report_input: any = {};
+  report_isLoading = false;
+  report_allChecked = false;
+
   constructor(
     private dataService: DataService,
     private router: Router,
+    private route: ActivatedRoute,
   ) { }
 
   ngOnInit(): void {
+    const d = this.route.snapshot.data;
     var page = Array();
     let array = {
       pagename: 'Outbound-Sacn-Tracking',
       active: 'Outbound',
+      menubar: d['menubar'],
+      version: d['version'],
+      lastupdate: d['lastupdate'],
     }
     page.push(array)
     this.pageactive = page;
@@ -131,8 +145,8 @@ export class OutboundScantrackingComponent implements OnInit {
 
   Get_TRANSPORTATION_NAME(){
     var resp = false;
-    this.dataService.Get_TRANSPORTATION_NAME().subscribe(res => {
-      if (this.user.status === 'error') {
+    this.dataService.Get_TRANSPORTATION_NAME().subscribe((res: any) => {
+      if (res && res.status === 'error') {
         console.log(res)
         Swal.fire({
           icon: 'error',
@@ -141,7 +155,7 @@ export class OutboundScantrackingComponent implements OnInit {
           showConfirmButton: false,
           timer: 2500
         });
-      }else if (this.user.status === 'NULL') {
+      }else if (res && res.status === 'NULL') {
         Swal.fire({
           icon: 'warning',
           title: 'ไม่พบข้อมูล TRANSPORTATION_NAME  !',
@@ -151,6 +165,7 @@ export class OutboundScantrackingComponent implements OnInit {
         });
       }else{
         this.transport = res;
+        this.buildTransportNames();
         resp = true;
       }
     })
@@ -158,26 +173,47 @@ export class OutboundScantrackingComponent implements OnInit {
     return resp;
   }
 
+  // สร้างรายชื่อขนส่งแบบไม่ซ้ำ (case-insensitive) สำหรับให้ผู้ใช้คลิกเลือก
+  buildTransportNames() {
+    const seen = new Set<string>();
+    const names: string[] = [];
+    const list = (this.transport && this.transport.data) ? this.transport.data : [];
+    for (const t of list) {
+      const name = (t.TRANSPORT_NAME || '').trim();
+      if (!name) { continue; }
+      const key = name.toUpperCase();
+      if (seen.has(key)) { continue; }
+      seen.add(key);
+      names.push(name);
+    }
+    names.sort((a, b) => a.localeCompare(b));
+    this.transportNames = names;
+  }
+
+  // ผู้ใช้คลิกเลือกขนส่งก่อนสแกน แล้วโฟกัสไปช่อง Pallet
+  selectTransport(name: string) {
+    // 1 Pallet = 1 ขนส่ง: ถ้า Pallet ปัจจุบันมีรายการอยู่แล้ว ห้ามเปลี่ยนขนส่ง (กันปนกัน)
+    if (this.selectedTransport && name !== this.selectedTransport
+        && this.showdataPage && this.data && this.data.length > 0) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Pallet นี้มีรายการอยู่แล้ว',
+        html: 'Pallet <b>' + this.input.Pallet_NO + '</b> มี ' + this.data.length + ' รายการ (' + this.selectedTransport + ')<br>' +
+              'ถ้าต้องการเปลี่ยนขนส่ง กรุณาใช้ <b>Pallet ใหม่</b> หรือ <b>ลบรายการใน Pallet นี้ออกก่อน</b> เพื่อไม่ให้ขนส่งปนกัน',
+        showConfirmButton: true
+      });
+      this.playAudioError();
+      return;
+    }
+    this.selectedTransport = name;
+    setTimeout(() => { this.inputPallet?.nativeElement.focus(); }, 200);
+  }
+
   // Function to get the transport name based on the input string
- getTransportName(input : string) {
-  console.log(this.transport);
-  if(this.transport.data == null){
-    var status_ =  this.Get_TRANSPORTATION_NAME()
-
-    if(status_){
-
-      // Loop through the data to find a match
-      for (let i = 0; i < this.transport.data.length; i++) {
-        // Extract the first `TRANSPORT_LEN` characters from the input
-        const transportCodePrefix = input.substring(0, this.transport.data[i].TRANSPORT_LEN);
-        // Check if the transport code prefix matches
-        if (transportCodePrefix.toUpperCase() == this.transport.data[i].TRANSPORT_CODE.toUpperCase()) {
-          return this.transport.data[i].TRANSPORT_NAME;
-          
-        }
-      }
-
-    }else{
+  // ใช้ longest-prefix match: เลือก code ที่ยาว/เจาะจงที่สุด (แก้ปัญหา TH2/TH7 ถูกจับเป็น TH)
+  getTransportName(input: string) {
+    if (!this.transport || this.transport.data == null) {
+      this.Get_TRANSPORTATION_NAME();
       Swal.fire({
         icon: 'warning',
         title: 'Load Master Unsuccress!',
@@ -185,22 +221,24 @@ export class OutboundScantrackingComponent implements OnInit {
         showConfirmButton: false,
         timer: 2500
       });
+      return null;
     }
-   
-  }else{
 
-      // Loop through the data to find a match
-      for (let i = 0; i < this.transport.data.length; i++) {
-        // Extract the first `TRANSPORT_LEN` characters from the input
-        const transportCodePrefix = input.substring(0, this.transport.data[i].TRANSPORT_LEN);
-        // Check if the transport code prefix matches
-        if (transportCodePrefix.toUpperCase() == this.transport.data[i].TRANSPORT_CODE.toUpperCase()) {
-          return this.transport.data[i].TRANSPORT_NAME;
-          
+    const code = (input || '').toUpperCase();
+    let best: any = null;
+
+    for (const t of this.transport.data) {
+      const transportCode = (t.TRANSPORT_CODE || '').toUpperCase();
+      const prefix = code.substring(0, t.TRANSPORT_LEN);
+      // prefix ต้องตรงกับ code และความยาวเท่ากับ code จริง (กันข้อมูล LEN เพี้ยน เช่น BFO/TIGER LEN=10)
+      if (prefix === transportCode && prefix.length === transportCode.length) {
+        if (best == null || t.TRANSPORT_LEN > best.TRANSPORT_LEN) {
+          best = t;
         }
       }
-  }
-  return null;  // Return null if no match is found
+    }
+
+    return best ? best.TRANSPORT_NAME : null;
   }
 
   tablecheck_user() {
@@ -234,18 +272,237 @@ export class OutboundScantrackingComponent implements OnInit {
   }
 
   getserverdate(){
-     
+
     this.dataService.getServerDate().subscribe(resp => {
       if (resp && resp.date) {
-        const currentDate = new Date(resp.date);//เวลาserver
+        const currentDate = new Date(resp.date);
         this.input.currentDateString = currentDate.toISOString().split('T')[0];
         this.input.currentDateString_status = "server"
+        this.report_input.report_date = this.input.currentDateString;
       }else{
-        const currentDate = new Date();//เวลาเครื่อง
+        const currentDate = new Date();
         this.input.currentDateString = currentDate.toISOString().split('T')[0];
         this.input.currentDateString_status = "client"
+        this.report_input.report_date = this.input.currentDateString;
       }
     });
+  }
+
+  switchTab(tab: string) {
+    this.activeTab = tab;
+  }
+
+  // key ที่ใช้กันซ้ำ/อ้างอิงรายการในลิสต์
+  reportKey(item: any): string {
+    return (item?.PALLET_NO ?? '') + '|' + (item?.BILL_NO ?? '');
+  }
+
+  loadReport() {
+    if (!this.report_input.Pallet_NO && !this.report_input.Tracking_No) {
+      Swal.fire({
+        icon: 'warning', title: 'กรุณาระบุ Pallet หรือ Tracking'
+        , showConfirmButton: false, timer: 2000
+      });
+      return;
+    }
+    this.report_isLoading = true;
+    this.dataService.report_pallet_outbound(this.report_input).subscribe(res => {
+      const data: any = res;
+      this.report_isLoading = false;
+      // ได้ response แล้ว -> เคลียช่อง Tracking เพื่อพร้อมสแกนรายการถัดไป
+      this.report_input.Tracking_No = '';
+      if (data.status === 'error') {
+        Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', showConfirmButton: false, timer: 2500 });
+        this.playAudioError();
+      } else if (data.status === 'null' || !data.data || data.data.length === 0) {
+        // ไม่พบ -> แจ้งเตือน แต่ไม่ล้างรายการอื่น ๆ ที่สะสมไว้
+        Swal.fire({ icon: 'warning', title: 'ไม่พบข้อมูล', showConfirmButton: false, timer: 2000 });
+        this.playAudioError();
+      } else {
+        // สะสมรายการที่ค้นหาได้ (กันซ้ำด้วย key = Pallet|Tracking)
+        let added = 0;
+        let dup = 0;
+        for (const row of data.data) {
+          const exists = this.report_list.some(x => this.reportKey(x) === this.reportKey(row));
+          if (exists) { dup++; continue; }
+          row._checked = false;
+          this.report_list.unshift(row);
+          added++;
+        }
+        this.syncReportAllChecked();
+        if (added === 0 && dup > 0) {
+          Swal.fire({ icon: 'info', title: 'รายการนี้อยู่ในลิสต์แล้ว', showConfirmButton: false, timer: 1800 });
+        }
+      }
+    });
+  }
+
+  // จำนวนรายการที่เลือกไว้
+  get reportSelectedCount(): number {
+    return this.report_list.filter(i => i._checked).length;
+  }
+
+  // จำนวนรายการที่ลบได้ (ขนส่งยังไม่เซ็นรับ)
+  get reportDeletableCount(): number {
+    return this.report_list.filter(i => i.STATUS_DELIVERY !== 'S').length;
+  }
+
+  // ติ๊กทั้งหมด / ยกเลิกติ๊กทั้งหมด (เฉพาะรายการที่ลบได้)
+  toggleAllReport() {
+    this.report_list.forEach(i => {
+      if (i.STATUS_DELIVERY !== 'S') { i._checked = this.report_allChecked; }
+    });
+  }
+
+  // ปรับสถานะ check all ให้ตรงกับรายการปัจจุบัน
+  syncReportAllChecked() {
+    const deletable = this.report_list.filter(i => i.STATUS_DELIVERY !== 'S');
+    this.report_allChecked = deletable.length > 0 && deletable.every(i => i._checked);
+  }
+
+  // ปุ่มเคลียรายการที่ค้นหาออกทั้งหมด
+  clearReportList() {
+    if (this.report_list.length === 0) { return; }
+    Swal.fire({
+      title: 'ล้างรายการที่ค้นหาทั้งหมด?',
+      html: 'มีทั้งหมด ' + this.report_list.length + ' รายการ',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#6c757d',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'ล้างรายการ',
+      cancelButtonText: 'ยกเลิก'
+    }).then(result => {
+      if (result.value) {
+        this.report_list = [];
+        this.report_allChecked = false;
+      }
+    });
+  }
+
+  // ลบรายการที่ติ๊กไว้พร้อมกันในครั้งเดียว
+  deleteSelectedReport() {
+    const selected = this.report_list.filter(i => i._checked && i.STATUS_DELIVERY !== 'S');
+    if (selected.length === 0) {
+      Swal.fire({ icon: 'warning', title: 'กรุณาเลือกรายการที่จะลบ', showConfirmButton: false, timer: 1800 });
+      return;
+    }
+
+    const listHtml = selected
+      .slice(0, 10)
+      .map(i => i.BILL_NO + ' (Pallet ' + i.PALLET_NO + ')')
+      .join('<br>') + (selected.length > 10 ? '<br>...' : '');
+
+    Swal.fire({
+      title: 'ยืนยันลบ ' + selected.length + ' รายการ?',
+      html: 'รายการที่จะลบ:<br>' + listHtml,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'ลบ ' + selected.length + ' รายการ',
+      cancelButtonText: 'ยกเลิก'
+    }).then(result => {
+      if (!result.value) { return; }
+
+      this.report_isLoading = true;
+      const calls = selected.map(item =>
+        this.dataService.delete_report_pallet_outbound({
+          Pallet_NO: item.PALLET_NO,
+          BILL_NO: item.BILL_NO,
+          report_date: item.scandate
+        }).pipe(catchError(() => of({ status: 'error' })))
+      );
+
+      forkJoin(calls).subscribe((results: any[]) => {
+        this.report_isLoading = false;
+        let success = 0;
+        let fail = 0;
+        const deletedKeys = new Set<string>();
+
+        results.forEach((r: any, idx: number) => {
+          if (r && r.status !== 'error') {
+            success++;
+            deletedKeys.add(this.reportKey(selected[idx]));
+          } else {
+            fail++;
+          }
+        });
+
+        // เอารายการที่ลบสำเร็จออกจากลิสต์
+        this.report_list = this.report_list.filter(i => !deletedKeys.has(this.reportKey(i)));
+        this.syncReportAllChecked();
+
+        if (fail === 0) {
+          Swal.fire({ icon: 'success', title: 'ลบสำเร็จ ' + success + ' รายการ', showConfirmButton: false, timer: 1800 });
+        } else {
+          Swal.fire({
+            icon: 'warning',
+            title: 'ลบเสร็จสิ้น',
+            html: 'สำเร็จ ' + success + ' รายการ<br>ไม่สำเร็จ ' + fail + ' รายการ',
+            showConfirmButton: true
+          });
+        }
+      });
+    });
+  }
+
+  deleteReportItem(item: any) {
+    Swal.fire({
+      title: 'ต้องการลบ ' + item.BILL_NO + ' ใช่หรือไม่?',
+      html: 'Pallet: ' + item.PALLET_NO + ' | วันที่: ' + item.scandate,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'ลบ',
+      cancelButtonText: 'ยกเลิก'
+    }).then(result => {
+      if (result.value) {
+        const payload = {
+          Pallet_NO: item.PALLET_NO,
+          BILL_NO: item.BILL_NO,
+          report_date: item.scandate
+        };
+        this.dataService.delete_report_pallet_outbound(payload).subscribe(res => {
+          const data: any = res;
+          if (data.status === 'error') {
+            Swal.fire({ icon: 'error', title: 'ลบไม่สำเร็จ', showConfirmButton: false, timer: 2500 });
+          } else {
+            // ลบสำเร็จ -> เอาออกจากลิสต์ที่สะสมไว้โดยตรง (ไม่ค้นหาใหม่)
+            this.report_list = this.report_list.filter(i => this.reportKey(i) !== this.reportKey(item));
+            this.syncReportAllChecked();
+            Swal.fire({ icon: 'success', title: 'ลบสำเร็จ', showConfirmButton: false, timer: 1500 });
+          }
+        });
+      }
+    });
+  }
+
+  exportToExcel() {
+    const headers = ['ลำดับ', 'Pallet', 'Tracking', 'Order', 'ขนส่ง', 'เวลาที่ Scan', 'User', 'Delivery No', 'Driver', 'สถานะ'];
+    const rows = this.report_list.map(item => [
+      item.ID,
+      `="${item.PALLET_NO}"`,
+      item.BILL_NO,
+      item.ORDER_NO,
+      item.SHIP_PROVIDER_OOD,
+      item.scandate,
+      item.PIN_ID,
+      item.DELIVERY_NO || '',
+      item.DRIVER_NAME || '',
+      item.STATUS_DELIVERY === 'S' ? 'ขนส่งเซ็นรับแล้ว' : 'ขนส่งยังไม่รับ'
+    ]);
+    const csvContent = [headers, ...rows]
+      .map(row => row.map(cell => `"${String(cell == null ? '' : cell).replace(/"/g, '""')}"`).join(','))
+      .join('\n');
+    const blob = new Blob(['﻿' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `report_pallet_${this.report_input.Pallet_NO}_${this.report_input.report_date}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   model_1(){
@@ -424,6 +681,18 @@ export class OutboundScantrackingComponent implements OnInit {
       var transport_name =  this.getTransportName(this.input.TRACK_CODE)
 
       if(transport_name != null){
+        // ตรวจสอบว่าขนส่งของ Track ตรงกับที่เลือกไว้หรือไม่ (prefix ต้องตรงกับขนส่งที่เลือก)
+        if (this.selectedTransport && transport_name.toString().trim().toUpperCase() !== this.selectedTransport.trim().toUpperCase()) {
+          Swal.fire({
+            icon: 'warning',
+            title: 'ขนส่งไม่ตรงกับที่เลือก',
+            html: 'เลือกไว้: <b>' + this.selectedTransport + '</b><br>Track นี้เป็น: <b>' + transport_name + '</b><br>' + this.input.TRACK_CODE,
+            showConfirmButton: true
+          });
+          this.playAudioError();
+          this.input.TRACK_CODE = '';
+          return;
+        }
         this.input.SHIP_PROVIDER_OOD = transport_name
         this.input.PIN_ID = this.input.USER_NAME
         this.input.INTERNAL_ID = this.input.PIN_CODE
@@ -445,7 +714,7 @@ export class OutboundScantrackingComponent implements OnInit {
               Swal.fire({
                 icon: 'warning',
                 title: 'Order Cancel',
-                html:'Order : ' + this.res_datas.data[0].ORDER_NO + '/'+this.res_datas.data[0].COMPANY +'/'+this.res_datas.data[0].CHANNEL+'/'+this.res_datas.data[0].SELLER_NO,
+                html:'Order' + this.res_datas.data[0].ORDER_NO + '/'+this.res_datas.data[0].COMPANY +'/'+this.res_datas.data[0].CHANNEL+'/'+this.res_datas.data[0].SELLER_NO,
                 showConfirmButton: false,
                 timer: 3000
               });
@@ -455,7 +724,7 @@ export class OutboundScantrackingComponent implements OnInit {
               Swal.fire({
                 icon: 'warning',
                 title: 'Order RePack',
-                html:'Order : ' + this.res_datas.data[0].ORDER_NO + '/'+this.res_datas.data[0].COMPANY +'/'+this.res_datas.data[0].CHANNEL+'/'+this.res_datas.data[0].SELLER_NO,
+                html:'Order' + this.res_datas.data[0].ORDER_NO + '/'+this.res_datas.data[0].COMPANY +'/'+this.res_datas.data[0].CHANNEL+'/'+this.res_datas.data[0].SELLER_NO,
                 showConfirmButton: false,
                 timer: 3000
               });
@@ -662,6 +931,18 @@ export class OutboundScantrackingComponent implements OnInit {
       var transport_name =  this.getTransportName(this.input.TRACK_CODE)
 
       if(transport_name != null){
+        // ตรวจสอบว่าขนส่งของ Track ตรงกับที่เลือกไว้หรือไม่ (prefix ต้องตรงกับขนส่งที่เลือก)
+        if (this.selectedTransport && transport_name.toString().trim().toUpperCase() !== this.selectedTransport.trim().toUpperCase()) {
+          Swal.fire({
+            icon: 'warning',
+            title: 'ขนส่งไม่ตรงกับที่เลือก',
+            html: 'เลือกไว้: <b>' + this.selectedTransport + '</b><br>Track นี้เป็น: <b>' + transport_name + '</b><br>' + this.input.TRACK_CODE,
+            showConfirmButton: true
+          });
+          this.playAudioError();
+          this.input.TRACK_CODE = '';
+          return;
+        }
         this.input.SHIP_PROVIDER_OOD = transport_name
         this.input.PIN_ID = this.input.USER_NAME
         this.input.INTERNAL_ID = this.input.PIN_CODE

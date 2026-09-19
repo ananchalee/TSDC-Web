@@ -1,10 +1,10 @@
-import { Component, OnInit, ElementRef, ViewChild ,OnDestroy } from '@angular/core';
-//import {MatButton} from '@angular/material/button';
-import { DataService } from '../../services/index'
+import { Component, OnInit, ElementRef, ViewChild ,OnDestroy, NgZone } from '@angular/core';
+import { DataService,TimeService } from '../../services/index'
 import Swal from 'sweetalert2';
 import { Subscription } from 'rxjs';
 import { Router, ActivatedRoute } from '@angular/router';
-import { HttpClient } from '@angular/common/http'; 
+import { HttpClient } from '@angular/common/http';
+import { NgSelectComponent } from '@ng-select/ng-select';
 import { VideoRecordingService } from '../../services/video-recording.service';
 
 declare var jQuery: any;
@@ -23,19 +23,29 @@ interface TrackingItem {
   templateUrl: './audit-check-tracking.component.html',
   styleUrls: ['./audit-check-tracking.component.scss']
 })
-export class AuditCheckTrackingComponent implements OnInit {
+export class AuditCheckTrackingComponent implements OnInit, OnDestroy {
   busy!: Subscription;
   @ViewChild('myModalBOX') myModalBOX!: ElementRef;
   @ViewChild('myModalSt') myModalSt!: ElementRef;
+  @ViewChild('myModalZonePrint') myModalZonePrint!: ElementRef;
 
   @ViewChild('inputcontainer') inputcontainer!: ElementRef;
   @ViewChild('inputItem') inputItem!: ElementRef;
   @ViewChild('inputbox') inputbox!: ElementRef;
   @ViewChild('inputITEMBARCODE') inputITEMBARCODE!: ElementRef;
 
-  @ViewChild('Btn_printTrack') Btn_printTrack!: ElementRef; 
+  @ViewChild('Btn_printTrack') Btn_printTrack!: ElementRef;
+  @ViewChild('okBtn') okBtn!: ElementRef<HTMLButtonElement>;
+  @ViewChild('zoneSelect') zoneSelect!: NgSelectComponent;
 
-  
+  zones = ['Zone F1A', 'Zone F1B', 'Zone 2 CoolRoom', 'Zone 3A', 'Zone 3B', 'Zone 3C'];
+
+  // ธงกันไม่ให้ interval ที่ focus CONTAINER_ID แย่ง focus ตอน zone modal เปิดอยู่
+  isZoneModalOpen = false;
+
+  // อนุญาตให้ปิด modal Zone ได้เฉพาะตอนพิมพ์ใบ Cancel สำเร็จเท่านั้น (บังคับ flow: คลิกพื้นหลัง/ESC ปิดไม่ได้)
+  allowZoneModalClose = false;
+
   isLoading = false;
   pageactive: any;
 
@@ -75,9 +85,10 @@ export class AuditCheckTrackingComponent implements OnInit {
   private toastTimerId: any = null;
   private currentToastMessage: string = '';
   private recordingToastTimeout: any = null;
-  private recordingStatusSubscription!: Subscription; 
-  private connectionStatusSubscription!: Subscription; 
-  //private backendApiUrl = 'http://localhost:3000/api'; 
+  private recordingStatusSubscription!: Subscription;
+  private connectionStatusSubscription!: Subscription;
+  private cameraStatusSubscription!: Subscription;
+  private lastRecordingStatus: any = null;
   
   showRecordingStarted(fileName: string) {
   const Toast = Swal.mixin({
@@ -147,6 +158,7 @@ showRecordingFinished(fileName: string) {
   input: any = {};
   btn: any = {};
   dataprint_LIST_ITEM: any = [];
+  printTimeShow: any = '';   
   interval: any;
   user: any;
   box_size: any = [];
@@ -166,18 +178,23 @@ showRecordingFinished(fileName: string) {
 
   constructor(
     private dataService: DataService,
+    private timeService: TimeService,
     private router: Router,
     private http: HttpClient, // Inject HttpClient
+    private route: ActivatedRoute,
+    private zone: NgZone,
     private videoRecordingService: VideoRecordingService,
-    //private busy: Subscription,
   ) { }
 
   ngOnInit(): void {
-
+    const d = this.route.snapshot.data;
     var page = Array();
     let array = {
-      pagename: 'Check Order Tracking',
+      pagename: 'Check Order Print Track',
       active: 'Audit&Check',
+      menubar: d['menubar'],
+      version: d['version'],
+      lastupdate: d['lastupdate'],
     }
     page.push(array)
     this.pageactive = page;
@@ -186,7 +203,7 @@ showRecordingFinished(fileName: string) {
     this.LOAD_USERCheckin();
     this.loadVas()
     setTimeout(() => { this.focusInput_con() }, 200)
-    this.interval = setInterval(() => this.focusInput_item(), 2000);
+    this.setFocusInterval(() => this.focusInput_item(), 2000);
     this.btn.Box = true;
     this.btn.Re = true;
 
@@ -197,58 +214,68 @@ showRecordingFinished(fileName: string) {
     this.input.TRACKING = null;
 
    
-    this.connectionStatusSubscription = this.videoRecordingService.getConnectionStatus().subscribe(isConnected => { 
-    //console.log('Video Recording WebSocket Connected Status:', isConnected); 
-  });
+    // ngOnDestroy รอบก่อนปิด socket ทิ้งไปแล้ว (service เป็น singleton ไม่ได้ถูกสร้างใหม่)
+    // ต้องสั่งต่อใหม่ทุกครั้งที่เข้าหน้านี้ ไม่งั้นเปิดหน้าเช็คซ้ำจะไม่มีไฟสถานะขึ้นเลย
+    this.videoRecordingService.ensureConnected();
+
+    this.connectionStatusSubscription = this.videoRecordingService.getConnectionStatus().subscribe(isConnected => {
+      this.videoAgentConnected = isConnected;
+      // จำไว้ว่าเครื่องนี้เคยต่อ agent ได้ = เป็นเครื่องที่ลง agent ไว้แล้ว
+      // เครื่องที่ยังไม่ได้ลงจะไม่เคยเป็น true จึงซ่อนป้ายไปเลย ไม่กวนระหว่างทยอย deploy
+      if (isConnected) {
+        this.videoAgentEverConnected = true;
+      }
+    });
+
+    // สถานะกล้องแยกมาจาก agent ต่างหาก — ต่อ agent ติดไม่ได้แปลว่าอัดได้
+    this.cameraStatusSubscription = this.videoRecordingService.getCameraStatus().subscribe((camera: any) => {
+      this.videoCameraReady = camera.ready;
+      this.videoCameraMessage = camera.message || '';
+    });
+
     this.getRecordingStatus();
   }
 
 getRecordingStatus(){
     this.recordingStatusSubscription = this.videoRecordingService.getRecordingStatus().subscribe((status: any) => {
-  //console.log('✨ **AuditCheckComponent received recording status:**', status);
+  this.lastRecordingStatus = status;
+  this.videoRecordingNow = (status.status === 'recording' || status.status === 'segment');
 
-  // 🔔 เคลียร์ setTimeout ที่รอดำเนินการเสมอ เมื่อได้รับสถานะใหม่
   if (this.recordingToastTimeout) {
     clearTimeout(this.recordingToastTimeout);
     this.recordingToastTimeout = null;
   }
 
   if (status.status === 'recording') {
-    const orderCode = status.orderCode || 'ไม่ระบุออเดอร์'; // ใช้ข้อความที่ชัดเจนขึ้น
-    const fileName = status.fileName || 'ไม่ระบุชื่อไฟล์';
-    const startedAt = status.startedAtLocal || 'ไม่ระบุเวลา'; // ดึงเวลาเริ่มต้น
+    // ไม่เด้ง toast ระหว่างอัดแล้ว — ใช้ไฟสถานะมุมขวาบนแทน เพราะ toast บังหน้าจอตอนทำงาน
+    // เวลาเริ่มอัดไปโชว์ในป้ายนั้นแทน
+    this.videoRecordingStartedAt = this.shortTime(status.startedAtLocal);
+    this.startElapsedClock(status.elapsedSeconds || 0);
 
-        //console.log('🚀 Status is "recording", scheduling toast to show in 3 seconds.');
+    // เขียนแถวตั้งต้นตั้งแต่เริ่มอัด (FNStaUpload = 2) เพื่อให้มีร่องรอยแม้เครื่องดับกลางทาง
+    this.saveVideoToDb(status);
+    this.videoErrorPrompted = false;
 
-    // ⏰ หน่วงเวลาการแสดง Toast 3 วินาที
-    this.recordingToastTimeout = setTimeout(() => {
-    // เพิ่มเงื่อนไขการตรวจสอบ Popup
-    if (Swal.isVisible()) {
-        //console.log('A popup is visible, delaying recording toast...');
-        // ถ้ามี popup ให้ตั้งเวลาหน่วงใหม่
-        this.recordingToastTimeout = setTimeout(() => {
-            this.showRecordingToast(`
-                <br>
-                กำลังบันทึกวิดีโอ...📸🎞️ <br>
-                START : ${startedAt}
-            `);
-            this.recordingToastTimeout = null;
-        }, 8000); // รออีก 8 วินาที แล้วลองแสดงใหม่
-        return; // หยุดการทำงานของโค้ดส่วนนี้
-    }
-
-    // ถ้าไม่มี popup ให้แสดง toast ทันที
-    this.showRecordingToast(`
-        <br>
-        กำลังบันทึกวิดีโอ...📸🎞️ <br>
-        START : ${startedAt}
-    `);
-    this.recordingToastTimeout = null;
-}, 3500);
+  } else if (status.status === 'segment') {
+    // ffmpeg ตัดไฟล์ใหม่ = ไฟล์ก่อนหน้าปิดสมบูรณ์แล้ว
+    // ปิดแถวเดิมเป็น 0 (พร้อมอัปโหลด) และเปิดแถวใหม่เป็น 2 โดยไม่รอให้ทั้งออเดอร์จบ
+    this.saveVideoToDb(status);
 
   } else if (status.status === 'stopped') {
-    //console.log('🛑 Status is "stopped", attempting to close toast and show success.');
+    // getRecordingStatus() เป็น BehaviorSubject มันจะรีเพลย์สถานะล่าสุดให้ผู้ subscribe รายใหม่
+    // ทุกครั้งที่กลับเข้าหน้านี้ ถ้าไม่กันไว้ จะเด้ง toast "บันทึกวิดีโอเรียบร้อย" และเขียน DB ซ้ำ
+    // ทั้งที่ไม่ได้เพิ่งอัดจบ
+    const stopKey = this.videoFilesKey(status);
+    if (this.lastVideoStopKey === stopKey) {
+      return;
+    }
+    this.lastVideoStopKey = stopKey;
+
     this.closeRecordingToast();
+    this.videoRecordingStartedAt = '';
+    this.stopElapsedClock();
+    // อัดจบแล้ว ปิดท้ายทุก segment เป็น 0 ให้ตัวอัปโหลดมาเก็บ
+    this.saveVideoToDb(status, true);   // อัดจบแล้ว ไฟล์ปิดหมดแล้ว เปลี่ยนชื่อเติม FNVideo_id ได้
     Swal.fire({
       toast: true,
       position: 'top-end',
@@ -259,25 +286,306 @@ getRecordingStatus(){
     });
     setTimeout(() => {
       Swal.close();
-    },500); // ปิด Toast หลังจาก ไม่ถึง 1 วินาที
-  
+    },500);
+
+  } else if (status.status === 'renamed') {
+    // agent เติม FNVideo_id ไว้หน้าชื่อไฟล์เรียบร้อย ส่งชื่อใหม่กลับไปแก้แถวใน DB
+    this.applyRenamedVideos(status);
+
   } else if (status.status === 'error') {
-    console.log('🚨 Status is "error", attempting to close toast and show error.');
+    // status error มาจากตัว agent เท่านั้น แปลว่าเครื่องนี้ "ลง agent ไว้แล้วแต่บันทึกไม่ได้"
+    // เครื่องที่ยังไม่ได้ลง agent จะไม่มีทางเข้าเงื่อนไขนี้ จึงไม่ถูกกวนระหว่างทยอย deploy
+    console.error('video agent error:', status.message);
     this.closeRecordingToast();
-     setTimeout(() => {
-        Swal.fire({
-            toast: true,
-            position: 'top-end',
-            icon: 'error',
-            title: status.message || 'เกิดข้อผิดพลาดในการบันทึกวิดีโอ!',
-            showConfirmButton: false,
-        });
-        setTimeout(() => {
-          Swal.close();
-        }, 10000); //slow 10 seconds
-    }, 3000); // 3000 มิลลิวินาที = 3 วินาที
+    this.videoRecordingStartedAt = '';
+    this.stopElapsedClock();
+    this.confirmContinueWithoutVideo(status.message);
   }
 },);
+}
+
+// กันยิงซ้ำตอน agent ส่งสถานะ recording เดิมมาใหม่ (เช่นหน้าเว็บ reconnect ระหว่างที่ยังอัดอยู่)
+lastVideoStartKey = '';
+
+// กันสถานะ stopped ตัวเดิมถูกรีเพลย์ซ้ำตอนกลับเข้าหน้าเช็คใหม่
+lastVideoStopKey = '';
+
+// คีย์ระบุ "รอบการอัด" จากรายชื่อไฟล์ ใช้เทียบว่าเป็นสถานะเดิมที่เคยจัดการไปแล้วหรือไม่
+videoFilesKey(status: any): string {
+  const files = status.files || [];
+  return files.length ? files.map((f: any) => f.name).join('|') : (status.orderCode || '');
+}
+
+// กันเด้งซ้ำถ้า agent ส่ง error ติดๆ กันหลายครั้งในการเช็ครอบเดียว
+videoErrorPrompted = false;
+
+// สถานะสำหรับไฟบอกสถานะมุมขวาบน
+videoAgentConnected = false;       // ต่อ agent อยู่ตอนนี้ไหม
+videoAgentEverConnected = false;   // เครื่องนี้ลง agent ไว้ไหม (เคยต่อติดสักครั้ง)
+videoRecordingNow = false;         // กำลังอัดอยู่ไหม
+videoRecordingStartedAt = '';      // เวลาที่เริ่มอัด โชว์ในป้ายแทน toast เดิม
+
+// สถานะกล้องที่ agent ตรวจให้ — true/false = ตรวจแล้ว, null = ยังไม่รู้ (agent รุ่นเก่ายังไม่ส่งค่านี้)
+// ป้ายจะเขียวก็ต่อเมื่อ "ต่อ agent ได้ และกล้องไม่ได้แจ้งว่าไม่พร้อม" เท่านั้น
+videoCameraReady: boolean | null = null;
+videoCameraMessage = '';           // เหตุผลที่กล้องไม่พร้อม โชว์ตอนเอาเมาส์ชี้ป้าย
+
+videoRecordingElapsed = '';        // นาฬิกาที่เดินระหว่างอัด (mm:ss) ให้เห็นว่าอัดมานานแค่ไหนแล้ว
+private videoElapsedTimer: any = null;
+private videoElapsedBase = 0;      // วินาทีที่ agent บอกว่าอัดไปแล้วตอนได้รับสถานะ
+private videoElapsedFrom = 0;      // เวลาเครื่องตอนรับสถานะนั้น ใช้บวกต่อเอง ไม่ต้องถาม agent ซ้ำ
+
+// นับเวลาต่อจากค่าที่ agent ส่งมา ไม่ได้เริ่มนับจาก 0 เสมอ
+// เพราะถ้าหน้าเว็บรีเฟรชกลางคันระหว่างที่ยังอัดอยู่ ต้องโชว์เวลาที่อัดมาแล้วจริงๆ ไม่ใช่เริ่มใหม่
+startElapsedClock(baseSeconds: number) {
+  this.videoElapsedBase = baseSeconds;
+  this.videoElapsedFrom = Date.now();
+  this.tickElapsedClock();
+
+  if (this.videoElapsedTimer) {
+    return;   // เดินอยู่แล้ว (เช่นสถานะ recording ถูกส่งซ้ำตอน reconnect) ไม่ต้องตั้งซ้อน
+  }
+  this.videoElapsedTimer = setInterval(() => this.tickElapsedClock(), 1000);
+}
+
+stopElapsedClock() {
+  if (this.videoElapsedTimer) {
+    clearInterval(this.videoElapsedTimer);
+    this.videoElapsedTimer = null;
+  }
+  this.videoRecordingElapsed = '';
+}
+
+tickElapsedClock() {
+  const seconds = this.videoElapsedBase + Math.floor((Date.now() - this.videoElapsedFrom) / 1000);
+  const p = (n: number) => String(n).padStart(2, '0');
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  this.videoRecordingElapsed = h ? `${h}:${p(m)}:${p(s)}` : `${p(m)}:${p(s)}`;
+}
+
+// สำเนาข้อมูลออเดอร์สำหรับเขียน DB
+// จำเป็นเพราะ check_closeShipment() สั่ง input.TRACKING = "" ทันทีหลัง sendCommand('stop')
+// แต่ agent ใช้เวลาอีกราวครึ่งวินาทีกว่าจะส่ง stopped กลับมา ถ้าอ่าน input ตอนนั้นจะได้ค่าว่าง
+videoCtx: any = {};
+
+// REF_INDEX ของ "รอบการอัดนี้" เท่านั้น เซ็ตตอน tracking_running สร้างเลขสำเร็จ (ปิดกล่องจริง)
+// ห้ามอ่านจาก this.dataprint ตรงๆ เพราะตัวนั้นค้างข้ามออเดอร์ จะทำให้ REF_INDEX ของออเดอร์ก่อน
+// ติดไปกับวิดีโอของออเดอร์ถัดไปที่ยังไม่ได้ปิดกล่อง
+videoRefIndex = '';
+
+// เก็บเฉพาะค่าที่ "มี" — ค่าที่จับได้แล้วจะไม่ถูกล้างทับด้วยค่าว่างที่มาทีหลัง
+captureVideoContext() {
+  const refIndex = this.videoRefIndex || '';
+
+  this.videoCtx = {
+    FTTable_id:     this.input.TABLE_CHECK  || this.videoCtx.FTTable_id     || '',
+    FTZone:         this.input.Zone         || this.videoCtx.FTZone         || '',
+    FTContainer_id: this.input.CONTAINER_ID || this.videoCtx.FTContainer_id || '',
+    FTPin_code:     this.input.PIN_CODE     || this.videoCtx.FTPin_code     || '',
+
+    // รหัสร้าน — ต้องติดไปกับแถววิดีโอตั้งแต่ตอนบันทึก จะย้อนมา join ทีหลังไม่ได้
+    // เพราะตารางกลางที่ถือ SELLER_NO ถูกล้างเป็นรอบ (วัด 12 ก.ย. 2026: วิดีโอเก่า
+    // 639 แถว ย้อนได้แค่ 87) หน้าค้นหาวิดีโอใช้ค่านี้เป็นตัวกรอง
+    // API เก็บลง TSDC_VIDEO_HD.FTShop_id (คอลัมน์เดียวกับ SELLER_NO) แล้วเปิด
+    // TSDC_WMS_CUSTOMER_CHANNEL ด้วยค่าเดียวกันต่อเพื่อหา FTCustomer_id มาเก็บคู่กัน
+    FTSeller_no:    this.input.SELLER_NO    || this.videoCtx.FTSeller_no    || '',
+
+    // ลำดับสำคัญมาก: เลขขนส่งสดใหม่ > เลขขนส่งที่จับไว้ก่อนหน้า > REF_INDEX
+    // REF_INDEX ต้องอยู่ท้ายสุดเพราะมันถูกสร้างตอนปิดกล่อง (หลังเลือก tracking)
+    // ถ้าเอามาก่อนค่าที่เก็บไว้ มันจะทับเลขขนส่งจริงทิ้งตอน input.TRACKING ถูกล้าง
+    FTTracking_id:  this.input.TRACKING || this.videoCtx.FTTracking_id || refIndex || '',
+  };
+}
+
+// startedAtLocal มาเป็น "15/8/2569 11:38:49" — เอาเฉพาะเวลาไปโชว์บนป้ายให้สั้น
+shortTime(localDateTime: string): string {
+  if (!localDateTime) {
+    return '';
+  }
+  const parts = String(localDateTime).trim().split(' ');
+  return parts.length > 1 ? parts[parts.length - 1] : String(localDateTime);
+}
+
+// เครื่องที่ลง agent ไว้แล้วแต่บันทึกวิดีโอไม่ได้ (เช่นหากล้องไม่เจอ) — ให้พนักงานตัดสินใจว่าจะเช็คต่อไหม
+// ไม่ปิดกั้นงานเอง เพราะของอาจต้องส่งออกตามรอบ แต่ต้องไม่ให้ "ไม่มีวิดีโอ" ผ่านไปโดยไม่มีใครรู้
+confirmContinueWithoutVideo(message: string) {
+  if (this.videoErrorPrompted) {
+    return;
+  }
+  this.videoErrorPrompted = true;
+
+  Swal.fire({
+    icon: 'warning',
+    title: 'บันทึกวิดีโอไม่สำเร็จ',
+    html: (message || 'ไม่สามารถเริ่มบันทึกวิดีโอได้')
+      + '<br><br><b>ต้องการทำงานต่อโดยไม่มีวิดีโอหรือไม่?</b>',
+    showCancelButton: true,
+    confirmButtonText: 'ทำงานต่อ',
+    cancelButtonText: 'ยกเลิก',
+    allowOutsideClick: false,
+    allowEscapeKey: false,
+  }).then((result) => {
+    if (result.value) {
+      console.warn('ผู้ใช้เลือกทำงานต่อโดยไม่มีวิดีโอ');
+    } else {
+      // พนักงานเลือกไปตามคนแก้กล้องก่อน — โหลดหน้าใหม่เพื่อกลับสู่สถานะตั้งต้น
+      window.location.reload();
+    }
+  });
+}
+
+// เขียน TSDC_VIDEO_HD — 1 ไฟล์ = 1 แถว
+// แต่ละไฟล์พก staUpload มาจาก agent เอง: 2 = กำลังเขียนอยู่, 0 = ปิดไฟล์แล้วพร้อมอัปโหลด
+// เรียกได้ 3 จังหวะ: เริ่มอัด / ffmpeg ตัด segment ใหม่ / อัดจบ
+saveVideoToDb(status: any, renameAfter = false) {
+  const files = status.files || [];
+  if (!files.length) {
+    console.warn('saveVideoToDb: agent ไม่ได้ส่งรายการไฟล์มา ข้ามการบันทึก DB');
+    return;
+  }
+
+  // สถานะ recording ถูกส่งซ้ำได้ทุกครั้งที่ WebSocket ต่อใหม่ระหว่างที่ยังอัดอยู่
+  if (status.status === 'recording') {
+    const key = files[0].name;
+    if (this.lastVideoStartKey === key) {
+      return;
+    }
+    this.lastVideoStartKey = key;
+    // ขึ้นรอบอัดใหม่ ล้างสำเนาและ REF_INDEX ของรอบก่อนทิ้ง
+    this.videoCtx = {};
+    this.videoRefIndex = '';
+  }
+
+  // เก็บค่าล่าสุดที่มีก่อนสร้าง payload เสมอ
+  this.captureVideoContext();
+
+  const payload = {
+    VIDEO_LIST: files.map((f: any) => ({
+      FTVideo_name: f.name,
+      // ชื่อก่อนถูกเปลี่ยน (ไฟล์เดียวจะถูกตัด -001 ออกตอนอัดจบ) — API ใช้หาแถวเดิม
+      FTVideo_name_old: f.nameOld || '',
+      FTPath: f.path,
+      // คอลัมน์เป็น decimal(18,2) และของเดิมในตารางเก็บเป็น "MB" ไม่ใช่ไบต์
+      FCFile_size: Number((f.sizeBytes / (1024 * 1024)).toFixed(2)),
+      FNStaUpload: f.staUpload,
+      FTStaDesc: f.staUpload === 2 ? 'Recording' : 'Insert success',
+      FDStartdate: f.startedAt,
+      FDEnddate: f.endedAt || ''      // ว่าง = ยังเขียนไม่จบ ฝั่ง API จะไม่แตะคอลัมน์นี้
+    })),
+    FTTable_id: this.videoCtx.FTTable_id || '',
+    FTZone: this.videoCtx.FTZone || '',
+    FTContainer_id: this.videoCtx.FTContainer_id || '',
+    FTOrder_number: status.orderCode || this.input.shipment_id || '',
+    FTTracking_id: this.videoCtx.FTTracking_id || '',
+    FTPin_code: this.videoCtx.FTPin_code || '',
+    FTSeller_no: this.videoCtx.FTSeller_no || '',
+    // ตามแบบระบบเดิม (Tsdc Camera vision) คอลัมน์นี้เก็บชื่อโปรแกรมที่เขียนแถว ไม่ใช่ชื่อคน
+    // ตัวคนแพ็คดูได้จาก FTPin_code
+    FTUser_create: 'TSDC Recording Agent 1.0',
+    FTIp_address_local: status.ipLocal || ''
+  };
+
+  this.dataService.insert_video_hd(payload).subscribe((res: any) => {
+    if (res && res.status === 'success') {
+      console.log('saveVideoToDb: บันทึก', payload.VIDEO_LIST.length, 'แถว');
+      if (renameAfter) {
+        this.renameVideosWithId(payload, res);
+      }
+    } else {
+      console.error('saveVideoToDb: API ตอบกลับไม่สำเร็จ', res);
+    }
+  }, (err: any) => {
+    // ไม่ขวาง flow การแพ็ค — ไฟล์ยังอยู่ในเครื่องโต๊ะเช็ค ตามเก็บย้อนหลังได้
+    console.error('saveVideoToDb: เรียก API ไม่สำเร็จ', err);
+  });
+}
+
+// payload ที่เพิ่งส่งไป เก็บไว้ใช้ตอน update ชื่อไฟล์ใหม่ จะได้ส่งค่าคอลัมน์อื่นเดิมไปครบ
+// ไม่ต้องไปดึงค่าจากหน้าจอใหม่ ซึ่งตอนนั้นถูก check_closeShipment ล้างไปแล้ว
+private videoLastPayload: any = null;
+
+// เอา FNVideo_id ที่ API คืนมา ไปเติมไว้หน้าชื่อไฟล์
+//
+// ทำตอนนี้ไม่ได้ทำตั้งแต่แรก เพราะ FNVideo_id เป็น IDENTITY ที่เกิดตอน insert
+// ส่วนไฟล์ถูก ffmpeg สร้างก่อนหน้านั้นเสมอ
+//
+// สั่งเฉพาะหลังอัดจบ (stopped) เท่านั้น ถ้าไปเปลี่ยนชื่อระหว่างยังอัดอยู่
+// ไฟล์จะหลุดจากการ scan ด้วย prefix ของ agent ทันที แล้วรายการไฟล์ตอนจบจะขาดไป
+renameVideosWithId(payload: any, res: any) {
+  // API รุ่นที่ยังไม่คืน ids มาให้ = ข้ามไปเฉยๆ ชื่อไฟล์คงรูปแบบเดิม ทุกอย่างทำงานต่อได้ปกติ
+  const ids = (res && res.ids) || [];
+  if (!ids.length) {
+    return;
+  }
+
+  const idByName: any = {};
+  for (const row of ids) {
+    if (row && row.FTVideo_name) {
+      idByName[row.FTVideo_name] = row.FNVideo_id;
+    }
+  }
+
+  const renames: Array<{ name: string, newName: string }> = [];
+  for (const row of payload.VIDEO_LIST) {
+    const id = idByName[row.FTVideo_name];
+    if (!id) {
+      continue;
+    }
+    // เติมไปแล้วไม่ต้องเติมซ้ำ — กันวนไม่รู้จบ เพราะรอบ update ชื่อใหม่ API ก็คืน id มาอีก
+    if (String(row.FTVideo_name).startsWith(id + '-')) {
+      continue;
+    }
+    renames.push({ name: row.FTVideo_name, newName: `${id}-${row.FTVideo_name}` });
+  }
+
+  this.videoLastPayload = payload;
+  this.videoRecordingService.sendRename(renames);
+}
+
+// agent เปลี่ยนชื่อไฟล์ให้แล้ว ส่ง update กลับไปให้ API แก้ FTVideo_name/FTPath ของแถวเดิม
+// หาแถวเดิมด้วย FTVideo_name_old เหมือนกลไกตอนตัด -001 ที่มีอยู่ก่อนแล้ว
+applyRenamedVideos(status: any) {
+  const files = status.files || [];
+  const last = this.videoLastPayload;
+  if (!files.length || !last) {
+    return;
+  }
+
+  const rowByName: any = {};
+  for (const row of last.VIDEO_LIST) {
+    rowByName[row.FTVideo_name] = row;
+  }
+
+  const list = [];
+  for (const f of files) {
+    const before = rowByName[f.nameOld];
+    if (!before) {
+      continue;   // ไม่ใช่ไฟล์ของรอบที่เพิ่งส่งไป ไม่ต้องยุ่ง
+    }
+    list.push(Object.assign({}, before, {
+      FTVideo_name: f.name,
+      FTVideo_name_old: f.nameOld,
+      FTPath: f.path,
+    }));
+  }
+
+  if (!list.length) {
+    return;
+  }
+
+  // รอบนี้ห้ามสั่ง rename ต่ออีก ไม่งั้นวนไม่จบ
+  this.videoLastPayload = null;
+  this.dataService.insert_video_hd(Object.assign({}, last, { VIDEO_LIST: list })).subscribe((res: any) => {
+    if (res && res.status === 'success') {
+      console.log('applyRenamedVideos: อัปเดตชื่อไฟล์', list.length, 'แถว');
+    } else {
+      console.error('applyRenamedVideos: API ตอบกลับไม่สำเร็จ', res);
+    }
+  }, (err: any) => {
+    console.error('applyRenamedVideos: เรียก API ไม่สำเร็จ', err);
+  });
 }
 
 ngOnDestroy(): void {
@@ -287,57 +595,44 @@ ngOnDestroy(): void {
     if (this.connectionStatusSubscription) {
         this.connectionStatusSubscription.unsubscribe();
     }
-    this.closeRecordingToast(); // ปิด Toast หาก Component ถูกทำลาย
-    this.videoRecordingService.closeConnection(); // ปิดการเชื่อมต่อ WebSocket ใน Service
-    
-    if (this.interval) {
-        clearInterval(this.interval);
+    if (this.cameraStatusSubscription) {
+        this.cameraStatusSubscription.unsubscribe();
     }
+    this.stopElapsedClock();
+    this.closeRecordingToast();
+    this.videoRecordingService.closeConnection();
+
+    this.clearFocusInterval();
 }
 
-// *** เพิ่มฟังก์ชัน didDestroy เป็นเมธอดของคลาส ***
 private didDestroy(): void {
-    //console.log('Toast was closed, checking if recording is still active...');
-
-    // ตรวจสอบว่ามีตัวจับเวลาเดิมทำงานอยู่หรือไม่ ถ้ามี ให้ยกเลิกก่อน
     if (this.toastTimerId) {
         clearTimeout(this.toastTimerId);
         this.toastTimerId = null;
     }
-    
-    // ตั้งเวลาหน่วง 10 วินาที
+
     const delayMilliseconds = 10000;
 
-    // เก็บ ID ของ setTimeout ที่สร้างขึ้นใหม่
     this.toastTimerId = setTimeout(() => {
         if (Swal.isVisible()) {
-          //console.log('A popup is currently visible, waiting for it to close...');
             this.toastTimerId = setTimeout(() => {
                 this.didDestroy();
-            }, 10000); 
+            }, 10000);
             return;
         }
-        
-        // เมื่อไม่มี Popup ให้ดำเนินการต่อ
-        const currentStatus = this.videoRecordingService.getRecordingStatus().getValue();
-        
-        if (currentStatus && currentStatus.status === 'recording') {
-            //console.log('Recording is still active, showing toast again.');
-            // *** แก้ไขตรงนี้: เรียกใช้ showRecordingToast ด้วยข้อความที่เก็บไว้ ***
+
+        if (this.lastRecordingStatus && this.lastRecordingStatus.status === 'recording') {
             this.showRecordingToast(this.currentToastMessage);
         } else {
-            //console.log('Recording has stopped, clearing toast and timer.');
             this.recordingToast = null;
             clearTimeout(this.toastTimerId);
             this.toastTimerId = null;
         }
-    }, delayMilliseconds); 
+    }, delayMilliseconds);
 }
 
 private showRecordingToast(message: string): void {
-    //console.log('Showing recording toast with message:', message, this.recordingToast);
     this.currentToastMessage = message;
-    // ถ้ายังไม่มี toast → สร้างใหม่
     this.recordingToast = Swal.fire({
         toast: true,
         position: 'top-end',
@@ -353,14 +648,12 @@ private showRecordingToast(message: string): void {
             toast.onmouseenter = Swal.stopTimer;
             toast.onmouseleave = Swal.resumeTimer;
         },
-        // *** แก้ไข: เปลี่ยนการเรียกใช้ didDestroy ***
         didDestroy: () => {
             this.didDestroy();
         }
     });
 }
 
-// *** ส่วนของฟังก์ชันอื่นๆ ที่คุณมีอยู่ ***
 private closeRecordingToast(): void {
     if (this.recordingToast) {
         Swal.close();
@@ -397,20 +690,19 @@ private closeRecordingToast(): void {
             iframe.contentWindow?.focus();
             iframe.contentWindow?.print();
 
+            // ต้องจับก่อนสั่ง stop เพราะ check_closeShipment() ข้างล่างจะล้าง input.TRACKING ทิ้ง
+            // ก่อนที่ agent จะส่ง stopped กลับมา
+            this.captureVideoContext();
+            this.videoRecordingService.sendCommand('stop', this.input.shipment_id);
+            this.closeRecordingToast();
+
             new Promise(f => setTimeout(f, 2000));
             //this.scanCon();
             this.check_closeShipment()
           };
         }, err => {
           console.error('Print failed:', err);
-          // Swal.fire({
-          //   icon: 'error',
-          //   title: 'ไม่สามารถโหลดไฟล์ได้',
-          //   text: 'Print Failed',
-          //   showConfirmButton: false,
-          //   timer: 2500
-          // });
-
+      
           this.pagePrint = false
             this.pagePrintTrack = false;
             this.pagePrintTrackAll = true;
@@ -444,17 +736,45 @@ private closeRecordingToast(): void {
   }
 
 
+  /**
+   * ตั้ง interval สำหรับดึง focus โดยเคลียร์ตัวเก่าทิ้งเสมอ
+   * ก่อนหน้านี้แต่ละจุดเขียนทับ this.interval เฉยๆ ตัวเก่าจึงวิ่งค้างสะสมทั้งกะจนหน้าจอหน่วง
+   * และรันนอก NgZone เพราะ .focus() ไม่ต้องการ change detection
+   */
+  private setFocusInterval(fn: () => void, ms: number) {
+    this.clearFocusInterval();
+    this.zone.runOutsideAngular(() => {
+      this.interval = setInterval(fn, ms);
+    });
+  }
+
+  private clearFocusInterval() {
+    if (this.interval) {
+      clearInterval(this.interval);
+      this.interval = null;
+    }
+  }
+
+  /** trackBy ของตารางบนหน้าสแกน เพื่อให้ Angular reuse DOM แทนที่จะสร้างใหม่ทุกรอบ change detection */
+  trackByIndex(index: number) {
+    return index;
+  }
+
+  trackByTrackingId(index: number, item: TrackingItem) {
+    return item.id;
+  }
+
   focusInput_item() {
 
 
     if (this.scanItemPage === false) {
-      this.inputItem.nativeElement.focus();
+      this.inputItem?.nativeElement?.focus();
     }
     if (this.pagePrint === false){
-      this.Btn_printTrack.nativeElement.focus();
+      this.Btn_printTrack?.nativeElement?.focus();
     }
-    
-   
+
+
   }
 
   focusInput_con() {
@@ -531,7 +851,6 @@ private closeRecordingToast(): void {
           }else if (this.sumcon == this.sumcheck){
             this.btn.Box = false;
           }
-          //this.btn.Box = false;
           this.btn.Re = false
          // console.log('เปิด re')
 
@@ -607,7 +926,6 @@ private closeRecordingToast(): void {
             }
 
           })
-          // setTimeout(() => { this.focusInput_item() }, 150)
         }
       })
     })
@@ -681,11 +999,8 @@ private closeRecordingToast(): void {
           }else{
             jQuery(this.myModalBOX.nativeElement).modal('show');
           }
-          //jQuery(this.myModalBOX.nativeElement).modal('show');
           
-          //this.inputbox.nativeElement.focus()
-          this.interval = setInterval(() => this.inputbox.nativeElement.focus(), 500);   
-         //this.interval = setInterval(() => this.inputItem.nativeElement.focus(), 100000000);
+          this.setFocusInterval(() => { if (!this.isZoneModalOpen) { this.inputbox?.nativeElement?.focus(); } }, 500);
 
           this.check_size();
          
@@ -744,6 +1059,13 @@ private closeRecordingToast(): void {
 
 
   scanCon() {
+    const orderCodeForVideo = this.input.shipment_id || this.input.CONTAINER_ID || '';
+    if (orderCodeForVideo) {
+      this.captureVideoContext();   // จับค่าก่อน scanCon() ล้างค่าใน input
+      this.videoRecordingService.sendCommand('stop', orderCodeForVideo);
+      this.closeRecordingToast();
+    }
+
     this.view = true;
     this.scanConPage = false;
     this.scanItemPage = true;
@@ -761,17 +1083,12 @@ private closeRecordingToast(): void {
     this.pagePrintCoverSheet = true;
     this.pagePrintShear = true;
     this.pagePrintCancel = true;
+    this.isLoading = false;
     this.LOAD_USERTABLECHECK();
     setTimeout(() => { this.focusInput_item() }, 3000);
     setTimeout(() => { this.focusInput_con() }, 1000);
-    this.interval = setInterval(() => this.focusInput_item(), 3000);
+    this.setFocusInterval(() => this.focusInput_item(), 3000);
     //console.log(this.input)
-
-    console.log(' สแกนกล่อง กำลังส่งคำสั่งหยุดการบันทึก...');
-    // ส่งคำสั่งหยุดการบันทึกผ่าน WebSocket
-        this.videoRecordingService.sendCommand('stop');
-        this.closeRecordingToast();
-
   }
 
 
@@ -806,11 +1123,15 @@ private closeRecordingToast(): void {
     })
   }
 
+  lastCheckedInKey = '';
+
   tablecheck_user() {
     /*  const user = JSON.parse(localStorage.getItem('currentUser') || '');
      this.input.USER_CHECK = user.WORKER_ID;
      this.input.TABLE_CHECK = this.input.USER_CHECK */
     this.input.WORKING_TYPE = 'Check';
+    const key = this.input.PIN_CODE + '|' + new Date().toDateString();
+    if (this.input.PIN_CODE && key === this.lastCheckedInKey) { return; }
     this.dataService.insert_user_tablecheck2(this.input).subscribe(res => {
       ////console.log(res);
       this.user = res
@@ -824,16 +1145,17 @@ private closeRecordingToast(): void {
           timer: 2500
         });
       } else if (this.user.status === 'success') {
+        this.lastCheckedInKey = key;
         this.LOAD_USERTABLECHECK();
       }
 
     })
   }
 
-  async WorkType(){
+  async WorkType_old(){
     
     var status_ = await this.checkorder_notclose();
-
+    this.isLoading = false;
     if(status_){
     this.alertcancel = false;
     this.ButtonprintCancel = false;
@@ -970,17 +1292,11 @@ private closeRecordingToast(): void {
                                 else if(ordercancel.status === 'success'){
                                   this.alertcancel = true;
                                   this.ButtonprintCancel = true;
-                                  //setTimeout(() => { this.printcancel() }, 250)
                                
                                 }
                               });
 
                               this.summaryConCheck();
-                              //this.CHECK_tracksum_qty();
-                              // this.scanConPage = true;
-                              // this.scanItemPage = false;
-                              // this.summaryPage = true;
-                              // 
 
                             }
                           })
@@ -1007,13 +1323,6 @@ private closeRecordingToast(): void {
                           });
 
                           this.summaryConCheck();
-                          //this.CHECK_tracksum_qty();
-                          // this.scanConPage = true;
-                          // this.scanItemPage = false;
-                          // this.summaryPage = true;
-                          // setTimeout(() => { this.focusInput_item() }, 150)
-                          const orderCodeForVideo = this.input.shipment_id || this.input.CONTAINER_ID || 'UNKNOWN_ORDER';
-                          this.videoRecordingService.sendCommand('start', orderCodeForVideo); 
                         }
 
                       } else {
@@ -1024,7 +1333,8 @@ private closeRecordingToast(): void {
               }
                 
               })
-            } else if (this.input.ORDER_TYPE == 'OFFLINE') {
+            }
+            else if (this.input.ORDER_TYPE == 'OFFLINE') {
               
       
 
@@ -1088,14 +1398,14 @@ private closeRecordingToast(): void {
                       this.scanConPage = true;
                       this.scanItemPage = false;
                       this.summaryPage = true;
-                      // setTimeout(() => { this.focusInput_item() }, 150)
                     } else {
                       this.input.CONTAINER_ID = ''
                     }
                   })
                 }
               })
-            } else if (this.input.ORDER_TYPE == 'SORTER') {
+            }
+            else if (this.input.ORDER_TYPE == 'SORTER') {
               //console.log('SORTER');
               this.dataService.CheckConSorter(this.input).subscribe(res => {
                 var data: any = res
@@ -1149,7 +1459,8 @@ private closeRecordingToast(): void {
                   })
                 }
               })
-            } else if (this.input.ORDER_TYPE == 'CF_ORDER') {
+            }
+            else if (this.input.ORDER_TYPE == 'CF_ORDER') {
               
               this.dataService.CheckCon_Orderconfirm(this.input).subscribe(res => {
                 var data: any = res
@@ -1229,7 +1540,8 @@ private closeRecordingToast(): void {
                   })
                 }
               })
-            } else if (this.input.ORDER_TYPE == 'DHL'){
+            }
+            else if (this.input.ORDER_TYPE == 'DHL') {
               Swal.fire({
                 icon: 'warning',
                 title: 'เป็นงาน Order ช่องทาง DHL ให้นำส่งคืนผู้รับผิดชอบ"',
@@ -1286,7 +1598,536 @@ private closeRecordingToast(): void {
     }
     return status;
   }
-  
+
+  insert_log() {
+    this.dataService.Insert_PICK_CHECK_LOG_NEW(this.input).subscribe(res => {
+      this.CheckWork = res;
+      if (this.CheckWork.status == 'error') {
+        console.log('Error Insert_PICK_CHECK_LOG_NEW');
+      } else {
+        console.log('Insert_PICK_CHECK_LOG_NEW success');
+      }
+    });
+  }
+
+  async checkorder_closed() {
+    let status = false;
+    try {
+      const res = await this.dataService.check_order_closed(this.input).toPromise();
+      this.CheckWork = res;
+
+      if (this.CheckWork.status === 'error') {
+        Swal.fire({
+          icon: 'error',
+          title: 'เกิดข้อผิดพลาด กรุณาติดต่อ ADMIN!',
+          html: this.CheckWork.data,
+          showConfirmButton: false,
+          timer: 2500
+        });
+      } else if (this.CheckWork.status === 'success') {
+        status = true;
+        this.input.shipment_id = this.CheckWork.data[0].SHIPMENT_ID;
+      } else if (this.CheckWork.status === 'null') {
+        this.input.WARNING = 'ยังไม่ถูกปิดงาน'
+        this.insert_log();
+        Swal.fire({
+          icon: 'warning',
+          title: 'ยังไม่ถูกปิดงาน',
+          html: 'กรุณาปิดงานบนระบบ Man!!',
+          showConfirmButton: false,
+          timer: 4000
+        });
+        this, this.input.CONTAINER_ID = '';
+      }
+    } catch (error) {
+      console.error('Error during check_order_notclose:', error);
+    }
+    return status;
+  }
+
+  async checkorder_cancel_RTS() {
+    let status = false;
+    try {
+
+      const res = await this.dataService.CheckOrder_Cancel(this.input).toPromise();
+        var ordercancel: any = res
+      if (ordercancel.status === 'error') {
+        Swal.fire({
+          icon: 'error',
+          title: 'Get ONLINE_ORDER_CANCEL Error!',
+          showConfirmButton: false,
+          timer: 2500
+        });
+        this.playAudioError();
+      }
+      else if (ordercancel.status === 'success') {
+        this.alertcancel = true;
+        this.ButtonprintCancel = true;
+        this.input.WARNING = 'ORDER CANCEL'
+        this.input.SHIPPING_NAME = ordercancel.data[0].SHIPPING_NAME,
+        this.input.TCHANNEL = ordercancel.data[0].TCHANNEL,
+        this.input.SELLER_NO = ordercancel.data[0].SELLER_NO,
+        this.input.COMPANY = ordercancel.data[0].COMPANY,
+        this.input.ORDER_DATE = ordercancel.data[0].ORDER_DATE,
+
+        this.insert_log();
+        // ล็อกช่อง CONTAINER_ID
+        this.isZoneModalOpen = true;
+        Swal.fire({
+          icon: 'warning',
+          title: 'ORDER CANCEL !',
+          html: 'Order ถูกยกเลิก !',
+          showConfirmButton: true,
+          backdrop: false,
+          allowOutsideClick: false,
+          allowEscapeKey: false,
+          confirmButtonText: 'พิมพ์ใบ Cancel',
+        }).then((result) => {
+          if (result.isConfirmed) {
+            this.selectZone();
+          } else {
+            // เผื่อกรณีถูกปิดด้วยวิธีอื่น ปลดล็อกช่อง input คืน
+            this.isZoneModalOpen = false;
+          }
+        });
+
+      } else {
+
+        const res = await this.dataService.Get_ONLINE_ORDER_SHIPPING(this.input).toPromise();
+        var checkRTS: any = res
+        if (checkRTS.status === 'error') {
+          Swal.fire({
+            icon: 'error',
+            title: 'Get ONLINE_ORDER_SHIPPING Error!',
+            showConfirmButton: false,
+            timer: 2500
+          });
+          this.playAudioError();
+          this.input.CONTAINER_ID = ''
+        } else if (checkRTS.status === 'null') {
+          this.input.WARNING = 'ไม่พบข้อมูล ONLINE ORDER SHIPPING'
+          this.insert_log();
+          Swal.fire({
+            icon: 'warning',
+            title: 'ไม่พบข้อมูล ONLINE ORDER SHIPPING',
+            showConfirmButton: false,
+            timer: 2500
+          });
+          this.playAudioError();
+          this.input.CONTAINER_ID = ''
+        } else {
+          if (checkRTS.data[0].RTS_STATUS_OOS != 'S') {
+            this.input.WARNING = 'Order ยังไม่ได้ทำการ RTS'
+            this.insert_log();
+            Swal.fire({
+              icon: 'warning',
+              title: 'Order ยังไม่ได้ทำการ RTS',
+              showConfirmButton: false,
+              timer: 2500
+            });
+            this.playAudioError();
+            this.input.CONTAINER_ID = ''
+          } else {
+            status = true;
+          }
+        }
+
+      }
+      
+      //this.summaryConCheck();
+    } catch (error) {
+      console.error('Error during check_order_notclose:', error);
+    }
+    return status;
+  }
+
+  async check_warning_Order() {
+
+    this.alertcancel = false;
+    this.ButtonprintCancel = false;
+
+    this.tablecheck_user();
+
+    var status_closed = await this.checkorder_closed();
+    this.isLoading = false;
+    if (status_closed) {
+      this.alertcancel = false;
+      this.ButtonprintCancel = false;
+
+      this.dataService.Checkorder_block(this.input).subscribe(async res => {
+        this.Block_order = res;
+        if (this.Block_order.status == 'error') {
+          Swal.fire({
+            icon: 'error',
+            title: 'เกิดข้อผิดพลาด Check รายการ block order ไม่ได้ ',
+            showConfirmButton: false,
+            timer: 2500
+          });
+
+          return;
+        } else {
+
+          if (this.Block_order.status === 'success' && this.Block_order.data[0].FNBlock_type == 1) {
+            Swal.fire({
+              title: 'Block : ' + this.Block_order.data[0].FTBlock_title,
+              html: 'รายละเอียด : ' + this.Block_order.data[0].FTBlock_desc,
+              icon: 'warning',
+              showCancelButton: false,
+              confirmButtonColor: '#d33',
+              backdrop: false,
+              confirmButtonText: 'ตกลง',
+            }).then((result) => {
+              if (result.value) {
+                this.CheckWork.status = 'Block order',
+                  this.scanCon();
+              }
+            })
+
+          }
+          else if (this.Block_order.status === 'success' && this.Block_order.data[0].FNBlock_type == 2) {
+            Swal.fire({
+              title: 'แจ้งเตือน : ' + this.Block_order.data[0].FTBlock_title,
+              html: 'รายละเอียด : ' + this.Block_order.data[0].FTBlock_desc,
+              icon: 'warning',
+              showCancelButton: false,
+              confirmButtonColor: '#d33',
+              backdrop: false,
+              confirmButtonText: 'ตกลง',
+            }).then(async (result) => {
+              if (result.value) {
+                var status_cancel = await this.checkorder_cancel_RTS();
+                if (status_cancel) {
+                  this.WorkType();
+                }
+              }
+            })
+          }
+          else {
+            var status_cancel = await this.checkorder_cancel_RTS();
+            if (status_cancel) {
+              this.WorkType();
+            }
+          }
+
+        }
+      })
+    }
+  }
+
+  async WorkType() {
+    this.dataService.CheckWork_track(this.input).subscribe(res => {
+      this.CheckWork = res;
+
+      if (this.CheckWork.status === 'error') {
+        Swal.fire({
+          icon: 'error',
+          title: 'เกิดข้อผิดพลาด กรุณาติดต่อ ADMIN!',
+          showConfirmButton: false,
+          timer: 2500
+        });
+      } else if (this.CheckWork.status === 'null') {
+        Swal.fire({
+          icon: 'warning',
+          title: 'ไม่พบข้อมูล CONTAINER นี้ หรือ PIN CODE ไม่ถูกต้อง',
+          showConfirmButton: false,
+          timer: 2500
+        });
+        this.input.CONTAINER_ID = ''
+      } else if (this.CheckWork.status === 'success') {
+        this.input.ORDER_TYPE = this.CheckWork.data[0].ORDER_TYPE;
+        this.input.shipment_id = this.CheckWork.data[0].SHIPMENT_ID;
+        this.input.COMPANY = this.CheckWork.data[0].COMPANY;
+        this.input.ORDER_DATE = this.CheckWork.data[0].ORDER_DATE;
+        this.input.SELLER_NO = this.CheckWork.data[0].SELLER_NO;
+
+        if (this.input.ORDER_TYPE == 'ONLINE' || this.input.ORDER_TYPE == 'CANCEL') {
+          console.log('ONLINE');
+          this.input.conditiontracking = ''
+          this.dataService.CheckConOnline_track(this.input).subscribe(res => {
+            var data: any = res
+            this.sumqty = data.data
+            if (data.status === 'error') {
+              console.log(data);
+              Swal.fire({
+                icon: 'error',
+                title: 'เกิดข้อผิดพลาด กรุณาติดต่อ ADMIN!',
+                showConfirmButton: false,
+                timer: 2500
+              });
+            } else if (data.status === 'null') {
+              console.log(data);
+              Swal.fire({
+                icon: 'warning',
+                title: 'ไม่พบข้อมูล CONTAINER นี้ หรือ PIN CODE ไม่ถูกต้อง',
+                showConfirmButton: false,
+                timer: 2500
+              });
+              this.input.CONTAINER_ID = ''
+            } else if (data.status === 'success') {
+              this.Status_Print_Track = this.sumqty[0].Print_Tracking
+              this.input.shipment_id = this.sumqty[0].shipment_id
+              this.input.SELLER_NO = this.sumqty[0].SELLER_NO
+              this.input.BRAND = this.sumqty[0].USER_DEF5
+              this.input.SHIPPING_NAME = this.sumqty[0].SHIPPING_NAME
+              this.input.TCHANNEL = this.sumqty[0].TCHANNEL
+              this.input.SUMCHECK = this.sumqty[0].SUMCHECK
+              this.input.b = this.sumqty[0].USER_DEF5.substring(0, 1);
+              this.input.d = this.sumqty[0].USER_DEF5.substring(1, 2);
+              this.input.p = this.sumqty[0].USER_DEF5.substring(2, 3);
+
+              Swal.fire({
+                title: 'คุณต้องการเริ่มงานนี้หรือไม่ ?',
+                html: 'SHIPMENT: ' + '<font color="blue">' + this.input.shipment_id + '</font>',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                backdrop: false,
+                confirmButtonText: 'ยืนยัน',
+                cancelButtonText: 'ยกเลิก'
+              }).then((result) => {
+                if (result.value) {
+                  this.summaryConCheck();
+                  this.videoRecordingService.sendCommand('start', this.input.shipment_id, this.input.TABLE_CHECK);
+                } else {
+                  this.input.CONTAINER_ID = ''
+                }
+              })
+            }
+
+          })
+        }
+        else if (this.input.ORDER_TYPE == 'OFFLINE') {
+
+          this.dataService.CheckConOffline(this.input).subscribe(res => {
+            var data: any = res
+            this.sumqty = data.data
+            console.log(data);
+            if (data.status === 'error') {
+              console.log(data);
+              Swal.fire({
+                icon: 'error',
+                title: 'เกิดข้อผิดพลาด กรุณาติดต่อ ADMIN!',
+                showConfirmButton: false,
+                timer: 2500
+              });
+            } else if (data.status === 'null') {
+
+              Swal.fire({
+                icon: 'warning',
+                title: 'ไม่พบข้อมูล CONTAINER นี้ หรือ PIN CODE ไม่ถูกต้อง',
+                showConfirmButton: false,
+                timer: 2500
+              });
+              this.input.CONTAINER_ID = ''
+            } else if (data.status === 'success') {
+
+              this.input.shipment_id = this.sumqty[0].shipment_id
+              this.input.SELLER_NO = this.sumqty[0].SELLER_NO
+              this.input.BILL_N8_BLH = this.sumqty[0].BILL_N8_BLH
+              this.input.BILL_NO = this.sumqty[0].BILL_NO
+              this.input.STORE_ADDRESS = this.sumqty[0].STORE_ADDRESS
+              this.input.CORNER_ID_BLH = this.sumqty[0].CORNER_ID_BLH
+              this.input.BILL_DATE = this.sumqty[0].BILL_DATE
+              this.input.SITE_ID_BLH = this.sumqty[0].SITE_ID_BLH
+              this.input.BATCH_CODE = this.sumqty[0].BATCH_CODE
+              this.input.TRANSPORT_ID = this.sumqty[0].TRANSPORT_ID
+              this.input.TRANSPORT_NAME = this.sumqty[0].TRANSPORT_NAME
+              this.input.BRAND = this.sumqty[0].USER_DEF5
+              this.input.BRAND_NAME = this.sumqty[0].BRAND_NAME
+              this.input.SHIPPING_NAME = this.sumqty[0].STORE_NAME
+              this.input.SUMCHECK = this.sumqty[0].SUMCHECK
+              this.input.TCHANNEL = 'Offline'
+              this.input.b = this.sumqty[0].USER_DEF5.substring(0, 1);
+              this.input.d = this.sumqty[0].USER_DEF5.substring(1, 2);
+              this.input.p = this.sumqty[0].USER_DEF5.substring(2, 3);
+
+              Swal.fire({
+                title: 'คุณต้องการเริ่มงานนี้หรือไม่ ?',
+                html: 'SHIPMENT: ' + '<font color="blue">' + this.input.shipment_id + '</font>',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                backdrop: false,
+                confirmButtonText: 'ยืนยัน',
+                cancelButtonText: 'ยกเลิก'
+              }).then((result) => {
+                if (result.value) {
+                  this.summaryConCheck();
+                  this.CHECK_tracksum_qty();
+                  this.scanConPage = true;
+                  this.scanItemPage = false;
+                  this.summaryPage = true;
+                  this.videoRecordingService.sendCommand('start', this.input.shipment_id, this.input.TABLE_CHECK);
+                } else {
+                  this.input.CONTAINER_ID = ''
+                }
+              })
+            }
+          })
+        }
+        else if (this.input.ORDER_TYPE == 'SORTER') {
+          //console.log('SORTER');
+          this.dataService.CheckConSorter(this.input).subscribe(res => {
+            var data: any = res
+            this.sumqty = data.data
+            if (data.status === 'error') {
+              console.log(data)
+              Swal.fire({
+                icon: 'error',
+                title: 'เกิดข้อผิดพลาด กรุณาติดต่อ ADMIN!',
+                showConfirmButton: false,
+                timer: 2500
+              });
+            } else if (data.status === 'null') {
+
+              Swal.fire({
+                icon: 'warning',
+                title: 'ไม่พบข้อมูล CONTAINER นี้ หรือ PIN CODE ไม่ถูกต้อง',
+                showConfirmButton: false,
+                timer: 2500
+              });
+              this.input.CONTAINER_ID = ''
+            } else if (data.status === 'success') {
+              this.input.shipment_id = this.sumqty[0].BATCH_CODE
+              this.input.SELLER_NO = 'SORTER'
+              this.input.BRAND = this.sumqty[0].BRAND
+              this.input.SUMCHECK = this.sumqty[0].SUMCHECK
+              this.input.b = this.sumqty[0].PRODUCT_BHS.substring(0, 1);
+              this.input.d = this.sumqty[0].PRODUCT_BHS.substring(1, 2);
+              this.input.p = this.sumqty[0].PRODUCT_BHS.substring(2, 3);
+
+              Swal.fire({
+                title: 'คุณต้องการเริ่มงานนี้หรือไม่ ?',
+                html: 'CONTAINER_ID: ' + '<font color="blue">' + this.input.CONTAINER_ID + '</font>',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                backdrop: false,
+                confirmButtonText: 'ยืนยัน',
+                cancelButtonText: 'ยกเลิก'
+              }).then((result) => {
+                if (result.isConfirmed) {
+
+                  this.summaryConCheck();
+                  this.scanConPage = true;
+                  this.scanItemPage = false;
+                  this.summaryPage = true;
+                  this.videoRecordingService.sendCommand('start', this.input.shipment_id, this.input.TABLE_CHECK);
+                } else {
+                  this.input.CONTAINER_ID = ''
+                }
+              })
+            }
+          })
+        }
+        else if (this.input.ORDER_TYPE == 'CF_ORDER') {
+
+          this.dataService.CheckCon_Orderconfirm(this.input).subscribe(res => {
+            var data: any = res
+            this.sumqty = data.data
+            if (data.status === 'error') {
+              console.log(data);
+              Swal.fire({
+                icon: 'error',
+                title: 'เกิดข้อผิดพลาด กรุณาติดต่อ ADMIN!',
+                showConfirmButton: false,
+                timer: 2500
+              });
+            } else if (data.status === 'null') {
+
+              Swal.fire({
+                icon: 'warning',
+                title: 'ไม่พบข้อมูล CONTAINER นี้ หรือ PIN CODE ไม่ถูกต้อง',
+                showConfirmButton: false,
+                timer: 2500
+              });
+              this.input.CONTAINER_ID = ''
+            } else if (data.status === 'success') {
+
+              this.input.shipment_id = this.sumqty[0].shipment_id
+              this.input.SELLER_NO = this.sumqty[0].SELLER_NO
+              this.input.BILL_N8_BLH = this.sumqty[0].BILL_N8_BLH
+              this.input.BILL_NO = this.sumqty[0].BILL_NO
+              this.input.STORE_ADDRESS = this.sumqty[0].STORE_ADDRESS
+              this.input.CORNER_ID_BLH = this.sumqty[0].CORNER_ID_BLH
+              this.input.BILL_DATE = this.sumqty[0].BILL_DATE
+              this.input.SITE_ID_BLH = this.sumqty[0].SITE_ID_BLH
+              this.input.BATCH_CODE = this.sumqty[0].BATCH_CODE
+              this.input.TRANSPORT_ID = this.sumqty[0].TRANSPORT_ID
+              this.input.TRANSPORT_NAME = this.sumqty[0].TRANSPORT_NAME
+              this.input.BRAND = this.sumqty[0].USER_DEF5
+              this.input.BRAND_NAME = this.sumqty[0].BRAND_NAME
+              this.input.SHIPPING_NAME = this.sumqty[0].STORE_NAME
+              this.input.TCHANNEL = 'CF_ORDER'
+              this.input.STATUS_DATA = this.sumqty[0].STATUS_DATA
+              this.input.SUMCHECK = this.sumqty[0].SUMCHECK
+              this.input.b = this.sumqty[0].USER_DEF5.substring(0, 1);
+              this.input.d = this.sumqty[0].USER_DEF5.substring(1, 2);
+              this.input.p = this.sumqty[0].USER_DEF5.substring(2, 3);
+
+              Swal.fire({
+                title: 'คุณต้องการเริ่มงานนี้หรือไม่ ?',
+                html: 'SHIPMENT: ' + '<font color="blue">' + this.input.shipment_id + '</font>',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                backdrop: false,
+                confirmButtonText: 'ยืนยัน',
+                cancelButtonText: 'ยกเลิก'
+              }).then((result) => {
+                if (result.value) {
+                  this.summaryConCheck();
+                  this.CHECK_tracksum_qty();
+                  this.scanConPage = true;
+                  this.scanItemPage = false;
+                  this.summaryPage = true;
+
+                  if (this.input.STATUS_DATA == 'N' && this.btn.Box == true) {
+                    this.btn.CFOrder = false;
+                  } else if (this.input.STATUS_DATA == 'N' && this.btn.Box == false) {
+                    this.btn.CFOrder = true;
+                  } else if (this.input.STATUS_DATA == 'S') {
+                    this.btn.CFOrder = true;
+                    this.btn.CoverSheet = false;
+                    this.btn.Printbill = false;
+                  }
+
+                  setTimeout(() => { this.focusInput_item() }, 300)
+                  this.videoRecordingService.sendCommand('start', this.input.shipment_id, this.input.TABLE_CHECK);
+                } else {
+                  this.input.CONTAINER_ID = ''
+                }
+              })
+            }
+          })
+        }
+        else if (this.input.ORDER_TYPE == 'DHL') {
+          Swal.fire({
+            icon: 'warning',
+            title: 'เป็นงาน Order ช่องทาง DHL ให้นำส่งคืนผู้รับผิดชอบ"',
+            showConfirmButton: false,
+            timer: 3000
+          });
+          this.input.CONTAINER_ID = ''
+        }
+        else {
+          Swal.fire({
+            icon: 'warning',
+            title: 'Work type ไม่ถูกต้อง',
+            showConfirmButton: false,
+            timer: 2500
+          });
+          this.input.CONTAINER_ID = ''
+        }
+
+      }
+    })
+  }
+
   summaryConCheck() {
 
     if (this.input.ORDER_TYPE != 'SORTER') {
@@ -1314,18 +2155,18 @@ private closeRecordingToast(): void {
           });
         } else if (data.status === 'success') {
           this.res_list = data.data;
-          //console.log(this.res_list[0].MaxBox_NO)
+          console.log(this.res_list[0].MaxBox_NO)
           this.input.MaxBox_NO = this.res_list[0].MaxBox_NO
 
           if (this.res_list?.some((item: any) => item.ITME_CANCEL === 'CANCEL')) {
             this.ButtonprintCancel = true;
           }
 
-          //console.log(this.res_list)
+          console.log(this.res_list)
           //console.log(this.input)
           this.input.distinctTrackingCount = new Set(this.res_list.map(item => item.TRACKING)).size;
-          //console.log("จำนวน Tracking ไม่ซ้ำกัน:", distinctTrackingCount);
-
+          console.log("จำนวน Tracking ไม่ซ้ำกัน:", this.input.distinctTrackingCount);
+          this.input.TRACKING_ref1 = this.res_list[0].TRACKING
           if(this.input.distinctTrackingCount > 1 && (this.input.TRACKING == '' || this.input.TRACKING == null)){
             this.scanConPage = true;
             this.scanItemPage = true;
@@ -1358,6 +2199,11 @@ private closeRecordingToast(): void {
             // แปลง Map เป็น Array
             this.distinctTrackingList = Array.from(distinctMap.values());
 
+          }else{
+            this.scanConPage = true;
+            this.scanItemPage = false;
+            this.summaryPage = true;
+            this.input.TRACKING = this.input.TRACKING_ref1;
           }
 
           
@@ -1413,6 +2259,11 @@ private closeRecordingToast(): void {
     this.selecttrackPage = true;
     setTimeout(() => { this.focusInput_item() }, 150)
 
+    // shipment ที่มีหลาย tracking: พอปิดกล่อง tracking แรกการอัดจะหยุดไปแล้ว
+    // พอผู้ใช้เลือก tracking ถัดไปแล้วกดเริ่มงาน ต้องสั่งอัดใหม่ ไม่งั้นช่วงนี้จะไม่มีวิดีโอเลย
+    // ถ้า agent ยังอัดออเดอร์เดิมค้างอยู่ คำสั่งนี้จะถูกมองข้าม ไม่เกิดไฟล์ซ้อน
+    this.videoRecordingService.sendCommand('start', this.input.shipment_id, this.input.TABLE_CHECK);
+
   }
 
   loadTracking() {
@@ -1425,7 +2276,6 @@ private closeRecordingToast(): void {
         this.input.MaxBox_NO = this.trackall[0].MaxBox_NO;
         if (this.input.ORDER_TYPE == 'OFFLINE') {
           this.btn.CoverSheet = false;
-          //this.CHECK_tracksum_qty();
         } else if (this.input.ORDER_TYPE == 'CF_ORDER') {
 
 
@@ -1656,7 +2506,6 @@ private closeRecordingToast(): void {
       this.input.ITEM_ID_BARCODE = '';
     }else{
     if ((this.input.ORDER_TYPE == 'ONLINE' || this.input.ORDER_TYPE == 'OFFLINE' || this.input.ORDER_TYPE == 'CF_ORDER')) {
-
       this.dataService.matchItemInContrack(this.input).subscribe(res => {
         //console.log(res);
         var data: any = res
@@ -1683,12 +2532,13 @@ private closeRecordingToast(): void {
           });
           this.input.ITEM_ID_BARCODE = ''
 
-          setTimeout(() => {
-            this.getRecordingStatus();
-          }, 300);
+          // setTimeout(() => {
+          //   this.getRecordingStatus();
+          // }, 300);
 
         } else if (data.status === 'success') {
           this.res_matchItemInCon = data.data;
+          this.input.ITEM_ID = this.res_matchItemInCon.ITEM_ID;
           if(this.res_matchItemInCon[0].ORDER_TYPE == "CANCEL"){
             this.playAudioError();
             Swal.fire({
@@ -1700,11 +2550,6 @@ private closeRecordingToast(): void {
             });
             this.input.ITEM_ID_BARCODE = ''
           }else{
-
-            // this.input.ITEM_ID = this.res_matchItemInCon.ITEM_ID;
-            // this.input.QTY_REQUESTED = this.res_matchItemInCon.QTY_REQUESTED;
-            // this.input.QTY_PICK = this.res_matchItemInCon.QTY_PICK;
-            // this.updateConQtyCheck();
 
             //track
             this.Check_itembytrack()
@@ -1791,12 +2636,10 @@ private closeRecordingToast(): void {
             timer: 2500
           });
           this.input.ITEM_ID_BARCODE = ''
-          //this.input.TRACKING = null
           this.playAudioError();
         }else{
           console.log(this.res_matchItemInCon);
 
-          //i = this.res_matchItemInCon.length;
           this.updateConQtyCheck();
           
         }
@@ -1829,6 +2672,7 @@ private closeRecordingToast(): void {
           this.input.ITEM_ID_BARCODE = ''
         } else if (data.status === 'success') {
           this.res_QTY_equal = data.data[0];
+          this.input.ITEM_ID = data.data[0].ITEM_ID
           this.input.check_QTY_PICK = data.data[0].QTY_PICK
           console.log(this.input.check_QTY_PICK,this.res_QTY_equal,this.Status_Print_Track)
           if (this.res_QTY_equal.QTY_equal == "equal") {
@@ -1971,9 +2815,6 @@ private closeRecordingToast(): void {
             this.box.Errorhide = true
             this.box.Suchide = false
             
-            //this.interval = setInterval(() => this.BtnTRACK.nativeElement.focus(), 0);
-            //this.BtnTRACK.nativeElement.focus();
-
           } else {
             this.box.Errorhide = false
             this.box.Suchide = true
@@ -2052,6 +2893,9 @@ private closeRecordingToast(): void {
         }
         a.push(array)
         this.dataprint = a
+
+        // ปิดกล่องสำเร็จและได้เลข running จริงแล้ว — ใช้เป็น FTTracking_id ได้ถ้าไม่มีเลขขนส่ง
+        this.videoRefIndex = data.data[0].REF_INDEX || '';
         //console.log(this.dataprint)
         jQuery(this.myModalBOX.nativeElement).modal('hide');
 
@@ -2097,6 +2941,8 @@ private closeRecordingToast(): void {
   }
 
   async printTracking() {
+    this.printTimeShow = this.timeService.getNow();   // เซ็ตเวลาก่อนพิมพ์
+    await new Promise(f => setTimeout(f, 0));          // ให้ Angular render เวลาใหม่ลง DOM ก่อนสั่งพิมพ์
     await window.print();
     await new Promise(f => setTimeout(f, 1000));
     this.scanCon();
@@ -2294,24 +3140,118 @@ private closeRecordingToast(): void {
   
   }
 
-  printcancel(){
+  selectZone() {
+    // ตั้งธงทันทีเพื่อหยุด interval ไม่ให้แย่ง focus ไปที่ CONTAINER_ID ในช่วง modal กำลังเปิด
+    this.isZoneModalOpen = true;
+    // ล็อก modal ไว้ก่อน ยังปิดไม่ได้จนกว่าจะพิมพ์สำเร็จ
+    this.allowZoneModalClose = false;
+
+    const modalEl = jQuery(this.myModalZonePrint.nativeElement);
+
+    // ใช้ off().one() กันไม่ให้ handler ซ้อนกันเวลาเปิด modal หลายรอบ
+    modalEl.off('shown.bs.modal').one('shown.bs.modal', () => {
+      setTimeout(() => {
+        if (this.zoneSelect) {
+          this.zoneSelect.focus();
+        }
+      });
+    });
+
+    // บังคับ flow: บล็อกการปิด modal ทุกทาง (คลิกพื้นหลัง/ESC/อื่นๆ) จนกว่า allowZoneModalClose = true
+    modalEl.off('hide.bs.modal').on('hide.bs.modal', (e: any) => {
+      if (!this.allowZoneModalClose) {
+        e.preventDefault();
+      }
+    });
+
+    // เมื่อ modal ปิดจริง (เกิดเฉพาะตอนพิมพ์สำเร็จ) ปลดธงเพื่อให้ interval กลับมาทำงานปกติ
+    modalEl.off('hidden.bs.modal').one('hidden.bs.modal', () => {
+      this.isZoneModalOpen = false;
+    });
+
+    modalEl.modal('show');
+  }
+
+  onZoneSelected() {
+    setTimeout(() => {
+      if (this.okBtn) {
+        this.okBtn.nativeElement.focus();
+      }
+    });
+  }
+
+  printcancel() {
+    console.log('printcancel', this.input)
     var a = Array();
-    for (var i = 0;i < 1; i++) {
-      let array = {
-        SHIPMENT_ID: this.input.shipment_id,
-        SHIPPING_NAME: this.input.SHIPPING_NAME,
-        TCHANNEL: this.input.TCHANNEL,
-        SELLER_NO: this.input.SELLER_NO,
-        COMPANY : this.input.COMPANY,
-        ORDER_DATE : this.input.ORDER_DATE
+    if (this.input.TABLE_CHECK == null || this.input.TABLE_CHECK == undefined) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'ระบุหมายเลขโต๊ะเช็คไม่ได้ กรุณา login ใหม่อีกครั้ง',
+        showConfirmButton: false,
+        timer: 2500
+      });
+      return;
+    }
+
+    this.busy = this.dataService.pickcheck_print_ordercancel(this.input).subscribe(res => {
+      var data: any = res
+      if (data.status == "success") {
+        // ปลดล็อกก่อน เพื่อให้ modal ปิดได้ (ปกติถูกบล็อกโดย hide.bs.modal guard)
+        this.allowZoneModalClose = true;
+        jQuery(this.myModalZonePrint.nativeElement).modal('hide');
+
+        for (var i = 0; i < 1; i++) {
+          let array = {
+            SHIPMENT_ID: this.input.shipment_id,
+            SHIPPING_NAME: this.input.SHIPPING_NAME,
+            TCHANNEL: this.input.TCHANNEL,
+            SELLER_NO: this.input.SELLER_NO,
+            COMPANY: this.input.COMPANY,
+            ORDER_DATE: this.input.ORDER_DATE,
+            Zone: this.input.Zone,
+            Table: this.input.TABLE_CHECK,
+            PRINT_DATE: this.timeService.getNow()
+
+          }
+          a.push(array)
+        }
+        this.dataprintcancel = a
+        this.pagePrint = false
+        this.pagePrintCancel = false;
 
       }
-      a.push(array)
-    }
-    this.dataprintcancel = a
-    this.pagePrint = false
-    this.pagePrintCancel = false;
+      else {
+        // print ไม่สำเร็จ: modal ยังเปิดค้างเพราะ backdrop static ผู้ใช้ยังกดยกเลิกได้
+        Swal.fire({
+          icon: 'error',
+          title: 'พิมพ์ใบ Cancel ไม่สำเร็จ',
+          html: 'กรุณาลองใหม่อีกครั้ง',
+          showConfirmButton: false,
+          timer: 2500
+        });
+        this.playAudioError();
+      }
+    });
   }
+
+  //printcancel(){
+  //  var a = Array();
+  //  for (var i = 0;i < 1; i++) {
+  //    let array = {
+  //      SHIPMENT_ID: this.input.shipment_id,
+  //      SHIPPING_NAME: this.input.SHIPPING_NAME,
+  //      TCHANNEL: this.input.TCHANNEL,
+  //      SELLER_NO: this.input.SELLER_NO,
+  //      COMPANY : this.input.COMPANY,
+  //      ORDER_DATE : this.input.ORDER_DATE
+
+  //    }
+  //    a.push(array)
+  //  }
+  //  this.dataprintcancel = a
+  //  this.pagePrint = false
+  //  this.pagePrintCancel = false;
+  //}
 
   backScanitem() {
     this.pagePrint = true;
@@ -2379,7 +3319,7 @@ private closeRecordingToast(): void {
             this.input.BOX_SIZE = ''
             jQuery(this.myModalBOX.nativeElement).modal('show');
 
-            this.interval = setInterval(() => this.inputbox.nativeElement.focus(), 500);
+            this.setFocusInterval(() => { if (!this.isZoneModalOpen) { this.inputbox?.nativeElement?.focus(); } }, 500);
             //this.inputbox.nativeElement.focus()
             //this.interval = setInterval(() => this.inputItem.nativeElement.focus(), 100000000);
 

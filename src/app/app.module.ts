@@ -24,6 +24,8 @@ import { AuditCheckPrintOldComponent } from './layout/audit-check-Print-Old/audi
 import { AuditCheckPrintOldFullComponent } from './layout/audit-check-Print-Old-fullcarton/audit-check-Print-Old-fullcarton.component';
 import { NgxBarcode6Module } from 'ngx-barcode6';
 import { QRCodeModule } from 'angularx-qrcode';
+import { NgSelectModule } from '@ng-select/ng-select';
+import { SignaturePadModule } from 'angular2-signaturepad';
 
 import {DataTablesModule} from 'angular-datatables';
 import { OutboundScantrackingComponent } from './layout/outbound-scantracking/outbound-scantracking.component';
@@ -31,9 +33,19 @@ import { OutboundRoutingComponent } from './layout/outbound-routing/outbound-rou
 import { RegisterPackComponent } from './layout/register-pack/register-pack.component';
 import { ReportSorterComponent } from './layout/reports/report-sorter/report-sorter.component';
 import { MoniterStatusRTSComponent } from './layout/moniter-statusRTS/moniter-statusRTS.component';
-
-
-
+import { MoniterInterfaceErrorManHComponent } from './layout/moniter-InterfaceErrorManH/moniter-InterfaceErrorManH.component';
+import { AWBComponent } from './layout/AWB/AWB.component';
+import { MoniterTrackingOrderInternalComponent } from './layout/moniter-TrackingOrderInternal/moniter-TrackingOrderInternal.component';
+import { ReportPrintOrderCancelComponent } from './layout/reports/report-print-ordercancel/report-print-ordercancel.component';
+import {OutboundSignatureOrderCancelComponent} from './layout/outbound-signature-ordercancel/outbound-signature-ordercancel.component';
+import {TsuruhaOrderdetailComponent} from './layout/TSURUHA/tsuruha-orderdetail/tsuruha-orderdetail.component'
+import {TsuruhaMapInvoiceComponent} from './layout/TSURUHA/tsuruha-mapping-invoice/tsuruha-mapping-invoice.component';
+import {ReportPackingListComponent} from './layout/reports/report-packinglist/report-packinglist.component';
+import {ReportPrintWaveOrderComponent} from './layout/reports/report-print-waveorder/report-print-waveorder.component';
+import {ReportPrintTrackingGroupSkuComponent} from './layout/reports/report-print-tracking-groupsku/report-print-tracking-groupsku.component';
+import {MonitorWaveOrdeComponent} from './layout/monitor-waveorde/monitor-waveorde.component';
+import {ConfirmQtyGroupSkuComponent} from './layout/confirm-qty-groupsku/confirm-qty-groupsku.component';
+import {VideoSearchComponent} from './layout/video-search/video-search.component';
 
 
 @NgModule({
@@ -55,9 +67,20 @@ import { MoniterStatusRTSComponent } from './layout/moniter-statusRTS/moniter-st
     RegisterPackComponent,
     ReportSorterComponent,
     MoniterStatusRTSComponent,
+    MoniterInterfaceErrorManHComponent,
+    AWBComponent,
+    MoniterTrackingOrderInternalComponent,
+    ReportPrintOrderCancelComponent,
+    OutboundSignatureOrderCancelComponent,
+    TsuruhaOrderdetailComponent,
+    TsuruhaMapInvoiceComponent,
+    ReportPackingListComponent,
+    ReportPrintWaveOrderComponent,
+    ReportPrintTrackingGroupSkuComponent,
+    MonitorWaveOrdeComponent,
+    ConfirmQtyGroupSkuComponent,
+    VideoSearchComponent
 
-
-  
   ],
   imports: [
     BrowserModule,
@@ -68,7 +91,8 @@ import { MoniterStatusRTSComponent } from './layout/moniter-statusRTS/moniter-st
     NgxBarcode6Module,
     QRCodeModule ,
     DataTablesModule,
- 
+    NgSelectModule,
+    SignaturePadModule
 
   ],
   providers: [

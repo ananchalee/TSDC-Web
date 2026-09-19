@@ -1,0 +1,518 @@
+/* =========================
+   FULL HEIGHT BASE
+========================= */
+html, body {
+  height: 100%;
+  margin: 0;
+}
+
+.screen-wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.card {
+  overflow: visible;
+}
+
+/* =========================
+   WRAPPER FLEX
+========================= */
+.wrapper.full-page {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+/* =========================
+   HEADER / MENU
+   (กินเท่าที่จำเป็น)
+========================= */
+app-header,
+app-menu {
+  flex: 0 0 auto;
+}
+
+/* =========================
+   CONTENT (พื้นที่ที่เหลือ)
+========================= */
+.flex-content {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* =========================
+   SECTION / CONTAINER
+========================= */
+.content,
+.container-fluid {
+  flex: 1;
+  min-height: 0;
+}
+
+/* =========================
+   CARD ตารางเต็มพื้นที่
+========================= */
+.full-height-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* =========================
+   STICKY HEADER
+========================= */
+.fixed-header-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background-color: #212529;
+  color: white;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+}
+
+/* =========================
+   SCROLL เฉพาะตาราง
+========================= */
+.table-scroll {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: auto;
+}
+
+
+/* =========================
+   TABLE STYLE
+========================= */
+.fixed-header-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.fixed-header-table th,
+.fixed-header-table td {
+  padding: 8px;
+  border: 1px solid #ddd;
+  white-space: nowrap;
+}
+
+
+/* ===== flatpickr align with input ===== */
+.flatpickr-calendar {
+  width: auto !important;
+  min-width: 160px;
+  box-sizing: border-box;
+}
+
+.flatpickr-time {
+  max-width: 160px;
+}
+
+.flatpickr-calendar.open {
+  left: auto !important;
+  right: auto !important;
+}
+
+/* ================= NORMAL SCREEN ================= */
+
+/* ซ่อน print layout บนหน้าจอปกติ */
+.print-wrapper {
+  display: none;
+}
+
+
+/* ================= PRINT MODE ================= */
+@media print {
+
+
+  /* ---------------- RESET LAYOUT ---------------- */
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    height: auto !important;
+  }
+  /* ซ่อน layout หลัก */
+  .wrapper,
+  app-header,
+  app-menu,
+  .sidebar,
+  .flex-content,
+  .content,
+  .container-fluid {
+    display: none !important;
+  }
+
+  .screen-wrapper {
+    display: none !important;
+  }
+
+  /* แสดง print area */
+  .print-wrapper {
+
+    display: block !important;
+    position: static !important;
+    width: 100%;
+  }
+
+
+  .wrapper,
+  .wrapper.full-page,
+  .flex-content,
+  .content,
+  .container-fluid,
+  .full-height-card,
+  .table-scroll {
+    height: auto !important;
+    min-height: auto !important;
+    overflow: visible !important;
+    display: block !important;
+  }
+
+
+
+  /* ======================================================
+     A4 SETTINGS
+  ====================================================== */
+
+
+  .a4-layout {
+    min-height: auto;
+    box-sizing: border-box;
+  }
+
+  .a4-page {
+    padding: 15mm;
+    page-break-after: always;
+    break-after: page;
+  }
+
+  .a4-page:last-child {
+    page-break-after: auto;
+    break-after: auto;
+  }
+
+  .a4-layout th,
+  .a4-layout td {
+    border: 1px solid #000 !important;
+    font-size: 10px !important;
+    padding: 2px !important;   /* ลด padding ให้แน่นขึ้น */
+  }
+
+  .a4-layout ngx-barcode6 {
+    display: block;
+    margin: 0 auto;
+    font-size: 12px;
+  }
+
+  .a4-layout table {
+    border: none !important;
+  }
+
+
+
+  /* ======================================================
+     A5 SETTINGS
+  ====================================================== */
+
+
+  .a5-layout {
+    width: 100%;
+    min-height: auto;
+    padding: 0;
+    box-sizing: border-box;
+
+    page-break-after: always;
+    break-after: page;
+    font-size: 12px;
+  }
+
+
+  .a5-layout:last-child {
+    page-break-after: auto;
+    break-after: auto;
+  }
+
+  .a5-layout th,
+  .a5-layout td {
+    font-size: 10px !important;
+    padding: 2px !important;   /* ลด padding ให้แน่นขึ้น */
+  }
+
+
+  /* ======================================================
+     TABLE STYLE FOR PRINT
+  ====================================================== */
+
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    table-layout: fixed;
+  }
+  
+  th, td {
+    border: 1px solid #000 !important;
+    padding: 4px !important;
+    font-size: 12px !important;
+    color: black !important;
+  
+    white-space: normal !important;     /* ให้ขึ้นบรรทัดใหม่ */
+    word-break: break-word;             /* ตัดคำยาว */
+    overflow-wrap: break-word;          /* รองรับ browser ใหม่ */
+  
+  }
+  
+  thead {
+    background: white !important;
+    display: table-header-group;   /* header ซ้ำอัตโนมัติถ้าขึ้นหน้าใหม่ */
+  }
+
+  tr {
+    page-break-inside: avoid;
+  }
+
+}
+
+.summary-box {
+  width: 200px;          /* กำหนดความกว้าง block */
+  margin-left: auto;     /* ดันไปชิดขวา */
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+}
+
+.label {
+  text-align: left;
+}
+
+.value {
+  text-align: right;
+  min-width: 80px;
+}
+
+
+
+
+/* ================================================
+   ORDER SEARCH PAGE — COMPONENT STYLES
+   ================================================ */
+
+/* ─── Card ─── */
+.main-card {
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.06);
+}
+
+.main-card-header {
+  background: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
+  padding: 12px 18px;
+  border-radius: 8px 8px 0 0;
+
+  .card-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #343a40;
+  }
+}
+
+/* ─── Zone labels ─── */
+.zone-label {
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: #6c757d;
+  margin-bottom: 10px;
+}
+
+/* ─── Field inputs ─── */
+.field-label {
+  font-size: 16px;
+  color: #495057;
+  margin-bottom: 4px;
+  display: block;
+}
+
+.field-input {
+  height: 36px;
+  font-size: 13px;
+}
+
+/* ─── Section divider ─── */
+.section-divider {
+  border: none;
+  border-top: 1px solid #e9ecef;
+  margin: 16px 0;
+}
+
+/* ─── Run Process Zone ─── */
+.run-process-zone {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.stat-chips {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.stat-chip {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 8px 16px;
+  min-width: 140px;
+
+  .stat-chip-label {
+    font-size: 14px;
+    color: #6c757d;
+  }
+
+  .stat-chip-value {
+    font-size: 16px;
+    font-weight: 600;
+    color: #c0392b;
+  }
+}
+
+.run-btn {
+  padding: 8px 20px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+/* ─── Print Zone ─── */
+.print-zone {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.btn-group-print {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.btn-export {
+  margin-left: auto;
+}
+
+/* ─── Table Card ─── */
+.table-card-header {
+  display: flex  !important;
+  align-items: center  !important;
+  justify-content: space-between  !important;
+  padding: 10px 16px;
+  background: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
+
+  h6 {
+    font-size: 14px;
+    font-weight: 600;
+    color: #343a40;
+  }
+}
+
+.result-count {
+  font-size: 13px;
+  color: #6c757d;
+  background: #e9ecef;
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+
+/* ─── Table rows ─── */
+.row-group-header {
+  background: #f1f3f5 !important;
+
+  td {
+    font-weight: 600;
+    font-size: 12px;
+    color: #343a40;
+    padding: 7px 8px;
+    border-top: 2px solid #dee2e6;
+  }
+}
+
+.row-detail {
+  td {
+    font-size: 14px;
+    color: #6c757d;
+    padding: 5px 8px;
+    background: #fff;
+  }
+}
+
+/* ─── Badge ─── */
+.badge-status {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 600;
+  background: #d4edda;
+  color: #155724;
+}
+
+/* ─── Empty state ─── */
+.empty-state {
+  padding: 40px 16px;
+  text-align: center;
+  color: #adb5bd;
+  font-size: 13px;
+}
+
+/* ─── Loading overlay ─── */
+.loading-overlay {
+  padding: 40px;
+  text-align: center;
+  color: #6c757d;
+  font-size: 14px;
+}
+
+/* ─── Button sizes ─── */
+.btn {
+  font-size: 13px;
+}
+
+/* ─── Print: hide screen UI ─── */
+@media print {
+  .screen-wrapper,
+  .content-header,
+  .main-sidebar,
+  .main-header {
+    display: none !important;
+  }
+
+  .print-wrapper {
+    display: block !important;
+  }
+}
+
+/* hide print area on screen */
+.print-wrapper {
+  display: none;
+}
+
+
+
+
+
+
+

@@ -1,12 +1,13 @@
 import { Injectable, ErrorHandler } from '@angular/core';
 //import { Http, RequestOptions, ResponseContentType, Response } from '@angular/http';
  import { Observable,throwError } from 'rxjs';
- import { catchError,map } from 'rxjs/operators';
+ import { catchError,map,shareReplay,finalize } from 'rxjs/operators';
 //import 'rxjs/add/operator/map'
 import { HttpClient,HttpHeaders,HttpErrorResponse } from '@angular/common/http';
 //import { errorHandler } from '@angular/platform-browser/src/browser';
 //import { error } from 'util';
 import { HttpParams } from '@angular/common/http';
+
 
 @Injectable()
 export class DataService {
@@ -14,6 +15,36 @@ export class DataService {
 
 
   constructor(private http: HttpClient) { }
+
+  /* =====================================================================
+     รวม request ที่ซ้ำกันให้เหลือครั้งเดียว
+     ---------------------------------------------------------------------
+     หน้ายิงของมีบางเส้นทางที่เรียก API ตัวเดียวกันด้วย payload เดียวกัน
+     พร้อมกัน 2 ครั้ง เพราะถูกเรียกจากคนละ callback เช่น
+       summaryConCheck() -> loadallsum() -> closeBox() -> tracksum_qty
+       และ popup .then()  -> CHECK_tracksum_qty()      -> tracksum_qty
+     วัดจากเบราว์เซอร์จริงเห็นสองตัวยิงห่างกัน 1 ms ตัวละ 1,084 ms
+
+     แทนที่จะไปลบจุดเรียก (เสี่ยงทำ logic พัง) เรารวมที่ชั้นนี้แทน
+     ถ้ามี request เดิมค้างอยู่ ให้ subscriber ตัวที่สองใช้ผลเดียวกัน
+     พอ request จบก็ล้างทิ้ง ครั้งต่อไปยิงใหม่ตามปกติ
+
+     *** ใส่ได้เฉพาะ endpoint ที่อ่านอย่างเดียวเท่านั้น ***
+     ห้ามใส่ตัวที่เขียนข้อมูล เพราะการยุบ 2 ครั้งเหลือ 1 จะทำให้ยอดหาย
+     ===================================================================== */
+  private inflight = new Map<string, Observable<any>>();
+
+  private postShared(url: string, data: any): Observable<any> {
+    const key = url + '|' + JSON.stringify(data);
+    const existing = this.inflight.get(key);
+    if (existing) { return existing; }
+    const req = this.http.post(url, data).pipe(
+      finalize(() => this.inflight.delete(key)),
+      shareReplay({ bufferSize: 1, refCount: false })
+    );
+    this.inflight.set(key, req);
+    return req;
+  }
 
 
   getServerDate(): Observable<{ date: string }> {
@@ -27,7 +58,7 @@ export class DataService {
 
 LOAD_USERTABLECHECK(data:any) {
    //console.log(data)
-  return this.http.post('http://10.26.1.21:1661/api/LOAD_USERTABLECHECK', data)
+  return this.postShared('http://10.26.1.21:1661/api/LOAD_USERTABLECHECK', data)
 }
 get_userpincode() {
   //console.log(data)
@@ -39,6 +70,32 @@ insert_user_tablecheck(data:any){
 
 insert_user_tablecheck2(data:any){
   return this.http.post('http://10.26.1.21:1661/api/insert_user_tablecheck2', data)
+}
+
+// บันทึกไฟล์วิดีโอที่อัดเสร็จลง TSDC_VIDEO_HD (VIDEO_LIST 1 รายการ = 1 แถว)
+insert_video_hd(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/insert_video_hd', data)
+}
+
+// endpoint ของหน้าค้นหาวิดีโอ แยกตัวแปรไว้เพราะตอน dev ต้องชี้ไป API ที่รันในเครื่อง
+// (api.js ตัวจริงบน 1661 ยังไม่มี endpoint พวกนี้จนกว่าจะ deploy)
+private readonly VIDEO_API = 'http://10.26.1.21:1661';
+
+// ค้นหาวิดีโอด้วยเลขออเดอร์ / รหัสร้าน / เลขพัสดุ / ช่วงวันที่
+search_video_hd(data:any){
+  return this.http.post(this.VIDEO_API + '/api/search_video_hd', data)
+}
+
+// รายชื่อร้านสำหรับ dropdown — เฉพาะร้านที่มีวิดีโอและมีใน master (ไม่มีใน master ไม่ดึงมา)
+video_seller_options(){
+  return this.http.get(this.VIDEO_API + '/api/video_seller_options')
+}
+
+/* ตัวไฟล์วิดีโอต้องผ่าน API เพราะไฟล์จริงอยู่บน share \\10.26.1.26 ซึ่งเบราว์เซอร์เปิดเองไม่ได้
+   คืนเป็น URL ไม่ใช่ Observable ตั้งใจให้เอาไปใส่ <video src> กับ <a href> ตรงๆ
+   ถ้าดึงเป็น blob ผ่าน HttpClient จะเสียความสามารถ seek และกินแรมเท่าขนาดคลิป (หลักร้อย MB) */
+video_hd_file_url(videoId: number, download = false): string {
+  return this.VIDEO_API + '/api/video_hd_file/' + videoId + (download ? '?download=1' : '');
 }
 
 load_checkinPack(data:any){
@@ -147,7 +204,7 @@ tsdc_pick_vas(){
 }
 
 tracksum_qty(data:any){
-  return this.http.post('http://10.26.1.21:1661/api/tracksum_qty',data)
+  return this.postShared('http://10.26.1.21:1661/api/tracksum_qty', data)
 }
 
 tracking_running(data:any){
@@ -156,7 +213,7 @@ tracking_running(data:any){
 
 
 loadTracking(data:any){
-  return this.http.post('http://10.26.1.21:1661/api/loadTracking',data)
+  return this.postShared('http://10.26.1.21:1661/api/loadTracking', data)
 
 }
 
@@ -250,6 +307,18 @@ ReprintTracking(data:any){
 
 ReprintTrackingAll(data:any){
   return this.http.post('http://10.26.1.21:1661/api/ReprintTrackingAll',data)
+}
+
+pickcheck_print_ordercancel(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/pickcheck_print_ordercancel',data)
+}
+
+get_report_printcancel(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/get_report_printcancel',data)
+}
+
+get_table_printcancel(){
+  return this.http.get('http://10.26.1.21:1661/api/get_table_printcancel')
 }
 
 outstanding_online(){
@@ -413,6 +482,12 @@ DeleteAndBackup_Track_Outbound(data:any){
 deleteTracking_outbount(data:any){
   return this.http.post('http://10.26.1.21:1661/api/deleteTracking_outbount',data)
 }
+report_pallet_outbound(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/report_pallet_outbound',data)
+}
+delete_report_pallet_outbound(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/delete_report_pallet_outbound',data)
+}
 
 check_ordercancel_online(data:any){
   return this.http.post('http://10.26.1.13:1665/api99/check_ordercancel_online', data);
@@ -469,12 +544,94 @@ update_statusRTS(data:any){
   return this.http.post('http://10.26.1.21:1661/api/update_statusRTS',data)
 }
 
-check_order_notclose(data:any){
-  return this.http.post('http://10.26.1.21:1661/api/check_order_notclose',data)
+Moniter_InterfaceErrorManH(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/Moniter_InterfaceErrorManH',data)
 }
 
-//////////////
+Moniter_TrackingOrderInternal_Summary(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/Moniter_TrackingOrderInternal_Summary',data)
+   //return this.http.get('http://localhost:3008/orders')
+}
 
+Moniter_TrackingOrderInternal_Detail(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/Moniter_TrackingOrderInternal_Detail',data)
+}
+
+///AWB
+Get_ONLINE_ORDER_SHIPPING(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/Get_ONLINE_ORDER_SHIPPING',data)
+}
+UPDATE_TrackingAndRTS(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/UPDATE_TrackingAndRTS',data)
+}
+////// tsuruha
+tsuruha_get_channel(){
+  return this.http.get('http://10.26.1.21:1661/api/tsuruha_get_channel')
+}
+tsuruha_get_lastprocess(){
+  return this.http.get('http://10.26.1.21:1661/api/tsuruha_get_lastprocess')
+}
+tsuruha_process_job_TSRH_A5(){
+  return this.http.get('http://10.26.1.21:1661/api/tsuruha_process_job_TSRH_A5')
+}
+tsuruha_get_orderdetail(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/tsuruha_get_orderdetail',data)
+}
+tsuruha_get_orderdetail_invhistory(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/tsuruha_get_orderdetail_invhistory',data)
+}
+tsuruha_check_order(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/tsuruha_check_order',data)
+}
+tsuruha_check_invoice(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/tsuruha_check_invoice',data)
+}
+tsuruha_update_invoice(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/tsuruha_update_invoice',data)
+}
+
+tsuruha_check_void(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/tsuruha_check_void',data)
+}
+tsuruha_update_void(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/tsuruha_update_void',data)
+  }
+
+tsuruha_history_invoice(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/tsuruha_history_invoice',data)
+}
+tsuruha_get_history_invoice(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/tsuruha_get_history_invoice',data)
+}
+tsuruha_cancel_invoice(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/tsuruha_cancel_invoice',data)
+}
+///////////////// report packinglist
+packinglist_header(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/packinglist_header',data)
+}
+packinglist_detail(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/packinglist_detail',data)
+}
+confirm_packinglist_header(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/confirm_packinglist_header',data)
+}
+confirm_packinglist_detail(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/confirm_packinglist_detail',data)
+}
+
+//////// report print wave
+Get_MANHT_PICK_PAPER(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/Get_MANHT_PICK_PAPER',data)
+}
+Get_ITEM_LOCATION_MANHT_PICK_PAPER(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/Get_ITEM_LOCATION_MANHT_PICK_PAPER',data)
+}
+Update_MANHT_PICK_PAPER(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/Update_MANHT_PICK_PAPER',data)
+}
+
+////// DownloadFile
 DownloadFileFromNetwork(data: { networkKey: string, path: string }) {
   const params = new HttpParams()
     .set('networkKey', data.networkKey)
@@ -494,19 +651,31 @@ checkpathfile_labeltrack(data:any){
   return this.http.post('http://10.26.1.21:1661/api/checkpathfile_labeltrack',data)
 }
 
-///////////////////// check tracking
+//////////// check tracking
+check_order_notclose(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/check_order_notclose',data)
+ }
+
+ check_order_closed(data: any) {
+    return this.http.post('http://10.26.1.21:1661/api/check_order_closed', data)
+  }
+
+  Insert_PICK_CHECK_LOG_NEW(data: any) {
+    return this.http.post('http://10.26.1.21:1661/api/Insert_PICK_CHECK_LOG_NEW', data)
+  }
+
 CheckWork_track(data:any){
   return this.http.post('http://10.26.1.21:1661/api/CheckWorktrack',data)
    
 }
 
 CheckConOnline_track(data:any){
-  return this.http.post('http://10.26.1.21:1661/api/CheckConOnlinetrack',data)
+  return this.postShared('http://10.26.1.21:1661/api/CheckConOnlinetrack', data)
 }
 
 
 summaryContrack(data:any){
-  return this.http.post('http://10.26.1.21:1661/api/summaryContrack',data)
+  return this.postShared('http://10.26.1.21:1661/api/summaryContrack', data)
 
 }
 matchItemInContrack(data:any){
@@ -546,12 +715,44 @@ updateCoverSheettrack(data:any){
 
 summary_ITEM_LACK_Track(data:any) {
   return this.http.post('http://10.26.1.21:1661/api/summary_ITEM_LACK_Track', data)
-   
 }
 
 Rescan_checkitem_Track(data:any){
   return this.http.post('http://10.26.1.21:1661/api/Rescan_checkitem_track',data)
+}
 
+Get_OrderCountConfirmMan_PICK_PAPER(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/Get_OrderCountConfirmMan_PICK_PAPER',data)
+}
+
+//////// monitor wave order
+Get_PendingPrint_WaveOrderList(){
+  return this.http.get('http://10.26.1.21:1661/api/Get_PendingPrint_WaveOrderList')
+}
+
+Cancel_PendingPrint_WaveOrder(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/Cancel_PendingPrint_WaveOrder',data)
+}
+
+//////// print tracking group sku
+Get_TrackingGroupSku(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/Get_TrackingGroupSku',data)
+}
+
+Update_PrintStatus_TrackingGroupSku(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/Update_PrintStatus_TrackingGroupSku',data)
+}
+
+Confirm_QtyGroupSku(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/Confirm_QtyGroupSku',data)
+}
+
+tracking_running_groupsku(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/tracking_running_groupsku',data)
+}
+
+insertTracking_confirmOutbound_groupsku(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/insertTracking_confirmOutbound_groupsku',data)
 }
 
 }

@@ -1,0 +1,26 @@
+// confirm-qty-groupsku.component.scss
+
+.screen-wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.flex-content {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+// ช่องสแกนตัวใหญ่ — คนเบิกยืนอ่านจากระยะห่างจากจอ
+.form-control-lg {
+  font-size: 20px;
+}
+
+// ตัวเลขจำนวนชิ้น ความกว้างเท่ากันทุกหลัก เลขจะได้ไม่ขยับตอนเปลี่ยนกลุ่ม
+.card-body [style*="font-size:52px"],
+.card-body [style*="font-size:24px"] {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}

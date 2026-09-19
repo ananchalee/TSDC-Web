@@ -20,9 +20,6 @@
         "build": {
           "builder": "@angular-devkit/build-angular:browser",
           "options": {
-            "allowedCommonJsDependencies": [
-              "ngx-barcode6"
-            ],
             "outputPath": "dist/Project-TSDC-V3",
             "index": "src/index.html",
             "main": "src/main.ts",
@@ -31,18 +28,22 @@
             "aot": true,
             "assets": [
               "src/favicon.ico",
+              "src/web.config",
               "src/assets"
             ],
             "styles": [
-      
+              "src/assets/flatpickr/flatpickr.min.css",
               "node_modules/datatables.net-dt/css/jquery.dataTables.css",
-             
+              "node_modules/@ng-select/ng-select/themes/default.theme.css",
               "src/styles.scss"
             ],
             "scripts": [
-            "node_modules/jquery/dist/jquery.js",
-            "node_modules/datatables.net/js/jquery.dataTables.js",
-            "node_modules/bootstrap/dist/js/bootstrap.js"
+              "node_modules/jquery/dist/jquery.js",
+              "node_modules/datatables.net/js/jquery.dataTables.js",
+              "node_modules/bootstrap/dist/js/bootstrap.js",
+              "src/assets/flatpickr/flatpickr.min.js",
+              "src/assets/js/xlsx.full.min.js",
+              "src/assets/js/xlsx.bundle.js"
             ]
           },
           "configurations": {
@@ -63,13 +64,13 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "2mb",
-                  "maximumError": "3mb"
+                  "maximumWarning": "5mb",
+                  "maximumError": "10mb"
                 },
                 {
                   "type": "anyComponentStyle",
                   "maximumWarning": "2kb",
-                  "maximumError": "4kb"
+                  "maximumError": "9kb"
                 }
               ]
             }
@@ -103,19 +104,21 @@
               "src/favicon.ico",
               "src/assets"
             ],
-           "styles": [
-      
-            "node_modules/datatables.net-dt/css/jquery.dataTables.css",
-            
-              
+            "styles": [
+              "src/assets/flatpickr/flatpickr.min.css",
+              "node_modules/datatables.net-dt/css/jquery.dataTables.css",
+              "node_modules/@ng-select/ng-select/themes/default.theme.css",
               "src/styles.scss"
             ],
             "scripts": [
-            "node_modules/jquery/dist/jquery.js",
-            "node_modules/datatables.net/js/jquery.dataTables.js",
-            "node_modules/bootstrap/dist/js/bootstrap.js"
-            ] 
-            
+              "node_modules/jquery/dist/jquery.js",
+              "node_modules/datatables.net/js/jquery.dataTables.js",
+              "node_modules/bootstrap/dist/js/bootstrap.js",
+              "src/assets/flatpickr/flatpickr.min.js",
+              "src/assets/js/xlsx.full.min.js",
+              "src/assets/js/xlsx.bundle.js"
+            ]
+
           }
         },
         "lint": {
@@ -150,5 +153,5 @@
   "cli": {
     "analytics": "84ddcd5d-80b8-420e-80b4-e2d4b8d5d772"
   }
-  
+
 }

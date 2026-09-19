@@ -15,24 +15,125 @@ import { RegisterPackComponent } from './layout/register-pack/register-pack.comp
 import { ReportSorterComponent } from './layout/reports/report-sorter/report-sorter.component';
 import { OutboundRoutingComponent } from './layout/outbound-routing/outbound-routing.component';
 import { MoniterStatusRTSComponent } from './layout/moniter-statusRTS/moniter-statusRTS.component';
+import { MoniterInterfaceErrorManHComponent} from './layout/moniter-InterfaceErrorManH/moniter-InterfaceErrorManH.component';
+import { AWBComponent } from './layout/AWB/AWB.component';
+import { MoniterTrackingOrderInternalComponent} from './layout/moniter-TrackingOrderInternal/moniter-TrackingOrderInternal.component';
+import { ReportPrintOrderCancelComponent } from './layout/reports/report-print-ordercancel/report-print-ordercancel.component';
+import { OutboundSignatureOrderCancelComponent } from './layout/outbound-signature-ordercancel/outbound-signature-ordercancel.component';
+import { TsuruhaOrderdetailComponent }from './layout/TSURUHA/tsuruha-orderdetail/tsuruha-orderdetail.component'
+import {TsuruhaMapInvoiceComponent} from './layout/TSURUHA/tsuruha-mapping-invoice/tsuruha-mapping-invoice.component';
+import {ReportPackingListComponent} from './layout/reports/report-packinglist/report-packinglist.component';
+import {ReportPrintWaveOrderComponent} from './layout/reports/report-print-waveorder/report-print-waveorder.component';
+import {ReportPrintTrackingGroupSkuComponent} from './layout/reports/report-print-tracking-groupsku/report-print-tracking-groupsku.component';
+import {MonitorWaveOrdeComponent} from './layout/monitor-waveorde/monitor-waveorde.component';
+import {ConfirmQtyGroupSkuComponent} from './layout/confirm-qty-groupsku/confirm-qty-groupsku.component';
+import {VideoSearchComponent} from './layout/video-search/video-search.component';
+
 const routes: Routes = [
 
  
   { path: '', redirectTo: 'login',pathMatch:'full' },
   { path: 'login', component:LoginComponent },
-  { path: 'dashboard', component:DashboardComponent },
-  { path:'audit-check',component:AuditCheckComponent},
-  { path:'audit-check-tracking',component:AuditCheckTrackingComponent},
-  { path:'audit-check-fullcarton',component:AuditCheckFullcartonComponent},
-  { path:'edit-box', component:EditBoxComponent },
-  { path:'audit-check-Print-Old',component:AuditCheckPrintOldComponent},
-  { path:'audit-check-Print-Old-Full',component:AuditCheckPrintOldFullComponent},
-  { path:'Outbound-Sacn-Tracking',component:OutboundScantrackingComponent},
-  { path:'register-pack',component:RegisterPackComponent},
-  { path:'report-sorter',component:ReportSorterComponent},
-  { path:'Outbound-Routing',component:OutboundRoutingComponent},
-  { path:'monit-statusRTS',component:MoniterStatusRTSComponent},
-
+  {
+    path: 'dashboard', component: DashboardComponent,
+    data: { menubar: 'Dashboard', version: '1.0.0', lastupdate: '2026-01-20' }
+  },
+  {
+    path: 'audit-check', component: AuditCheckComponent,
+    data: { menubar: 'Audit Check Online A', version: '2.0.0', lastupdate: '2026-07-31' }
+  },
+  {
+    path: 'audit-check-tracking', component: AuditCheckTrackingComponent,
+    data: { menubar: 'Audit Check Online B', version: '2.0.1', lastupdate: '2026-08-22' }
+  },
+  {
+    path: 'audit-check-fullcarton', component: AuditCheckFullcartonComponent,
+    data: { menubar: 'Check Fullcarton', version: '1.0.0', lastupdate: '2026-01-01' }
+  },
+  {
+    path: 'edit-box', component: EditBoxComponent,
+    data: { menubar: 'แก้ไขขนาดกล่อง', version: '1.0.0', lastupdate: '2026-01-01' }
+  },
+  {
+    path: 'audit-check-Print-Old', component: AuditCheckPrintOldComponent,
+    data: { menubar: 'Audit Check Offline A', version: '1.0.0', lastupdate: '2026-07-31' }
+  },
+  {
+    path: 'audit-check-Print-Old-Full', component: AuditCheckPrintOldFullComponent,
+    data: { menubar: 'เช็คสินค้ายกลัง', version: '1.0.0', lastupdate: '2026-01-01' }
+  },
+  {
+    path: 'Outbound-Sacn-Tracking', component: OutboundScantrackingComponent,
+    data: { menubar: 'Tracking Order', version: '2.2.0', lastupdate: '2026-07-18' }
+  },
+  {
+    path: 'register-pack', component: RegisterPackComponent,
+    data: { menubar: 'ลงทะเบียนแพคสินค้า', version: '1.0.0', lastupdate: '2026-01-01' }
+  },
+  {
+    path: 'report-sorter', component: ReportSorterComponent,
+    data: { menubar: 'Report Sorter', version: '1.0.0', lastupdate: '2026-01-01' }
+  },
+  {
+    path: 'Outbound-Routing', component: OutboundRoutingComponent,
+    data: { menubar: 'Outbound Routing', version: '1.0.0', lastupdate: '2026-01-01' }
+  },
+  {
+    path: 'monit-statusRTS', component: MoniterStatusRTSComponent,
+    data: { menubar: 'RTS', version: '1.0.0', lastupdate: '2026-01-01' }
+  },
+  {
+    path: 'monit-InterfaceError-ManH', component: MoniterInterfaceErrorManHComponent,
+    data: { menubar: 'Interface Error', version: '1.0.0', lastupdate: '2026-01-01' }
+  },
+  {
+    path: 'AWB', component: AWBComponent,
+    data: { menubar: 'AWB', version: '1.0.0', lastupdate: '2026-01-01' }
+  },
+  {
+    path: 'monit-Trackorderinternal', component: MoniterTrackingOrderInternalComponent,
+    data: { menubar: 'Tracking Order Internal', version: '1.0.0', lastupdate: '2026-01-01' }
+  },
+  {
+    path: 'report-printordercancel', component: ReportPrintOrderCancelComponent,
+    data: { menubar: 'Report Print Order Cancel', version: '1.0.0', lastupdate: '2026-01-01' }
+  },
+  {
+    path: 'Outbound-SignatureOrderCancel', component: OutboundSignatureOrderCancelComponent,
+    data: { menubar: 'Signature Order Cancel', version: '1.0.0', lastupdate: '2026-01-01' }
+  },
+  {
+    path: 'tsuruha-orderdetail', component: TsuruhaOrderdetailComponent,
+    data: { menubar: 'Report Tsuruha', version: '1.0.0', lastupdate: '2026-01-01' }
+  },
+  {
+    path: 'tsuruha-mappinginvoice', component: TsuruhaMapInvoiceComponent,
+    data: { menubar: 'Map Invoice', version: '1.0.0', lastupdate: '2026-01-01' }
+  },
+  {
+    path: 'report-packinglist', component: ReportPackingListComponent,
+    data: { menubar: 'Report Packing List', version: '1.0.0', lastupdate: '2026-01-01' }
+  },
+  {
+    path: 'report-printWaveOrder', component: ReportPrintWaveOrderComponent,
+    data: { menubar: 'Report Print Wave Order', version: '1.1.0', lastupdate: '2026-08-08' }
+  },
+  {
+    path: 'report-printTrackingGroupSku', component: ReportPrintTrackingGroupSkuComponent,
+    data: { menubar: 'Print Tracking Group SKU', version: '1.2.0', lastupdate: '2026-09-05' }
+  },
+  {
+    path: 'monitor-waveorde', component: MonitorWaveOrdeComponent,
+    data: { menubar: 'Monitor Wave Order', version: '1.0.0', lastupdate: '2026-01-01' }
+  },
+  {
+    path: 'confirm-qty-groupsku', component: ConfirmQtyGroupSkuComponent,
+    data: { menubar: 'Confirm Qty Group SKU', version: '1.0.0', lastupdate: '2026-08-29' }
+  },
+  {
+    path: 'video-search', component: VideoSearchComponent,
+    data: { menubar: 'Video Packings', version: '1.0.0', lastupdate: '2026-09-12' }
+  },
   { path: '**', redirectTo: 'login' } ,
 
 ];

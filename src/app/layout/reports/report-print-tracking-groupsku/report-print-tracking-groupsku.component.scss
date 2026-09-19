@@ -1,0 +1,120 @@
+// report-print-tracking-groupsku.component.scss
+
+.screen-wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.flex-content {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+// ── การ์ด Transport ที่กดได้ (เป็น <button> เพื่อให้ disabled ใช้งานได้จริง) ──
+.tp-card {
+  border: 1px solid rgba(0, 0, 0, 0.125);
+  background-color: #fff;
+  padding: 0;
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+    transform: translateY(-1px);
+  }
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 0.15rem rgba(23, 162, 184, 0.4);
+  }
+}
+
+// ── overlay ระหว่างโหลด/รวม PDF ──────────────────────────────
+.print-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.print-overlay-box {
+  background: #fff;
+  border-radius: 6px;
+  padding: 28px 40px;
+  text-align: center;
+  min-width: 280px;
+}
+
+// ── ส่วนใบ Cancel / ใบ track: อยู่ใน DOM แต่ไม่แสดงบนจอ โผล่เฉพาะตอนพิมพ์ ──
+// (ใบปะหน้าพาเลทไม่อยู่ตรงนี้ — ถูกวาดเป็นหน้าแรกของ PDF ผ่าน pdf-lib แทน)
+.cancel-print-section,
+.track-print-section {
+  display: none;
+}
+
+// ── Print ─────────────────────────────────────────────────────
+// ปกติหน้านี้พิมพ์ PDF ผ่าน iframe (CSS ตรงนี้ไม่เกี่ยว)
+// จะใช้ก็ต่อเมื่อพิมพ์ใบ Cancel / ใบ track ซึ่งเรียก window.print() ของหน้านี้ตรง ๆ
+@media print {
+
+  .print-overlay,
+  .modal,
+  .modal-backdrop {
+    display: none !important;
+  }
+
+  // ซ่อนทุกอย่างก่อน แล้วค่อยเปิดเฉพาะใบที่จะพิมพ์
+  body * {
+    visibility: hidden;
+  }
+
+  .cancel-print-section,
+  .cancel-print-section *,
+  .track-print-section,
+  .track-print-section * {
+    visibility: visible;
+  }
+
+  .cancel-print-section,
+  .track-print-section {
+    display: block !important;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+  }
+
+  // หน้าจอปกติไม่ต้องกินพื้นที่ตอนพิมพ์
+  .wrapper.full-page {
+    display: none !important;
+    height: 0 !important;
+  }
+
+  ngx-barcode6 {
+    display: block;
+    text-align: left;
+  }
+  ngx-barcode6 svg {
+    display: block;
+    margin: 0;
+  }
+
+  // กันหน้าเปล่าติดท้ายจาก page-break ของใบสุดท้าย
+  .page:last-child {
+    page-break-after: auto !important;
+  }
+}
