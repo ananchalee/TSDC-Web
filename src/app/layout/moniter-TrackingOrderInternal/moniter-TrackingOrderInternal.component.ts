@@ -49,8 +49,8 @@ export class MoniterTrackingOrderInternalComponent implements OnInit {
     const d = this.activatedRoute.snapshot.data;
     var page = Array();
     let array = {
-      pagename: 'Moniter-TrackorderInternal',
-      active: 'Moniter',
+      pagename: 'Monitor-TrackOrderInternal',
+      active: 'Monitor',
       menubar: d['menubar'],
       version: d['version'],
       lastupdate: d['lastupdate'],

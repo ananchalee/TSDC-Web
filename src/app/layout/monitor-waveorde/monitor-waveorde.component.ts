@@ -38,7 +38,7 @@ export class MonitorWaveOrdeComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     const d = this.route.snapshot.data;
     const page: any[] = [];
-    page.push({ pagename: 'Monitor-WaveOrder', active: 'Moniter', menubar: d['menubar'], version: d['version'], lastupdate: d['lastupdate'] });
+    page.push({ pagename: 'Monitor-WaveOrder', active: 'Monitor', menubar: d['menubar'], version: d['version'], lastupdate: d['lastupdate'] });
     this.pageactive = page;
 
     this.getdata();

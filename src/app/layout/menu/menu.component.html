@@ -51,22 +51,22 @@
           </a>
         </li> -->
 
-        <section [hidden]="!menu_Moniter">
-          <li class="nav-header" >Moniter</li>
+        <section [hidden]="!menu_Monitor">
+          <li class="nav-header" >Monitor</li>
           <li class="nav-item ">
-            <a class="nav-link" [ngClass]='{active:page.moniter}'  >
+            <a class="nav-link" [ngClass]='{active:page.Monitor}'  >
 
               <!-- <i class="far fa-check-circle nav-icon"></i> -->
           
               <i class="fas fa-tv nav-icon"></i>
               <p>
-                Moniter
+                Monitor
                 <i class="fas fa-angle-left right"></i>
               </p>
             </a>
             <ul class="nav nav-treeview">
               <li class="nav-item"  (click)="Onclick_menu('monit_statusRTS') ">
-                <a class="nav-link"  [ngClass]='{active:page.Moniter_StatusRTS}'>
+                <a class="nav-link"  [ngClass]='{active:page.Monitor_StatusRTS}'>
                   <i class="fas fa-paper-plane nav-icon"></i>
                   <p>
                     {{routeData['monit-statusRTS']?.menubar || 'RTS'}}
@@ -89,7 +89,7 @@
                 <a class="nav-link"  [ngClass]='{active:page.monit_TrackOrderInternal}'>
                   <i class="fas fa-paper-plane nav-icon"></i>
                   <p>
-                    {{routeData['monit-Trackorderinternal']?.menubar || 'Track Order Internal'}}
+                    {{routeData['monit-Trackorderinternal']?.menubar || 'Tracking Order Internal'}}
                     <br>
                     <small *ngIf="routeData['monit-Trackorderinternal']?.version" style="font-size:0.65rem; opacity:0.75; display:block; text-align:center;">v{{routeData['monit-Trackorderinternal'].version}} | {{routeData['monit-Trackorderinternal'].lastupdate}}</small>
                   </p>

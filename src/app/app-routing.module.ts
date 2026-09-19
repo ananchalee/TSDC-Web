@@ -92,7 +92,7 @@ const routes: Routes = [
   },
   {
     path: 'monit-Trackorderinternal', component: MoniterTrackingOrderInternalComponent,
-    data: { menubar: 'Track Order Internal', version: '1.0.0', lastupdate: '2026-01-01' }
+    data: { menubar: 'Tracking Order Internal', version: '1.0.0', lastupdate: '2026-01-01' }
   },
   {
     path: 'report-printordercancel', component: ReportPrintOrderCancelComponent,

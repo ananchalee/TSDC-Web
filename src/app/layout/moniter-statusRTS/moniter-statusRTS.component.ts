@@ -44,8 +44,8 @@ export class MoniterStatusRTSComponent implements OnInit {
     const d = this.activatedRoute.snapshot.data;
     var page = Array();
     let array = {
-      pagename: 'Moniter-Status-RTS',
-      active: 'Moniter',
+      pagename: 'Monitor-Status-RTS',
+      active: 'Monitor',
       menubar: d['menubar'],
       version: d['version'],
       lastupdate: d['lastupdate'],

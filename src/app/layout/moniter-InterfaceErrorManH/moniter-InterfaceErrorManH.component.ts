@@ -43,8 +43,8 @@ export class MoniterInterfaceErrorManHComponent implements OnInit {
     const d = this.activatedRoute.snapshot.data;
     var page = Array();
     let array = {
-      pagename: 'Moniter-InterfaceError',
-      active: 'Moniter',
+      pagename: 'Monitor-InterfaceError',
+      active: 'Monitor',
       menubar: d['menubar'],
       version: d['version'],
       lastupdate: d['lastupdate'],
