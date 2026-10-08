@@ -6,6 +6,8 @@ import { LoginComponent } from './login/login.component';
 import { DashboardComponent} from './layout/dashboard/dashboard.component'
 import { AuditCheckComponent } from './layout/audit-check/audit-check.component';
 import { AuditCheckTrackingComponent } from './layout/audit-check-tracking/audit-check-tracking.component';
+import { AuditCheckTrackingConfirmComponent } from './layout/audit-check-tracking-confirm/audit-check-tracking-confirm.component';
+import { VideoLeaveGuard } from './layout/audit-check-tracking-confirm/video-leave.guard';
 import { AuditCheckFullcartonComponent} from './layout/audit-check-fullcarton/audit-check-fullcarton.component';
 import { EditBoxComponent } from './layout/edit-box/edit-box.component';
 import { AuditCheckPrintOldComponent } from './layout/audit-check-Print-Old/audit-check-Print-Old.component';
@@ -45,6 +47,11 @@ const routes: Routes = [
   {
     path: 'audit-check-tracking', component: AuditCheckTrackingComponent,
     data: { menubar: 'Audit Check Online B', version: '2.0.1', lastupdate: '2026-08-22' }
+  },
+  {
+    path: 'audit-check-tracking-confirm', component: AuditCheckTrackingConfirmComponent,
+    canDeactivate: [VideoLeaveGuard],
+    data: { menubar: 'Audit Check Online C', version: '1.0.0', lastupdate: '2026-09-26' }
   },
   {
     path: 'audit-check-fullcarton', component: AuditCheckFullcartonComponent,

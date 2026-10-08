@@ -70,6 +70,8 @@ export class MenuComponent implements OnInit {
               break;
             case 'Check Order Print Track': this.page.audit_CheckOrderTrack = true;
               break;
+            case 'Check Order Confirm Print Track': this.page.audit_CheckOrderTrackConfirm = true;
+              break;
             case 'Check fullcarton' : this.page.audit_fullcarton = true;
               break;
             case 'Confirm Qty Group SKU' : this.page.audit_confirmqtygroupsku = true;
@@ -169,6 +171,9 @@ export class MenuComponent implements OnInit {
         break;
       case 'checkordertrack':
           this.router.navigate(["/audit-check-tracking"]);
+      break;
+      case 'checkordertrackconfirm':
+          this.router.navigate(["/audit-check-tracking-confirm"]);
       break;
       case 'checkfullcarton':
           this.router.navigate(["/audit-check-fullcarton"]);
