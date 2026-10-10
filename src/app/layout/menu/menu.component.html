@@ -154,6 +154,16 @@
                   </p>
                 </a>
               </li>
+              <li class="nav-item" (click)="Onclick_menu('checkordertrackconfirm')" >
+                <a class="nav-link" [ngClass]='{active:page.audit_CheckOrderTrackConfirm}' >
+                  <i class="fas fa-clipboard-check nav-icon"></i>
+                  <p>
+                    {{routeData['audit-check-tracking-confirm']?.menubar || 'Audit Check Online C'}}
+                    <br>
+                    <small *ngIf="routeData['audit-check-tracking-confirm']?.version" style="font-size:0.65rem; opacity:0.75; display:block; text-align:center;">v{{routeData['audit-check-tracking-confirm'].version}} | {{routeData['audit-check-tracking-confirm'].lastupdate}}</small>
+                  </p>
+                </a>
+              </li>
               <li class="nav-item" (click)="Onclick_menu('checkfullcarton')" >
                 <a class="nav-link" [ngClass]='{active:page.audit_fullcarton}' >
                   <i class="fas fa-archive nav-icon"></i>
