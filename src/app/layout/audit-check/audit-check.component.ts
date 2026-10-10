@@ -30,6 +30,8 @@ export class AuditCheckComponent implements OnInit, OnDestroy {
   zones = ['Zone F1A', 'Zone F1B','Zone 2 CoolRoom','Zone 3A', 'Zone 3B', 'Zone 3C'];
 
   isLoading = false;
+  /** กันปิดกล่องซ้ำ (ยิงบาร์โค้ดกล่องซ้ำ/กดบันทึกหลังระบบไปเองแล้ว) รีเซ็ตทุกครั้งที่เปิดหน้าต่างปิดกล่อง */
+  boxSubmitting = false;
   pageactive: any;
 
   dtOptions: any = {};
@@ -366,6 +368,7 @@ export class AuditCheckComponent implements OnInit, OnDestroy {
   closeBox() {
     console.log('1')
     this.input.BOX_SIZE = ''
+    this.boxSubmitting = false;
     this.input.OnclickCoverSheet = false;
     this.busy = this.dataService.tracksum_qty(this.input).subscribe(res => {
       var data: any = res;
@@ -1604,14 +1607,16 @@ console.log(this.input.check_QTY_PICK,this.res_QTY_equal,this.Status_Print_Track
           this.box = data.data[0]
           this.input.CARTON_BOX_W = this.box.CARTON_BOX_W == undefined ? 0 : this.box.CARTON_BOX_W
           this.input.CARTON_BOX_L = this.box.CARTON_BOX_L  == undefined ? 0 : this.box.CARTON_BOX_L
-          this.input.CARTON_BOX_H = this.box.CARTON_BOX_H == undefined ? 0 : this.box.CARTON_BOX_L
-          this.input.CARTON_BOX_WEIGHT = this.box.CARTON_BOX_WEIGHT == undefined ? 0 :this.box.CARTON_BOX_L
+          this.input.CARTON_BOX_H = this.box.CARTON_BOX_H == undefined ? 0 : this.box.CARTON_BOX_H
+          this.input.CARTON_BOX_WEIGHT = this.box.CARTON_BOX_WEIGHT == undefined ? 0 : this.box.CARTON_BOX_WEIGHT
           //this.tracking_box();
 
           //console.log(this.input)
           if (this.box.ACTIVE == 'Y') {
             this.box.Errorhide = true
             this.box.Suchide = false
+            // สแกนกล่องผ่าน master แล้วไปหน้า print ทันที ไม่ต้องกดบันทึก (VAS ต้องติ๊กก่อนสแกนกล่อง)
+            this.tracking_box();
             
             //this.interval = setInterval(() => this.BtnTRACK.nativeElement.focus(), 0);
             //this.BtnTRACK.nativeElement.focus();
@@ -1639,6 +1644,10 @@ console.log(this.input.check_QTY_PICK,this.res_QTY_equal,this.Status_Print_Track
   }
 
   tracking_box() {
+    if (this.boxSubmitting) {
+      return;
+    }
+    this.boxSubmitting = true;
     this.isLoading = true;
     this.box.btn = false
     let array = this.vasFormArray;
@@ -1667,6 +1676,7 @@ console.log(this.input.check_QTY_PICK,this.res_QTY_equal,this.Status_Print_Track
       //console.log('1',data);
       if (data.status === 'error') {
         console.log(data);
+        this.boxSubmitting = false;
         Swal.fire({
           icon: 'error',
           title: 'เกิดข้อผิดพลาด กรุณาติดต่อ ADMIN!',
@@ -1957,6 +1967,7 @@ console.log(this.input.check_QTY_PICK,this.res_QTY_equal,this.Status_Print_Track
         }).then((result) => {
           if (result.value) {
             this.input.BOX_SIZE = ''
+            this.boxSubmitting = false;
             jQuery(this.myModalBOX.nativeElement).modal('show');
 
             this.interval = setInterval(() => this.inputbox.nativeElement.focus(), 500);

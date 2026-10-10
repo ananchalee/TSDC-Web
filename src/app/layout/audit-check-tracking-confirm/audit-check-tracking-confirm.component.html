@@ -373,6 +373,7 @@
                     <thead>
                       <tr>
                         <th style="width: 10px">#</th>
+                        <th>BARCODE</th>
                         <th>ITEM</th>
                         <th>รายละเอียดสินค้า</th>
                         <th>หน่วย</th>
@@ -383,6 +384,7 @@
                       <tr *ngFor="let data of res_list; let i = index; trackBy: trackByIndex"
                           [ngClass]="{ 'row-danger': data.ITME_CANCEL == 'CANCEL' }">
                         <td>{{i+1}}</td>
+                        <td>{{data.ITEM_ID_BARCODE}}</td>
                         <td>{{data.ITEM_ID}}</td>
                         <td>{{data.ITEM_DESC}}</td>
                         <td>{{data.UOM_PICK}}</td>
@@ -391,7 +393,7 @@
                     </tbody>
                     <tfoot>
                       <tr>
-                        <th colspan="4" class="text-right">รวม ({{itemCount}} รายการ)</th>
+                        <th colspan="5" class="text-right">รวม ({{itemCount}} รายการ)</th>
                         <th class="text-center">{{sumQtyPick}}</th>
                       </tr>
                     </tfoot>
@@ -435,6 +437,19 @@
                 <form>
 
 
+                  <div class="row">
+                    <h5 *ngIf="VAS?.length" class="col-12 text-center" style="color:rgb(216, 120, 10)">เลือก VAS ก่อนสแกนขนาดกล่อง</h5>
+                    <ul>
+                      <div class="form-group">
+                        <div class="custom-control custom-checkbox" *ngFor="let data of VAS; trackBy: trackByIndex">
+                          <input class="custom-control-input" (change)="checkBoxVas(data.VAS_NAME,$event)"
+                                 name="{{data.VAS_NAME}}" type="checkbox" id="{{data.VAS_NAME}}">
+                          <label class="custom-control-label" for="{{data.VAS_NAME}}"> {{data.VAS_NAME}}</label>
+                        </div>
+                      </div>
+                    </ul>
+                  </div>
+                  <br>
                   <div class="row justify-content-md-center">
                     <h5>ขนาดกล่อง</h5>
                     <div class="col-md-auto">
@@ -453,18 +468,6 @@
                         </i>
                       </div>
                     </div>
-                  </div>
-                  <br>
-                  <div class="row">
-                    <ul>
-                      <div class="form-group">
-                        <div class="custom-control custom-checkbox" *ngFor="let data of VAS; trackBy: trackByIndex">
-                          <input class="custom-control-input" (change)="checkBoxVas(data.VAS_NAME,$event)"
-                                 name="{{data.VAS_NAME}}" type="checkbox" id="{{data.VAS_NAME}}">
-                          <label class="custom-control-label" for="{{data.VAS_NAME}}"> {{data.VAS_NAME}}</label>
-                        </div>
-                      </div>
-                    </ul>
                   </div>
                   <br>
                   <div class="row justify-content-md-center">

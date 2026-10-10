@@ -47,6 +47,8 @@ export class AuditCheckTrackingComponent implements OnInit, OnDestroy {
   allowZoneModalClose = false;
 
   isLoading = false;
+  /** กันปิดกล่องซ้ำ (ยิงบาร์โค้ดกล่องซ้ำ/กดบันทึกหลังระบบไปเองแล้ว) รีเซ็ตทุกครั้งที่เปิดหน้าต่างปิดกล่อง */
+  boxSubmitting = false;
   pageactive: any;
 
   dtOptions: any = {};
@@ -1045,6 +1047,7 @@ private closeRecordingToast(): void {
 
   closeBox() {
     this.input.BOX_SIZE = ''
+    this.boxSubmitting = false;
     this.input.OnclickCoverSheet = false;
     this.busy = this.dataService.tracksum_qty(this.input).subscribe(res => {
       var data: any = res;
@@ -1484,6 +1487,7 @@ private closeRecordingToast(): void {
                       this.scanConPage = true;
                       this.scanItemPage = false;
                       this.summaryPage = true;
+                      setTimeout(() => { this.focusInput_item() }, 0)
                     } else {
                       this.input.CONTAINER_ID = ''
                     }
@@ -1539,6 +1543,7 @@ private closeRecordingToast(): void {
                       this.scanConPage = true;
                       this.scanItemPage = false;
                       this.summaryPage = true;
+                      setTimeout(() => { this.focusInput_item() }, 0)
                     } else {
                       this.input.CONTAINER_ID = ''
                     }
@@ -2046,6 +2051,7 @@ private closeRecordingToast(): void {
                   this.scanItemPage = false;
                   this.summaryPage = true;
                   this.videoRecordingService.sendCommand('start', this.input.shipment_id, this.input.TABLE_CHECK);
+                  setTimeout(() => { this.focusInput_item() }, 0)
                 } else {
                   this.input.CONTAINER_ID = ''
                 }
@@ -2102,6 +2108,7 @@ private closeRecordingToast(): void {
                   this.scanItemPage = false;
                   this.summaryPage = true;
                   this.videoRecordingService.sendCommand('start', this.input.shipment_id, this.input.TABLE_CHECK);
+                  setTimeout(() => { this.focusInput_item() }, 0)
                 } else {
                   this.input.CONTAINER_ID = ''
                 }
@@ -2289,6 +2296,7 @@ private closeRecordingToast(): void {
             this.scanConPage = true;
             this.scanItemPage = false;
             this.summaryPage = true;
+            setTimeout(() => { this.focusInput_item() }, 0)
             this.input.TRACKING = this.input.TRACKING_ref1;
           }
 
@@ -2892,14 +2900,16 @@ private closeRecordingToast(): void {
           this.box = data.data[0]
           this.input.CARTON_BOX_W = this.box.CARTON_BOX_W == undefined ? 0 : this.box.CARTON_BOX_W
           this.input.CARTON_BOX_L = this.box.CARTON_BOX_L  == undefined ? 0 : this.box.CARTON_BOX_L
-          this.input.CARTON_BOX_H = this.box.CARTON_BOX_H == undefined ? 0 : this.box.CARTON_BOX_L
-          this.input.CARTON_BOX_WEIGHT = this.box.CARTON_BOX_WEIGHT == undefined ? 0 :this.box.CARTON_BOX_L
+          this.input.CARTON_BOX_H = this.box.CARTON_BOX_H == undefined ? 0 : this.box.CARTON_BOX_H
+          this.input.CARTON_BOX_WEIGHT = this.box.CARTON_BOX_WEIGHT == undefined ? 0 : this.box.CARTON_BOX_WEIGHT
           //this.tracking_box();
 
           //console.log(this.input)
           if (this.box.ACTIVE == 'Y') {
             this.box.Errorhide = true
             this.box.Suchide = false
+            // สแกนกล่องผ่าน master แล้วไปหน้า print ทันที ไม่ต้องกดบันทึก (VAS ต้องติ๊กก่อนสแกนกล่อง)
+            this.tracking_box();
             
           } else {
             this.box.Errorhide = false
@@ -2924,6 +2934,10 @@ private closeRecordingToast(): void {
   }
 
   tracking_box() {
+    if (this.boxSubmitting) {
+      return;
+    }
+    this.boxSubmitting = true;
     this.isLoading = true;
     this.box.btn = false
     let array = this.vasFormArray;
@@ -2952,6 +2966,7 @@ private closeRecordingToast(): void {
       //console.log('1',data);
       if (data.status === 'error') {
         console.log(data);
+        this.boxSubmitting = false;
         this.isLoading = false;
         Swal.fire({
           icon: 'error',
@@ -3403,6 +3418,7 @@ private closeRecordingToast(): void {
         }).then((result) => {
           if (result.value) {
             this.input.BOX_SIZE = ''
+            this.boxSubmitting = false;
             jQuery(this.myModalBOX.nativeElement).modal('show');
 
             this.setFocusInterval(() => { if (!this.isZoneModalOpen) { this.inputbox?.nativeElement?.focus(); } }, 500);
