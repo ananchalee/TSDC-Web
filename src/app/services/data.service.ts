@@ -674,6 +674,13 @@ updateConQtyChecktrack(data:any){
   return this.http.post('http://10.26.1.21:1661/api/updateConQtyChecktrack',data)
 }
 
+//ยืนยันจำนวนทั้ง tracking ทีเดียว (เมนู audit-check-tracking-confirm)
+   //เขียน QTY_CHECK + แถวกล่องที่ยังไม่ปิด แทนการยิงทีละชิ้นแบบตอนสแกน
+
+  confirmQtyChecktrack(data: any) {
+    return this.http.post('http://10.26.1.21:1661/api/confirmQtyChecktrack',data)
+}
+
 UpdateChecktrackdate(data:any){
   return this.http.post('http://10.26.1.21:1661/api/UpdateChecktrackdate',data)
 
