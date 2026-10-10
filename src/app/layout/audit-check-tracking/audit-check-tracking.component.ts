@@ -296,6 +296,7 @@ getRecordingStatus(){
     // status error มาจากตัว agent เท่านั้น แปลว่าเครื่องนี้ "ลง agent ไว้แล้วแต่บันทึกไม่ได้"
     // เครื่องที่ยังไม่ได้ลง agent จะไม่มีทางเข้าเงื่อนไขนี้ จึงไม่ถูกกวนระหว่างทยอย deploy
     console.error('video agent error:', status.message);
+    this.videoFinished();
     this.closeRecordingToast();
     this.videoRecordingStartedAt = '';
     this.stopElapsedClock();
@@ -443,6 +444,9 @@ saveVideoToDb(status: any, renameAfter = false) {
   const files = status.files || [];
   if (!files.length) {
     console.warn('saveVideoToDb: agent ไม่ได้ส่งรายการไฟล์มา ข้ามการบันทึก DB');
+    if (renameAfter) {
+      this.videoFinished();
+    }
     return;
   }
 
@@ -495,10 +499,16 @@ saveVideoToDb(status: any, renameAfter = false) {
       }
     } else {
       console.error('saveVideoToDb: API ตอบกลับไม่สำเร็จ', res);
+      if (renameAfter) {
+        this.videoFinished();
+      }
     }
   }, (err: any) => {
     // ไม่ขวาง flow การแพ็ค — ไฟล์ยังอยู่ในเครื่องโต๊ะเช็ค ตามเก็บย้อนหลังได้
     console.error('saveVideoToDb: เรียก API ไม่สำเร็จ', err);
+    if (renameAfter) {
+      this.videoFinished();
+    }
   });
 }
 
@@ -517,6 +527,7 @@ renameVideosWithId(payload: any, res: any) {
   // API รุ่นที่ยังไม่คืน ids มาให้ = ข้ามไปเฉยๆ ชื่อไฟล์คงรูปแบบเดิม ทุกอย่างทำงานต่อได้ปกติ
   const ids = (res && res.ids) || [];
   if (!ids.length) {
+    this.videoFinished();
     return;
   }
 
@@ -540,6 +551,10 @@ renameVideosWithId(payload: any, res: any) {
     renames.push({ name: row.FTVideo_name, newName: `${id}-${row.FTVideo_name}` });
   }
 
+  if (!renames.length) {
+    this.videoFinished();
+    return;
+  }
   this.videoLastPayload = payload;
   this.videoRecordingService.sendRename(renames);
 }
@@ -550,6 +565,7 @@ applyRenamedVideos(status: any) {
   const files = status.files || [];
   const last = this.videoLastPayload;
   if (!files.length || !last) {
+    this.videoFinished();
     return;
   }
 
@@ -572,6 +588,7 @@ applyRenamedVideos(status: any) {
   }
 
   if (!list.length) {
+    this.videoFinished();
     return;
   }
 
@@ -583,8 +600,77 @@ applyRenamedVideos(status: any) {
     } else {
       console.error('applyRenamedVideos: API ตอบกลับไม่สำเร็จ', res);
     }
+    this.videoFinished();
   }, (err: any) => {
     console.error('applyRenamedVideos: เรียก API ไม่สำเร็จ', err);
+    this.videoFinished();
+  });
+}
+
+// ---- กดไปเมนูอื่นระหว่างที่วิดีโอยังอัดค้าง (เรียกจาก VideoLeaveGuard) ----
+// ออกจากหน้าเฉยๆ ไม่ได้สั่ง agent หยุด (ตั้งใจไว้ให้รีเฟรชกลางออเดอร์แล้วอัดต่อได้)
+// ถ้าไม่ถาม วิดีโอจะอัดค้างไปเรื่อยๆ และออเดอร์ถัดไปเริ่มอัดไม่ได้
+// รีเฟรช/ปิดแท็บไม่ผ่านตรงนี้ — ยังอัดต่อเหมือนเดิม
+
+// resolve ของ promise ที่รอ "ปิดไฟล์ครบ" — stopped -> บันทึก DB -> rename -> อัปเดตชื่อใน DB
+// ต้องรอจนจบ rename เพราะถ้าออกจากหน้าก่อน agent เปลี่ยนชื่อไฟล์ไปแล้วแต่ DB ยังเป็นชื่อเก่า
+// ตัวอัปโหลดจะหาไฟล์ไม่เจอ
+private videoFinishResolve: (() => void) | null = null;
+
+private videoFinished() {
+  if (this.videoFinishResolve) {
+    const resolve = this.videoFinishResolve;
+    this.videoFinishResolve = null;
+    resolve();
+  }
+}
+
+canDeactivate(): boolean | Promise<boolean> {
+  // ต่อ agent ไม่ได้ = สั่งหยุดไม่ได้อยู่แล้ว ถามไปก็ไม่มีผล ปล่อยออกตามปกติ
+  if (!this.videoRecordingNow || !this.videoAgentConnected) {
+    return true;
+  }
+
+  const order = (this.lastRecordingStatus && this.lastRecordingStatus.orderCode) || this.input.shipment_id || '';
+
+  return Swal.fire({
+    icon: 'warning',
+    title: 'กำลังบันทึกวิดีโออยู่',
+    html: 'ออเดอร์ <b>' + order + '</b> ยังเช็คไม่จบ' +
+      '<br><br><b>ต้องการหยุดบันทึกวิดีโอแล้วไปเมนูอื่นหรือไม่?</b>',
+    showCancelButton: true,
+    confirmButtonText: 'หยุดบันทึกและออก',
+    cancelButtonText: 'อยู่หน้านี้ต่อ',
+    allowOutsideClick: false,
+    allowEscapeKey: false,
+  }).then((result) => {
+    if (!result.value) {
+      return false;
+    }
+    return this.stopVideoBeforeLeave(order);
+  });
+}
+
+private stopVideoBeforeLeave(order: string): Promise<boolean> {
+  Swal.fire({
+    title: 'กำลังปิดไฟล์วิดีโอ...',
+    allowOutsideClick: false,
+    allowEscapeKey: false,
+    showConfirmButton: false,
+    didOpen: () => Swal.showLoading(),
+  });
+
+  return new Promise<boolean>((resolve) => {
+    // agent ไม่ตอบ / API ช้า ก็ไม่ขังพนักงานไว้ในหน้านี้ — ไฟล์ยังอยู่ในเครื่อง ตามเก็บได้
+    const timer = setTimeout(() => this.videoFinished(), 15000);
+    this.videoFinishResolve = () => {
+      clearTimeout(timer);
+      Swal.close();
+      resolve(true);
+    };
+
+    this.captureVideoContext();
+    this.videoRecordingService.sendCommand('stop', order);
   });
 }
 

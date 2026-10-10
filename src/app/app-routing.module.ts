@@ -42,10 +42,12 @@ const routes: Routes = [
   },
   {
     path: 'audit-check', component: AuditCheckComponent,
+    canDeactivate: [VideoLeaveGuard],
     data: { menubar: 'Audit Check Online A', version: '2.0.0', lastupdate: '2026-07-31' }
   },
   {
     path: 'audit-check-tracking', component: AuditCheckTrackingComponent,
+    canDeactivate: [VideoLeaveGuard],
     data: { menubar: 'Audit Check Online B', version: '2.0.1', lastupdate: '2026-08-22' }
   },
   {
