@@ -4,7 +4,7 @@
 Component: `src/app/layout/confirm-qty-groupsku/`
 Backend source: `D:\TSDC PROJECT\TSDC-Api.21\API\tsdc-project\server\api.js`
 
-ยืนยันจำนวนชิ้นตอน **เบิกของ** — คนละขั้นกับการพิมพ์ tracking (`/report-printTrackingGroupSku`)
+ยืนยันจำนวนชิ้นตอน **เบิกของ** — คนละขั้นกับการพิมพ์ tracking (`/audit-check-group-pick`)
 แต่ใช้ตาราง `TSDC_PICK_CHECK_NEW_TRACKING_GROUP_SKU` ตัวเดียวกัน
 
 ---

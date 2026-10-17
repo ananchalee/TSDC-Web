@@ -76,6 +76,8 @@ export class MenuComponent implements OnInit {
               break;
             case 'Confirm Qty Group SKU' : this.page.audit_confirmqtygroupsku = true;
               break;
+            case 'Print Tracking Group SKU' : this.page.audit_printtrackgroupsku = true;
+              break;
           }
           break;
         case 'AWB':
@@ -123,8 +125,6 @@ export class MenuComponent implements OnInit {
               case 'Report Packing List' :this.page.report_packinglist = true;
               break;
               case 'Report Print Wave Order' :this.page.report_printwave = true;
-              break;
-              case 'Print Tracking Group SKU' :this.page.report_printtrackgroupsku = true;
               break;
           }
         break;
@@ -212,7 +212,7 @@ export class MenuComponent implements OnInit {
         this.router.navigate(["/report-printWaveOrder"]);
         break;
       case 'report_printtrackgroupsku':
-        this.router.navigate(["/report-printTrackingGroupSku"]);
+        this.router.navigate(["/audit-check-group-pick"]);
         break;
       case 'video_search':
         this.router.navigate(["/video-search"]);

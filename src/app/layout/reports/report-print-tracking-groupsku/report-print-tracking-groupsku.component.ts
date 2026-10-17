@@ -188,7 +188,7 @@ export class ReportPrintTrackingGroupSkuComponent implements OnInit {
     const page: any[] = [];
     page.push({
       pagename:   'Print Tracking Group SKU',
-      active:     'Reports',
+      active:     'Audit&Check',
       menubar:    d['menubar'],
       version:    d['version'],
       lastupdate: d['lastupdate']
