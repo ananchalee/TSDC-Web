@@ -75,6 +75,8 @@ modal โชว์ `ITEM_ID` แต่ **ไม่โชว์ `ITEM_ID_BARCODE`
 **⚠ ใครเป็นคนเติมค่า** — `api.js` ไม่มี `INSERT` ลงตารางนี้เลย แถวถูกสร้างจากระบบ/job
 ภายนอก ต้องตามไปแก้ตัวที่ insert ให้เติม 2 คอลัมน์นี้ด้วย ค่าที่ควรเติมอ้างจาก
 `TSDC_PICK_CHECK_NEW_TRACKING` (`ITEM_ID_BARCODE` ของไอเทม, `SUM(QTY_PICK)` ของ shipment นั้น)
+ตั้งแต่ 17 ต.ค. 2026 `tracking_running_groupsku` ใช้ `ITEM_ID` / `ITEM_ID_BARCODE` / `QTY` ชุดนี้
+เป็นรายการในกล่อง (`BOX_CONTROL_DETAIL_NEW`) ด้วย — ค่าว่างที่นี่ = พิมพ์การ์ดนั้นไม่ได้
 
 **⚠ ไม่มี `ITEM_ID_BARCODE` = พิมพ์ไม่ได้** — ช่องสแกนแสดงเสมอ ไม่มีการซ่อนหรือข้าม
 กลุ่มที่ข้อมูลไม่มี barcode จะสแกนไม่ผ่าน ช่องขนาดกล่องและปุ่มพิมพ์เลย disabled ค้างไว้
@@ -131,11 +133,39 @@ modal โชว์ `ITEM_ID` แต่ **ไม่โชว์ `ITEM_ID_BARCODE`
 และ tracking ของคนละ sub ไม่ซ้ำกันอยู่แล้ว ส่วนการ stamp `PALLET_NO` กลับก็กรองด้วย
 `TRACKING in (...)` ที่ส่งเฉพาะของ sub นั้น
 
-**ผลที่ตามมา — ใบปะหน้าพาเลทออกมามากกว่า 1 ใบ ต่อ 1 พาเลท**
-ใบปะหน้าพิมพ์ 2 บรรทัด: `SHIPMENTS (this print)` = เฉพาะรอบนั้น และ `TOTAL ON PALLET` = สะสมทั้งพาเลท
-พิมพ์ sub A ได้ `10 / 10` แล้วพิมพ์ sub B ได้ `8 / 18` — เลข 18 ถูกต้อง แต่ใบแรกกลายเป็นข้อมูลเก่า
+**ผลที่ตามมา — 1 พาเลทมีใบคุม (PALLET COVER SHEET) ได้มากกว่า 1 ใบ**
+พิมพ์ทีละการ์ด (ทีละ sub) ได้ใบคุมการ์ดละใบ ทุกใบเลขพาเลทเดียวกัน แต่**ไม่มีใบไหนกลายเป็นข้อมูลเก่า**
+เพราะใบคุมไม่พิมพ์ยอดสะสมของพาเลทแล้ว (ดูหัวข้อ "ใบคุมพาเลท" ด้านล่าง)
 
-> **กติกาหน้างาน: ใช้ใบปะหน้าใบล่าสุด เอาใบเก่าออก**
+- บล็อกบน = ยอดของ**ทั้ง group** — เหมือนกันทุกใบ ไม่ว่าจะพิมพ์ sub ไหนก่อน
+- บล็อกล่าง = ของ **sub ที่พิมพ์รอบนั้น** — แต่ละใบต่างกัน
+
+ตัวอย่าง `G-SKU002` ขนส่ง Lex มี 2 sub: `G-SKU002-1` (2 order · 1 ชิ้นต่อกล่อง) และ
+`G-SKU002-2` (1 order · 2 ชิ้นต่อกล่อง) → ได้ใบคุม 2 ใบ เลขพาเลทเดียวกัน บล็อกบน `5 order · 6 ชิ้น · 5 กล่อง` เท่ากัน
+
+> ⚠ แบบเก่าเคยพิมพ์ `SHIPMENTS (this print)` / `TOTAL ON PALLET` (ยอดสะสม) ทำให้ใบแรก
+> ล้าสมัยหลังพิมพ์ sub ถัดไป จึงเคยมีกติกา "ใช้ใบล่าสุด เอาใบเก่าออก" — **กติกานั้นยกเลิกแล้ว**
+> (แก้เอกสาร 17 ต.ค. 2026 ให้ตรงกับ `coverLines()` ปัจจุบัน)
+
+#### ใบคุมพาเลท (PALLET COVER SHEET)
+
+วาดเองด้วย pdf-lib ใน `addPalletCover()` แล้ว**แทรกเป็นหน้าแรกของเล่ม PDF** (A4 แนวตั้ง)
+print dialog จึงเด้งครั้งเดียว · รายละเอียดใต้บาร์โค้ดเป็นภาษาไทย วาดลง canvas แล้วฝังเป็น PNG
+(`coverDetailPng()`) เพราะฟอนต์มาตรฐานของ PDF เขียนไทยไม่ได้
+
+| ส่วน | บรรทัด | มาจาก (`coverTotals()`) |
+|---|---|---|
+| หัว | บาร์โค้ด CODE128 = `PALLET_NO` | ผลของ `insertTracking_confirmOutbound_groupsku` |
+| บล็อกบน (ทั้ง group) | Group Pick · จำนวน order ทั้งหมด · จำนวนชิ้นทั้งหมด · Pallet No · จำนวนกล่อง | ทุกแถวที่โหลดอยู่ (`data_list`) — จำนวนกล่อง = จำนวน order (1 order = 1 กล่อง) |
+| บล็อกล่าง (sub ที่พิมพ์) | ขนส่ง (ตัวใหญ่) · Sub Group Pick · จำนวน order / ชิ้นใน sub group · จำนวนชิ้นต่อกล่องที่บรรจุ | แถวของการ์ดนั้น (`rowsOf(transport, subGroup)`) |
+| ท้ายใบ | จำนวนชิ้นต่อกล่องที่บรรจุ (ตัวใหญ่ ให้เห็นแต่ไกลตอนแพ็ก) · Printed: วันเวลา | ค่าเดียวกับบล็อกล่าง |
+
+`QTY_BOX` (ยอดสะสมพาเลทจาก API) และ `QTY_SHIPMENT` (จำนวนที่พิมพ์รอบนี้) ยังอยู่ใน `PalletSheet`
+แต่**ไม่ได้พิมพ์ลงใบ** · หน่วย (`ชิ้น` / `แพ็ก`) มาจาก `UOM` ของแถว ไม่ได้ hardcode
+
+ปุ่ม **"ดูตัวอย่างใบปะหน้า"** ในหน้าต่างระบุขนาดกล่อง (`previewPalletCover()`) สร้างใบคุมหน้าเดียว
+เปิดแท็บใหม่ ตัวเลขเป็นของจริง แต่เลขพาเลทขึ้น `PREVIEW` — **ไม่ยิง API ใดเลย** ไม่เกิดเลขพาเลท
+ไม่เปลี่ยน `PRINT_STATUS` ใช้ตรวจหน้าตาก่อนพิมพ์จริงได้
 
 ถ้าวันหนึ่งต้องการให้แต่ละ sub มีพาเลทของตัวเอง ต้องแก้ 2 ที่ — เพิ่ม `SUB_GROUP_PICK`
 ในเงื่อนไขหาเลขเดิม/ตอน update ใน `api.js` และให้ Angular ส่งค่านั้นไปใน payload ด้วย
@@ -324,9 +354,13 @@ WHERE TABLE_CHECK  = @TABLE_CHECK
 
 1. คำนวณ `@TABLE_RUNNING` / `@BOX_NO_ORDER` / `@REF_INDEX` — **ยกจาก `/tracking_running` ทุกบรรทัด**
    `REF_INDEX = TABLE_CHECK + YY + MM + DD + lpad(TABLE_RUNNING,4)`
-2. `INSERT` เข้า `TSDC_PICK_CHECK_BOX_CONTROL_DETAIL_NEW` โดย `SELECT` รายการไอเทมจริงจาก
-   `TSDC_PICK_CHECK_NEW_TRACKING` (`where SHIPMENT_ID + SELLER_NO` และ `TRACKING` ถ้ามี)
-   `group by ITEM_ID`, `QTY = SUM(QTY_PICK)`
+2. `INSERT` เข้า `TSDC_PICK_CHECK_BOX_CONTROL_DETAIL_NEW` โดย `SELECT` รายการไอเทมจาก
+   **แถวของ group sku เอง** `TSDC_PICK_CHECK_NEW_TRACKING_GROUP_SKU`
+   (`where GROUP_PICK + SHIPMENT_ID` และ `TRACKING` ถ้ามี) `group by ITEM_ID`, `QTY = SUM(QTY)`
+   — เปลี่ยนเมื่อ 17 ต.ค. 2026 · เดิมดึงจาก `TSDC_PICK_CHECK_NEW_TRACKING` (`SUM(QTY_PICK)`)
+   ซึ่งเป็นตารางงานชั่วคราว ถูกล้างหลังจบ order ทำให้ group ที่ค้างพิมพ์ข้ามวันพิมพ์ไม่ได้
+   (ตรวจแล้ว: 193 แถวของ group จริงไม่เหลือใน NEW_TRACKING เลย · 16 แถวที่เคยพิมพ์
+   `ITEM_ID` / `ITEM_ID_BARCODE` / `QTY` ตรงกับที่เคยดึงจาก NEW_TRACKING ทุกแถว)
 3. `INSERT` เข้า `TSDC_PICK_CHECK_BOX_CONTROL_NEW` โดยรวม `sum(QTY)` จากแถวที่เพิ่ง insert
 4. `UPDATE TSDC_PICK_CHECK_NEW_TRACKING_GROUP_SKU SET TRACKING_DOC_P = @REF_INDEX`
 
@@ -340,7 +374,7 @@ WHERE TABLE_CHECK  = @TABLE_CHECK
 { "status": "null", "message": "ไม่พบรายการไอเทมของ shipment นี้" }
 ```
 
-> ⚠ `status: 'null'` เกิดเมื่อหา shipment นั้นใน `TSDC_PICK_CHECK_NEW_TRACKING` ไม่เจอ
+> ⚠ `status: 'null'` เกิดเมื่อแถว group sku ของ shipment นั้นไม่มี `QTY` (ว่างหรือ 0)
 > (`QTY = 0`) — frontend จะข้ามใบนั้นแล้วไปรวมในรายการ "ไม่สำเร็จ" ท้ายงาน
 > ไม่พิมพ์ใบที่ไม่มีของ
 
@@ -433,8 +467,9 @@ linked server มีปัญหา (syntax / สิทธิ์ / MSDTC / ล�
 `QTY_BOX` = ยอดสะสมทั้งพาเลท — **1 shipment = 1 กล่อง** จึงนับ `SHIPMENT_ID` แบบไม่ซ้ำ
 จาก `TSDC_PICK_CHECK_NEW_TRACKING_GROUP_SKU where PALLET_NO = @PALLET_NO`
 (นับจาก `TSDC_CONFIRM_OUTBOUND` ไม่ได้ เพราะที่นั่นเก็บ `BILL_NO` = `TRACKING` ไม่ใช่ shipment)
+— frontend เก็บค่านี้ไว้ใน `PalletSheet.QTY_BOX` แต่**ใบคุมไม่ได้แสดง** (ใช้ยอดทั้ง group แทน)
 
-ส่วนจำนวน shipment ที่พิมพ์**รอบนี้** frontend นับเองจาก `ROWS`
+ส่วนจำนวน shipment ที่พิมพ์**รอบนี้** frontend นับเองจาก `ROWS` (`QTY_SHIPMENT` — ไม่ได้แสดงบนใบคุมเช่นกัน)
 
 `REMOTE_ERROR` ว่าง = sync ไปเครื่อง Conveyor สำเร็จ ถ้าไม่ว่าง frontend จะยัง
 พิมพ์ตามปกติแต่เด้ง Swal เตือนว่า "ส่งข้อมูลไปเครื่อง Conveyor ไม่สำเร็จ" พร้อมข้อความ error
@@ -532,8 +567,8 @@ POST /api/CheckOrder_Cancel_Bulk
        -> downloadfile_NetworkPath ทุก FILE_PACKING (ขนาน)
        -> pdf-lib merge เป็นเล่มเดียว
        -> insertTracking_confirmOutbound_groupsku (เฉพาะใบที่โหลดไฟล์ได้) -> ได้ PALLET_NO
-       -> window.print()  ใบปะหน้าพาเลท (dialog ที่ 1)
-       -> iframe.print()  PDF ที่ merge แล้ว   (dialog ที่ 2)
+       -> addPalletCover: แทรกใบคุมพาเลทเป็นหน้าแรกของเล่ม (เส้นบนล้ม = ไม่มีใบคุม พิมพ์ PDF ต่อ)
+       -> iframe.print()  เล่มเดียว ใบคุม + PDF ทุกใบ (print dialog เด้งครั้งเดียว)
        -> Update_PrintStatus_TrackingGroupSku -> refresh
 
   -> STATUS_PRINT = 2 (DocP) -> modal ระบุขนาดกล่อง (ตัวเดียวกับ STATUS_PRINT = 1)
