@@ -8,6 +8,10 @@
             <div style="font-size:1rem; font-weight:600;">{{input.menubar || page}}</div>
             <div *ngIf="input.version || input.lastupdate" style="font-size:0.65rem; opacity:0.8;">
               v{{input.version}} &nbsp;|&nbsp; {{input.lastupdate}}
+              <a *ngIf="notices.length" class="upd-btn" [class.upd-new]="noticeNew" (click)="openNotices()" title="ดูรายละเอียดอัปเดต">
+                <ng-container *ngIf="noticeNew">NEW</ng-container>
+                <ng-container *ngIf="!noticeNew"><i class="fas fa-bullhorn"></i> อัปเดต</ng-container>
+              </a>
             </div>
           </div>
           <a [hidden]="!input.PageDashboard" class="text-white" style="font-size:70%;">Refresh Page &nbsp; {{Repage}}</a>
@@ -27,3 +31,36 @@
          Log Out &nbsp;<i class="fas fa-sign-out-alt"></i> </a>  
       </div>
     </nav>
+
+<!-- ประกาศอัปเดตเมนู: เปิดดู PDF/รูปในหน้าเว็บ ไม่ต้องดาวน์โหลด -->
+<div *ngIf="noticeOpen" class="upd-overlay" (click)="closeNotices()">
+  <div class="upd-box" (click)="$event.stopPropagation()">
+    <div class="upd-head">
+      <span><i class="fas fa-bullhorn"></i>&nbsp; อัปเดตเมนู {{input.menubar || page}}</span>
+      <a class="upd-close" (click)="closeNotices()" title="ปิด">&times;</a>
+    </div>
+    <div class="upd-body">
+      <div class="upd-list">
+        <div *ngFor="let n of notices" class="upd-item" [class.active]="n === selNotice" (click)="selectNotice(n)">
+          <div class="upd-ver">v{{n.version}} <small>{{n.date}}</small></div>
+          <div class="upd-title">{{n.title}}</div>
+          <div *ngIf="n.detail" class="upd-detail">{{n.detail}}</div>
+          <div *ngIf="n === selNotice && updateNotice.fileList(n).length > 1" class="upd-files">
+            <a *ngFor="let f of updateNotice.fileList(n); let i = index" [class.active]="f === selFile"
+               (click)="selectFile(f); $event.stopPropagation()">ไฟล์ {{i + 1}}</a>
+          </div>
+        </div>
+      </div>
+      <div class="upd-view">
+        <ng-container *ngIf="selFileUrl; else noFile">
+          <img *ngIf="updateNotice.isImage(selFile)" [src]="selFileUrl" alt="">
+          <iframe *ngIf="!updateNotice.isImage(selFile)" [src]="selFileUrl"></iframe>
+        </ng-container>
+        <ng-template #noFile><div class="upd-empty">ไม่มีไฟล์แนบ</div></ng-template>
+      </div>
+    </div>
+    <div class="upd-foot" *ngIf="selFile">
+      <a [href]="updateNotice.fileUrl(selFile)" target="_blank" rel="noopener">เปิดในแท็บใหม่ <i class="fas fa-external-link-alt"></i></a>
+    </div>
+  </div>
+</div>
