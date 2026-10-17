@@ -1,0 +1,26 @@
+[
+  {
+    "route": "audit-check",
+    "version": "2.0.1",
+    "date": "2026-10-17",
+    "title": "สแกนกล่องผ่าน แล้วไปหน้า print ทันที",
+    "detail": "",
+    "files": ["audit-check/2026-10-17-audit-A-v2.0.1.pdf"]
+  },
+  {
+    "route": "audit-check-tracking",
+    "version": "2.0.2",
+    "date": "2026-10-17",
+    "title": "สแกนกล่องผ่าน แล้วไปหน้า print ทันที",
+    "detail": "",
+    "files": ["audit-check/2026-10-17-audit-B-v2.0.2.pdf"]
+  },
+  {
+    "route": "audit-check-tracking-confirm",
+    "version": "1.0.1",
+    "date": "2026-10-17",
+    "title": "สแกนกล่องผ่าน แล้วไปหน้า print ทันที",
+    "detail": "",
+    "files": ["audit-check/2026-10-17-audit-C-v1.0.1.pdf"]
+  }
+]

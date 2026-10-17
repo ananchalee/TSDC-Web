@@ -3,7 +3,9 @@
 // The list of file replacements can be found in `angular.json`.
 
 export const environment = {
-  production: false
+  production: false,
+  // โฟลเดอร์ประกาศอัปเดตเมนู (updates.json + ไฟล์ PDF/รูป) บน IIS 10.26.1.21
+  docsUrl: 'http://10.26.1.21/TSDC-Docs/'
 };
 
 /*
