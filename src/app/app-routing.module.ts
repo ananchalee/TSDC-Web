@@ -43,17 +43,17 @@ const routes: Routes = [
   {
     path: 'audit-check', component: AuditCheckComponent,
     canDeactivate: [VideoLeaveGuard],
-    data: { menubar: 'Audit Check Online A', version: '2.0.0', lastupdate: '2026-07-31' }
+    data: { menubar: 'Audit Check Online A', version: '2.0.1', lastupdate: '2026-10-17' }
   },
   {
     path: 'audit-check-tracking', component: AuditCheckTrackingComponent,
     canDeactivate: [VideoLeaveGuard],
-    data: { menubar: 'Audit Check Online B', version: '2.0.1', lastupdate: '2026-08-22' }
+    data: { menubar: 'Audit Check Online B', version: '2.0.2', lastupdate: '2026-10-17' }
   },
   {
     path: 'audit-check-tracking-confirm', component: AuditCheckTrackingConfirmComponent,
     canDeactivate: [VideoLeaveGuard],
-    data: { menubar: 'Audit Check Online C', version: '1.0.0', lastupdate: '2026-09-26' }
+    data: { menubar: 'Audit Check Online C', version: '1.0.1', lastupdate: '2026-10-17' }
   },
   {
     path: 'audit-check-fullcarton', component: AuditCheckFullcartonComponent,
