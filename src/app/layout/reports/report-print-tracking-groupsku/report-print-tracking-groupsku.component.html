@@ -10,7 +10,7 @@
           <div class="row mb-2">
             <div class="col-sm-6">
               <ol class="breadcrumb">
-                <li class="breadcrumb-item">Report</li>
+                <li class="breadcrumb-item">Audit&Check</li>
                 <li class="breadcrumb-item active">
                   {{pageactive && pageactive[0]?.menubar || 'Print Tracking Group SKU'}}
                   <small *ngIf="pageactive && pageactive[0]?.version" style="font-size:0.7rem; opacity:0.75;">v{{pageactive[0].version}} | {{pageactive[0].lastupdate}}</small>
@@ -37,6 +37,7 @@
                   <div class="col-auto">
                     <label class="mb-1">Group Pick</label>
                     <input type="text"
+                           #inputGroupPick
                            class="form-control"
                            placeholder=""
                            [(ngModel)]="input.GROUP_PICK"

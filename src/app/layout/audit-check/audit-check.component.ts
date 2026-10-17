@@ -29,6 +29,8 @@ export class AuditCheckComponent implements OnInit {
   zones = ['Zone F1A', 'Zone F1B','Zone 2 CoolRoom','Zone 3A', 'Zone 3B', 'Zone 3C'];
 
   isLoading = false;
+  /** กันปิดกล่องซ้ำ (ยิงบาร์โค้ดกล่องซ้ำ/กดบันทึกหลังระบบไปเองแล้ว) รีเซ็ตทุกครั้งที่เปิดหน้าต่างปิดกล่อง */
+  boxSubmitting = false;
   pageactive: any;
 
   dtOptions: any = {};
@@ -343,6 +345,7 @@ export class AuditCheckComponent implements OnInit {
   closeBox() {
     console.log('1')
     this.input.BOX_SIZE = ''
+    this.boxSubmitting = false;
     this.input.OnclickCoverSheet = false;
     this.busy = this.dataService.tracksum_qty(this.input).subscribe(res => {
       var data: any = res;
@@ -630,62 +633,19 @@ export class AuditCheckComponent implements OnInit {
                 
                   }else {
 
-                    Swal.fire({
-                      title: 'คุณต้องการเริ่มงานนี้หรือไม่ ?',
-                      html: 'SHIPMENT: ' + '<font color="blue">' + this.input.shipment_id + '</font>',
-                      icon: 'warning',
-                      showCancelButton: true,
-                      confirmButtonColor: '#3085d6',
-                      cancelButtonColor: '#d33',
-                      backdrop: false,
-                      confirmButtonText: 'ยืนยัน',
-                      cancelButtonText: 'ยกเลิก'
-                    }).then((result) => {
-                      if (result.value) {
-                        
-                        if(this.Block_order.status === 'success' && this.Block_order.data[0].FNBlock_type == 2){
-                          Swal.fire({
-                            title:'แจ้งเตือน : '+ this.Block_order.data[0].FTBlock_title,
-                            html: 'รายละเอียด : '+this.Block_order.data[0].FTBlock_desc ,
-                            icon: 'warning',
-                            showCancelButton: false,
-                            confirmButtonColor: '#d33',
-                            backdrop: false,
-                            confirmButtonText: 'ตกลง',
-                          }).then((result) => {
-                            if (result.value) {
-                              this.dataService.CheckOrder_Cancel(this.input).subscribe(res => {
-                                var ordercancel: any = res
-                                console.log(ordercancel);
-                                if (ordercancel.status === 'error') {
-                                    console.log(data);
-                                    Swal.fire({
-                                      icon: 'error',
-                                      title: 'Get ONLINE_ORDER_CANCEL Error!',
-                                      showConfirmButton: false,
-                                      timer: 2500
-                                    });
-                                    this.playAudioError();
-                                }
-                                else if(ordercancel.status === 'success'){
-                                  this.alertcancel = true;
-                                  this.ButtonprintCancel = true;
-                                  //setTimeout(() => { this.printcancel() }, 250)
-                               
-                                }
-                              });
-
-                              this.summaryConCheck();
-                              this.CHECK_tracksum_qty();
-                              this.scanConPage = true;
-                              this.scanItemPage = false;
-                              this.summaryPage = true;
-                              setTimeout(() => { this.focusInput_item() }, 150)
-
-                            }
-                          })
-                        }else{
-                          
+                    // เริ่มงานทันที ไม่ถาม "คุณต้องการเริ่มงานนี้หรือไม่" แล้ว (17 ต.ค. 2026)
+                    
+                    if(this.Block_order.status === 'success' && this.Block_order.data[0].FNBlock_type == 2){
+                      Swal.fire({
+                        title:'แจ้งเตือน : '+ this.Block_order.data[0].FTBlock_title,
+                        html: 'รายละเอียด : '+this.Block_order.data[0].FTBlock_desc ,
+                        icon: 'warning',
+                        showCancelButton: false,
+                        confirmButtonColor: '#d33',
+                        backdrop: false,
+                        confirmButtonText: 'ตกลง',
+                      }).then((result) => {
+                        if (result.value) {
                           this.dataService.CheckOrder_Cancel(this.input).subscribe(res => {
                             var ordercancel: any = res
                             console.log(ordercancel);
@@ -703,6 +663,7 @@ export class AuditCheckComponent implements OnInit {
                               this.alertcancel = true;
                               this.ButtonprintCancel = true;
                               //setTimeout(() => { this.printcancel() }, 250)
+                           
                             }
                           });
 
@@ -712,12 +673,38 @@ export class AuditCheckComponent implements OnInit {
                           this.scanItemPage = false;
                           this.summaryPage = true;
                           setTimeout(() => { this.focusInput_item() }, 150)
-                        }
 
-                      } else {
-                        this.input.CONTAINER_ID = ''
-                      }
-                    })
+                        }
+                      })
+                    }else{
+                      
+                      this.dataService.CheckOrder_Cancel(this.input).subscribe(res => {
+                        var ordercancel: any = res
+                        console.log(ordercancel);
+                        if (ordercancel.status === 'error') {
+                            console.log(data);
+                            Swal.fire({
+                              icon: 'error',
+                              title: 'Get ONLINE_ORDER_CANCEL Error!',
+                              showConfirmButton: false,
+                              timer: 2500
+                            });
+                            this.playAudioError();
+                        }
+                        else if(ordercancel.status === 'success'){
+                          this.alertcancel = true;
+                          this.ButtonprintCancel = true;
+                          //setTimeout(() => { this.printcancel() }, 250)
+                        }
+                      });
+
+                      this.summaryConCheck();
+                      this.CHECK_tracksum_qty();
+                      this.scanConPage = true;
+                      this.scanItemPage = false;
+                      this.summaryPage = true;
+                      setTimeout(() => { this.focusInput_item() }, 150)
+                    }
                   }
               }
                 
@@ -769,28 +756,13 @@ export class AuditCheckComponent implements OnInit {
                   this.input.d = this.sumqty[0].USER_DEF5.substring(1, 2);
                   this.input.p = this.sumqty[0].USER_DEF5.substring(2, 3);
 
-                  Swal.fire({
-                    title: 'คุณต้องการเริ่มงานนี้หรือไม่ ?',
-                    html: 'SHIPMENT: ' + '<font color="blue">' + this.input.shipment_id + '</font>',
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#3085d6',
-                    cancelButtonColor: '#d33',
-                    backdrop: false,
-                    confirmButtonText: 'ยืนยัน',
-                    cancelButtonText: 'ยกเลิก'
-                  }).then((result) => {
-                    if (result.value) {
-                      this.summaryConCheck();
-                      this.CHECK_tracksum_qty();
-                      this.scanConPage = true;
-                      this.scanItemPage = false;
-                      this.summaryPage = true;
-                      // setTimeout(() => { this.focusInput_item() }, 150)
-                    } else {
-                      this.input.CONTAINER_ID = ''
-                    }
-                  })
+                  // เริ่มงานทันที ไม่ถาม "คุณต้องการเริ่มงานนี้หรือไม่" แล้ว (17 ต.ค. 2026)
+                  this.summaryConCheck();
+                  this.CHECK_tracksum_qty();
+                  this.scanConPage = true;
+                  this.scanItemPage = false;
+                  this.summaryPage = true;
+                  // setTimeout(() => { this.focusInput_item() }, 150)
                 }
               })
             } else if (this.input.ORDER_TYPE == 'SORTER') {
@@ -824,27 +796,12 @@ export class AuditCheckComponent implements OnInit {
                   this.input.d = this.sumqty[0].PRODUCT_BHS.substring(1, 2);
                   this.input.p = this.sumqty[0].PRODUCT_BHS.substring(2, 3);
 
-                  Swal.fire({
-                    title: 'คุณต้องการเริ่มงานนี้หรือไม่ ?',
-                    html: 'CONTAINER_ID: ' + '<font color="blue">' + this.input.CONTAINER_ID + '</font>',
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#3085d6',
-                    cancelButtonColor: '#d33',
-                    backdrop: false,
-                    confirmButtonText: 'ยืนยัน',
-                    cancelButtonText: 'ยกเลิก'
-                  }).then((result) => {
-                    if (result.isConfirmed) {
+                  // เริ่มงานทันที ไม่ถาม "คุณต้องการเริ่มงานนี้หรือไม่" แล้ว (17 ต.ค. 2026)
 
-                      this.summaryConCheck();
-                      this.scanConPage = true;
-                      this.scanItemPage = false;
-                      this.summaryPage = true;
-                    } else {
-                      this.input.CONTAINER_ID = ''
-                    }
-                  })
+                  this.summaryConCheck();
+                  this.scanConPage = true;
+                  this.scanItemPage = false;
+                  this.summaryPage = true;
                 }
               })
             } else if (this.input.ORDER_TYPE == 'CF_ORDER') {
@@ -892,39 +849,24 @@ export class AuditCheckComponent implements OnInit {
                   this.input.d = this.sumqty[0].USER_DEF5.substring(1, 2);
                   this.input.p = this.sumqty[0].USER_DEF5.substring(2, 3);
 
-                  Swal.fire({
-                    title: 'คุณต้องการเริ่มงานนี้หรือไม่ ?',
-                    html: 'SHIPMENT: ' + '<font color="blue">' + this.input.shipment_id + '</font>',
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#3085d6',
-                    cancelButtonColor: '#d33',
-                    backdrop: false,
-                    confirmButtonText: 'ยืนยัน',
-                    cancelButtonText: 'ยกเลิก'
-                  }).then((result) => {
-                    if (result.value) {
-                      this.summaryConCheck();
-                      this.CHECK_tracksum_qty();
-                      this.scanConPage = true;
-                      this.scanItemPage = false;
-                      this.summaryPage = true;
+                  // เริ่มงานทันที ไม่ถาม "คุณต้องการเริ่มงานนี้หรือไม่" แล้ว (17 ต.ค. 2026)
+                  this.summaryConCheck();
+                  this.CHECK_tracksum_qty();
+                  this.scanConPage = true;
+                  this.scanItemPage = false;
+                  this.summaryPage = true;
 
-                      if (this.input.STATUS_DATA == 'N' && this.btn.Box == true) {
-                        this.btn.CFOrder = false;
-                      } else if (this.input.STATUS_DATA == 'N' && this.btn.Box == false) {
-                        this.btn.CFOrder = true;
-                      } else if (this.input.STATUS_DATA == 'S') {
-                        this.btn.CFOrder = true;
-                        this.btn.CoverSheet = false;
-                        this.btn.Printbill = false;
-                      }
+                  if (this.input.STATUS_DATA == 'N' && this.btn.Box == true) {
+                    this.btn.CFOrder = false;
+                  } else if (this.input.STATUS_DATA == 'N' && this.btn.Box == false) {
+                    this.btn.CFOrder = true;
+                  } else if (this.input.STATUS_DATA == 'S') {
+                    this.btn.CFOrder = true;
+                    this.btn.CoverSheet = false;
+                    this.btn.Printbill = false;
+                  }
 
-                      //setTimeout(() => { this.focusInput_item() }, 300)
-                    } else {
-                      this.input.CONTAINER_ID = ''
-                    }
-                  })
+                  //setTimeout(() => { this.focusInput_item() }, 300)
                 }
               })
             } else if (this.input.ORDER_TYPE == 'DHL'){
@@ -1556,14 +1498,16 @@ console.log(this.input.check_QTY_PICK,this.res_QTY_equal,this.Status_Print_Track
           this.box = data.data[0]
           this.input.CARTON_BOX_W = this.box.CARTON_BOX_W == undefined ? 0 : this.box.CARTON_BOX_W
           this.input.CARTON_BOX_L = this.box.CARTON_BOX_L  == undefined ? 0 : this.box.CARTON_BOX_L
-          this.input.CARTON_BOX_H = this.box.CARTON_BOX_H == undefined ? 0 : this.box.CARTON_BOX_L
-          this.input.CARTON_BOX_WEIGHT = this.box.CARTON_BOX_WEIGHT == undefined ? 0 :this.box.CARTON_BOX_L
+          this.input.CARTON_BOX_H = this.box.CARTON_BOX_H == undefined ? 0 : this.box.CARTON_BOX_H
+          this.input.CARTON_BOX_WEIGHT = this.box.CARTON_BOX_WEIGHT == undefined ? 0 : this.box.CARTON_BOX_WEIGHT
           //this.tracking_box();
 
           //console.log(this.input)
           if (this.box.ACTIVE == 'Y') {
             this.box.Errorhide = true
             this.box.Suchide = false
+            // สแกนกล่องผ่าน master แล้วไปหน้า print ทันที ไม่ต้องกดบันทึก (VAS ต้องติ๊กก่อนสแกนกล่อง)
+            this.tracking_box();
             
             //this.interval = setInterval(() => this.BtnTRACK.nativeElement.focus(), 0);
             //this.BtnTRACK.nativeElement.focus();
@@ -1591,6 +1535,10 @@ console.log(this.input.check_QTY_PICK,this.res_QTY_equal,this.Status_Print_Track
   }
 
   tracking_box() {
+    if (this.boxSubmitting) {
+      return;
+    }
+    this.boxSubmitting = true;
     this.isLoading = true;
     this.box.btn = false
     let array = this.vasFormArray;
@@ -1619,6 +1567,7 @@ console.log(this.input.check_QTY_PICK,this.res_QTY_equal,this.Status_Print_Track
       //console.log('1',data);
       if (data.status === 'error') {
         console.log(data);
+        this.boxSubmitting = false;
         Swal.fire({
           icon: 'error',
           title: 'เกิดข้อผิดพลาด กรุณาติดต่อ ADMIN!',
@@ -1903,6 +1852,7 @@ console.log(this.input.check_QTY_PICK,this.res_QTY_equal,this.Status_Print_Track
         }).then((result) => {
           if (result.value) {
             this.input.BOX_SIZE = ''
+            this.boxSubmitting = false;
             jQuery(this.myModalBOX.nativeElement).modal('show');
 
             this.interval = setInterval(() => this.inputbox.nativeElement.focus(), 500);

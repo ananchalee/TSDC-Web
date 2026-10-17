@@ -40,15 +40,15 @@ const routes: Routes = [
   },
   {
     path: 'audit-check', component: AuditCheckComponent,
-    data: { menubar: 'Audit Check Online A', version: '2.0.0', lastupdate: '2026-07-31' }
+    data: { menubar: 'Audit Check Online A', version: '2.0.1', lastupdate: '2026-10-17' }
   },
   {
     path: 'audit-check-tracking', component: AuditCheckTrackingComponent,
-    data: { menubar: 'Audit Check Online B', version: '2.0.1', lastupdate: '2026-07-31' }
+    data: { menubar: 'Audit Check Online B', version: '2.0.2', lastupdate: '2026-10-17' }
   },
   {
     path: 'audit-check-tracking-confirm', component: AuditCheckTrackingConfirmComponent,
-    data: { menubar: 'Audit Check Online C', version: '1.0.0', lastupdate: '2026-09-26' }
+    data: { menubar: 'Audit Check Online C', version: '1.0.1', lastupdate: '2026-10-17' }
   },
   {
     path: 'audit-check-fullcarton', component: AuditCheckFullcartonComponent,
@@ -123,16 +123,18 @@ const routes: Routes = [
     data: { menubar: 'Report Print Wave Order', version: '1.1.0', lastupdate: '2026-08-08' }
   },
   {
-    path: 'report-printTrackingGroupSku', component: ReportPrintTrackingGroupSkuComponent,
-    data: { menubar: 'Print Tracking Group SKU', version: '1.2.0', lastupdate: '2026-09-05' }
+    path: 'audit-check-group-pick', component: ReportPrintTrackingGroupSkuComponent,
+    data: { menubar: 'Audit Check Group Pick', version: '1.2.1', lastupdate: '2026-10-17' }
   },
+  // URL เดิมก่อนย้ายมาอยู่ใต้ Audit&Check (17 ต.ค. 2026) กัน bookmark เก่าพัง
+  { path: 'report-printTrackingGroupSku', redirectTo: 'audit-check-group-pick', pathMatch: 'full' },
   {
     path: 'monitor-waveorde', component: MonitorWaveOrdeComponent,
     data: { menubar: 'Monitor Wave Order', version: '1.0.0', lastupdate: '2026-01-01' }
   },
   {
     path: 'confirm-qty-groupsku', component: ConfirmQtyGroupSkuComponent,
-    data: { menubar: 'Confirm Qty Group SKU', version: '1.0.0', lastupdate: '2026-08-29' }
+    data: { menubar: 'Confirm Pick Group SKU', version: '1.0.1', lastupdate: '2026-10-17' }
   },
   { path: '**', redirectTo: 'login' } ,
 

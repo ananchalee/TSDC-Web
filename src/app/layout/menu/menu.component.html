@@ -164,13 +164,13 @@
                   </p>
                 </a>
               </li>
-              <li class="nav-item" (click)="Onclick_menu('checkfullcarton')" >
-                <a class="nav-link" [ngClass]='{active:page.audit_fullcarton}' >
-                  <i class="fas fa-archive nav-icon"></i>
+              <li class="nav-item" (click)="Onclick_menu('report_printtrackgroupsku')" >
+                <a class="nav-link" [ngClass]='{active:page.audit_printtrackgroupsku}' >
+                  <i class="fas fa-file-contract nav-icon"></i>
                   <p>
-                    {{routeData['audit-check-fullcarton']?.menubar || 'Check fullcarton'}}
+                    {{routeData['audit-check-group-pick']?.menubar || 'Audit Check Group Pick'}}
                     <br>
-                    <small *ngIf="routeData['audit-check-fullcarton']?.version" style="font-size:0.65rem; opacity:0.75; display:block; text-align:center;">v{{routeData['audit-check-fullcarton'].version}} | {{routeData['audit-check-fullcarton'].lastupdate}}</small>
+                    <small *ngIf="routeData['audit-check-group-pick']?.version" style="font-size:0.65rem; opacity:0.75; display:block; text-align:center;">v{{routeData['audit-check-group-pick'].version}} | {{routeData['audit-check-group-pick'].lastupdate}}</small>
                   </p>
                 </a>
               </li>
@@ -178,9 +178,19 @@
                 <a class="nav-link" [ngClass]='{active:page.audit_confirmqtygroupsku}' >
                   <i class="fas fa-clipboard-check nav-icon"></i>
                   <p>
-                    {{routeData['confirm-qty-groupsku']?.menubar || 'Confirm Qty Group SKU'}}
+                    {{routeData['confirm-qty-groupsku']?.menubar || 'Confirm Pick Group SKU'}}
                     <br>
                     <small *ngIf="routeData['confirm-qty-groupsku']?.version" style="font-size:0.65rem; opacity:0.75; display:block; text-align:center;">v{{routeData['confirm-qty-groupsku'].version}} | {{routeData['confirm-qty-groupsku'].lastupdate}}</small>
+                  </p>
+                </a>
+              </li>
+              <li class="nav-item" (click)="Onclick_menu('checkfullcarton')" >
+                <a class="nav-link" [ngClass]='{active:page.audit_fullcarton}' >
+                  <i class="fas fa-archive nav-icon"></i>
+                  <p>
+                    {{routeData['audit-check-fullcarton']?.menubar || 'Check fullcarton'}}
+                    <br>
+                    <small *ngIf="routeData['audit-check-fullcarton']?.version" style="font-size:0.65rem; opacity:0.75; display:block; text-align:center;">v{{routeData['audit-check-fullcarton'].version}} | {{routeData['audit-check-fullcarton'].lastupdate}}</small>
                   </p>
                 </a>
               </li>
@@ -349,19 +359,6 @@
 
             </ul>
 
-            <ul class="nav nav-treeview">
-              <li class="nav-item"  (click)="Onclick_menu('report_printtrackgroupsku') ">
-                <a class="nav-link"  [ngClass]='{active:page.report_printtrackgroupsku}'>
-                  <i class="nav-icon fas fa-file-contract"></i>
-                  <p>
-                    {{routeData['report-printTrackingGroupSku']?.menubar || 'Print Tracking Group SKU'}}
-                    <br>
-                    <small *ngIf="routeData['report-printTrackingGroupSku']?.version" style="font-size:0.65rem; opacity:0.75; display:block; text-align:center;">v{{routeData['report-printTrackingGroupSku'].version}} | {{routeData['report-printTrackingGroupSku'].lastupdate}}</small>
-                  </p>
-                </a>
-              </li>
-
-            </ul>
 
           </li>
 

@@ -1,6 +1,8 @@
 import { Component, OnInit, Input, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { DataService } from '../../services/index';
+import { UpdateNoticeService, UpdateNotice } from '../../services/update-notice.service';
 import { interval, Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
@@ -18,6 +20,15 @@ export class HeaderComponent implements OnInit, OnDestroy {
   Repage: any = {};
   input: any = {};
 
+  // ประกาศอัปเดตเมนู (ดู update-notice.service.ts)
+  routeKey = '';
+  notices: UpdateNotice[] = [];
+  noticeNew = false;
+  noticeOpen = false;
+  selNotice: UpdateNotice | null = null;
+  selFile = '';
+  selFileUrl: SafeResourceUrl | null = null;
+
   pushRightClass: string = 'push-right';
   today = new Date();
 
@@ -26,7 +37,9 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
   constructor(
     private dataService: DataService,
-    public router: Router
+    public router: Router,
+    public updateNotice: UpdateNoticeService,
+    private sanitizer: DomSanitizer
   ) {}
 
   ngOnInit(): void {
@@ -40,12 +53,50 @@ export class HeaderComponent implements OnInit, OnDestroy {
       this.input.PageDashboard = false;
     }
 
+    this.loadNotices();
+
     // รีเฟรช RepageTime ทุกวินาที
     this.TimeRepage();
     setInterval(() => this.TimeRepage(), 1000);
 
     // ดึงเวลา server และนับต่อด้วย offset
     this.startTime();
+  }
+
+  loadNotices() {
+    this.routeKey = (this.router.url || '').split(/[?#;]/)[0].replace(/^\/+/, '').split('/')[0];
+    if (!this.routeKey) { return; }
+    this.updateNotice.getForRoute(this.routeKey, this.input.version)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(list => {
+        this.notices = list;
+        this.noticeNew = list.length > 0 && !this.updateNotice.isSeen(this.routeKey, list[0].version);
+      });
+  }
+
+  openNotices() {
+    if (!this.notices.length) { return; }
+    this.noticeOpen = true;
+    this.selectNotice(this.notices[0]);
+    this.updateNotice.markSeen(this.routeKey, this.notices[0].version);
+    this.noticeNew = false;
+  }
+
+  closeNotices() {
+    this.noticeOpen = false;
+    this.selFileUrl = null;
+  }
+
+  selectNotice(n: UpdateNotice) {
+    this.selNotice = n;
+    const files = this.updateNotice.fileList(n);
+    this.selectFile(files.length ? files[0] : '');
+  }
+
+  selectFile(path: string) {
+    this.selFile = path;
+    // PDF ต้องผ่าน iframe จึงต้อง bypass; url มาจาก docsUrl ของเราเท่านั้น
+    this.selFileUrl = path ? this.sanitizer.bypassSecurityTrustResourceUrl(this.updateNotice.fileUrl(path)) : null;
   }
 
   // คำนวณเวลาคงเหลือ (RepageTime)

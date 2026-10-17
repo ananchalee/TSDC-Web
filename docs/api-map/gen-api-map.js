@@ -41,13 +41,13 @@ const GROUP = {
   'register-pack': 'Register',
   'audit-check': 'Audit & Check', 'audit-check-tracking': 'Audit & Check',
   'audit-check-fullcarton': 'Audit & Check', 'confirm-qty-groupsku': 'Audit & Check',
+  'audit-check-group-pick': 'Audit & Check',
   'AWB': 'Audit & Check', 'edit-box': 'Audit & Check',
   'audit-check-Print-Old': 'Audit & Check', 'audit-check-Print-Old-Full': 'Audit & Check',
   'Outbound-Sacn-Tracking': 'Outbound', 'Outbound-Routing': 'Outbound',
   'Outbound-SignatureOrderCancel': 'Outbound',
   'report-sorter': 'Report', 'report-printordercancel': 'Report',
   'report-packinglist': 'Report', 'report-printWaveOrder': 'Report',
-  'report-printTrackingGroupSku': 'Report',
   'tsuruha-orderdetail': 'Tsuruha', 'tsuruha-mappinginvoice': 'Tsuruha',
 };
 const GROUP_ORDER = ['Audit & Check', 'Outbound', 'Report', 'Monitor', 'Register', 'Tsuruha', 'อื่นๆ'];
