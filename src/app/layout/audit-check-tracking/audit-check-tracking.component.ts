@@ -1966,24 +1966,9 @@ private closeRecordingToast(): void {
               this.input.d = this.sumqty[0].USER_DEF5.substring(1, 2);
               this.input.p = this.sumqty[0].USER_DEF5.substring(2, 3);
 
-              Swal.fire({
-                title: 'คุณต้องการเริ่มงานนี้หรือไม่ ?',
-                html: 'SHIPMENT: ' + '<font color="blue">' + this.input.shipment_id + '</font>',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33',
-                backdrop: false,
-                confirmButtonText: 'ยืนยัน',
-                cancelButtonText: 'ยกเลิก'
-              }).then((result) => {
-                if (result.value) {
-                  this.summaryConCheck();
-                  this.videoRecordingService.sendCommand('start', this.input.shipment_id, this.input.TABLE_CHECK);
-                } else {
-                  this.input.CONTAINER_ID = ''
-                }
-              })
+              // เริ่มงานทันที ไม่ถาม "คุณต้องการเริ่มงานนี้หรือไม่" แล้ว (17 ต.ค. 2026)
+              this.summaryConCheck();
+              this.videoRecordingService.sendCommand('start', this.input.shipment_id, this.input.TABLE_CHECK);
             }
 
           })
@@ -2033,29 +2018,14 @@ private closeRecordingToast(): void {
               this.input.d = this.sumqty[0].USER_DEF5.substring(1, 2);
               this.input.p = this.sumqty[0].USER_DEF5.substring(2, 3);
 
-              Swal.fire({
-                title: 'คุณต้องการเริ่มงานนี้หรือไม่ ?',
-                html: 'SHIPMENT: ' + '<font color="blue">' + this.input.shipment_id + '</font>',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33',
-                backdrop: false,
-                confirmButtonText: 'ยืนยัน',
-                cancelButtonText: 'ยกเลิก'
-              }).then((result) => {
-                if (result.value) {
-                  this.summaryConCheck();
-                  this.CHECK_tracksum_qty();
-                  this.scanConPage = true;
-                  this.scanItemPage = false;
-                  this.summaryPage = true;
-                  this.videoRecordingService.sendCommand('start', this.input.shipment_id, this.input.TABLE_CHECK);
-                  setTimeout(() => { this.focusInput_item() }, 0)
-                } else {
-                  this.input.CONTAINER_ID = ''
-                }
-              })
+              // เริ่มงานทันที ไม่ถาม "คุณต้องการเริ่มงานนี้หรือไม่" แล้ว (17 ต.ค. 2026)
+              this.summaryConCheck();
+              this.CHECK_tracksum_qty();
+              this.scanConPage = true;
+              this.scanItemPage = false;
+              this.summaryPage = true;
+              this.videoRecordingService.sendCommand('start', this.input.shipment_id, this.input.TABLE_CHECK);
+              setTimeout(() => { this.focusInput_item() }, 0)
             }
           })
         }
@@ -2090,29 +2060,14 @@ private closeRecordingToast(): void {
               this.input.d = this.sumqty[0].PRODUCT_BHS.substring(1, 2);
               this.input.p = this.sumqty[0].PRODUCT_BHS.substring(2, 3);
 
-              Swal.fire({
-                title: 'คุณต้องการเริ่มงานนี้หรือไม่ ?',
-                html: 'CONTAINER_ID: ' + '<font color="blue">' + this.input.CONTAINER_ID + '</font>',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33',
-                backdrop: false,
-                confirmButtonText: 'ยืนยัน',
-                cancelButtonText: 'ยกเลิก'
-              }).then((result) => {
-                if (result.isConfirmed) {
+              // เริ่มงานทันที ไม่ถาม "คุณต้องการเริ่มงานนี้หรือไม่" แล้ว (17 ต.ค. 2026)
 
-                  this.summaryConCheck();
-                  this.scanConPage = true;
-                  this.scanItemPage = false;
-                  this.summaryPage = true;
-                  this.videoRecordingService.sendCommand('start', this.input.shipment_id, this.input.TABLE_CHECK);
-                  setTimeout(() => { this.focusInput_item() }, 0)
-                } else {
-                  this.input.CONTAINER_ID = ''
-                }
-              })
+              this.summaryConCheck();
+              this.scanConPage = true;
+              this.scanItemPage = false;
+              this.summaryPage = true;
+              this.videoRecordingService.sendCommand('start', this.input.shipment_id, this.input.TABLE_CHECK);
+              setTimeout(() => { this.focusInput_item() }, 0)
             }
           })
         }
@@ -2161,40 +2116,25 @@ private closeRecordingToast(): void {
               this.input.d = this.sumqty[0].USER_DEF5.substring(1, 2);
               this.input.p = this.sumqty[0].USER_DEF5.substring(2, 3);
 
-              Swal.fire({
-                title: 'คุณต้องการเริ่มงานนี้หรือไม่ ?',
-                html: 'SHIPMENT: ' + '<font color="blue">' + this.input.shipment_id + '</font>',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33',
-                backdrop: false,
-                confirmButtonText: 'ยืนยัน',
-                cancelButtonText: 'ยกเลิก'
-              }).then((result) => {
-                if (result.value) {
-                  this.summaryConCheck();
-                  this.CHECK_tracksum_qty();
-                  this.scanConPage = true;
-                  this.scanItemPage = false;
-                  this.summaryPage = true;
+              // เริ่มงานทันที ไม่ถาม "คุณต้องการเริ่มงานนี้หรือไม่" แล้ว (17 ต.ค. 2026)
+              this.summaryConCheck();
+              this.CHECK_tracksum_qty();
+              this.scanConPage = true;
+              this.scanItemPage = false;
+              this.summaryPage = true;
 
-                  if (this.input.STATUS_DATA == 'N' && this.btn.Box == true) {
-                    this.btn.CFOrder = false;
-                  } else if (this.input.STATUS_DATA == 'N' && this.btn.Box == false) {
-                    this.btn.CFOrder = true;
-                  } else if (this.input.STATUS_DATA == 'S') {
-                    this.btn.CFOrder = true;
-                    this.btn.CoverSheet = false;
-                    this.btn.Printbill = false;
-                  }
+              if (this.input.STATUS_DATA == 'N' && this.btn.Box == true) {
+                this.btn.CFOrder = false;
+              } else if (this.input.STATUS_DATA == 'N' && this.btn.Box == false) {
+                this.btn.CFOrder = true;
+              } else if (this.input.STATUS_DATA == 'S') {
+                this.btn.CFOrder = true;
+                this.btn.CoverSheet = false;
+                this.btn.Printbill = false;
+              }
 
-                  setTimeout(() => { this.focusInput_item() }, 300)
-                  this.videoRecordingService.sendCommand('start', this.input.shipment_id, this.input.TABLE_CHECK);
-                } else {
-                  this.input.CONTAINER_ID = ''
-                }
-              })
+              setTimeout(() => { this.focusInput_item() }, 300)
+              this.videoRecordingService.sendCommand('start', this.input.shipment_id, this.input.TABLE_CHECK);
             }
           })
         }
