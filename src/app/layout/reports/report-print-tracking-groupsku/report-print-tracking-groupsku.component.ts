@@ -1,5 +1,5 @@
 // report-print-tracking-groupsku.component.ts
-import { Component, OnInit, ElementRef, ViewChild } from '@angular/core';
+import { Component, OnInit, AfterViewInit, ElementRef, ViewChild } from '@angular/core';
 import { DataService, TimeService } from '../../../services/index';
 import { ActivatedRoute } from '@angular/router';
 import { PDFDocument, PDFFont, StandardFonts } from 'pdf-lib';
@@ -126,7 +126,7 @@ interface CancelSheet {
   templateUrl: './report-print-tracking-groupsku.component.html',
   styleUrls:   ['./report-print-tracking-groupsku.component.scss']
 })
-export class ReportPrintTrackingGroupSkuComponent implements OnInit {
+export class ReportPrintTrackingGroupSkuComponent implements OnInit, AfterViewInit {
 
   pageactive: any;
 
@@ -170,6 +170,7 @@ export class ReportPrintTrackingGroupSkuComponent implements OnInit {
   box: any = { Errorhide: true, Suchide: true, des: '' };
 
   //// ── สแกนไอเทมก่อนระบุขนาดกล่อง ────────────────────────────
+  @ViewChild('inputGroupPick') inputGroupPick!: ElementRef<HTMLInputElement>;
   @ViewChild('inputScanItem') inputScanItem!: ElementRef<HTMLInputElement>;
   @ViewChild('inputBoxSize')  inputBoxSize!:  ElementRef<HTMLInputElement>;
 
@@ -194,6 +195,11 @@ export class ReportPrintTrackingGroupSkuComponent implements OnInit {
       lastupdate: d['lastupdate']
     });
     this.pageactive = page;
+  }
+
+  //// เข้าเมนูแล้วพร้อมยิง Group Pick ได้ทันที
+  ngAfterViewInit(): void {
+    setTimeout(() => this.inputGroupPick?.nativeElement.focus(), 150);
   }
 
   // ── ค้นหาด้วย Group Pick ─────────────────────────────────────
