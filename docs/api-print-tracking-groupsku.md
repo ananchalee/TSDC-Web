@@ -1,6 +1,6 @@
 # API Spec — Print Tracking Group SKU
 
-หน้าจอ: `/report-printTrackingGroupSku`
+หน้าจอ: `/audit-check-group-pick` (เมนู Audit Check Group Pick · URL เดิม `/report-printTrackingGroupSku` redirect มาที่นี่)
 Component: `src/app/layout/reports/report-print-tracking-groupsku/`
 Service methods: `src/app/services/data.service.ts`
 
