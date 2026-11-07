@@ -2267,7 +2267,10 @@ ngOnDestroy(): void {
       if (Swal.isVisible()) { return; }
       clearInterval(wait);
       this.scanLocked = false;
-      setTimeout(() => this.inputItem?.nativeElement?.focus(), 0);
+      // มีหน้าต่างปิดกล่องเปิดอยู่ (เช่นเปิดเองตอน tracking ครบ) ไม่ดึง focus ไปช่องสแกนสินค้า
+      if (!document.querySelector('.modal.show')) {
+        setTimeout(() => this.inputItem?.nativeElement?.focus(), 0);
+      }
     }, 200);
   }
 
