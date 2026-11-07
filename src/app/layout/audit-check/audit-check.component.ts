@@ -4,6 +4,9 @@ import { DataService,TimeService } from '../../services/index'
 import Swal from 'sweetalert2';
 import { Observable, Subscription } from 'rxjs';
 import { timeout } from 'rxjs/operators';
+
+// ปุ่มที่ต้องรอคิวสแกนบันทึกหมดก่อนทำงาน (ดู whenScanIdle)
+type ScanIdleAction = 'closeBox' | 'Rescan' | 'RescanAll' | 'CFOrder' | 'scanCon';
 import { Router, ActivatedRoute } from '@angular/router';
 
 declare var jQuery: any;
@@ -1227,27 +1230,46 @@ export class AuditCheckComponent implements OnInit {
           console.log(err);
           this.scanFailPopup();
         }
-        if (!counted && this.scanQueue.length) {
-          // ชิ้นนี้ไม่ผ่าน (มี popup เตือนอยู่) ชิ้นที่ยิงค้างไว้ไม่บันทึกต่อ ให้ยิงใหม่
-          this.scanDropped += this.scanQueue.length;
-          this.scanQueue = [];
+        if (!counted) {
+          // ชิ้นนี้ไม่ผ่าน (มี popup เตือนอยู่) — ชิ้นที่ยิงค้างไว้ไม่บันทึกต่อ ให้ยิงใหม่
+          // และไม่ทำปุ่มที่กดรอไว้ (เช่นปิดกล่อง) ให้คนเห็น popup แล้วจัดการก่อน
+          this.pendingAction = null;
+          if (this.scanQueue.length) {
+            this.scanDropped += this.scanQueue.length;
+            this.scanQueue = [];
+          }
         }
       }
     } finally {
       this.scanRunning = false;
     }
+
+    if (this.pendingAction) {
+      const action = this.pendingAction;
+      this.pendingAction = null;
+      Swal.close();
+      this[action]();
+    }
   }
 
   // ปุ่มที่อ่าน/แก้ยอดกล่อง ต้องรอให้คิวสแกนบันทึกหมดก่อน
-  scanBusyWarn(): boolean {
-    if (!this.scanBusy) { return false; }
+  // คิวยังไม่ว่าง → ขึ้น toast ค้างไว้ (ไม่แย่ง focus ช่องสแกน ยิงต่อได้) แล้วทำให้เองเมื่อคิวว่าง
+  // กดซ้ำระหว่างรอ = ทำครั้งเดียว (ตัวล่าสุด)
+  private pendingAction: ScanIdleAction | null = null;
+
+  whenScanIdle(action: ScanIdleAction) {
+    if (!this.scanBusy) {
+      this[action]();
+      return;
+    }
+    this.pendingAction = action;
     Swal.fire({
+      toast: true,
+      position: 'top',
       icon: 'info',
       title: 'กำลังบันทึกสินค้าที่ยิงไว้ รอสักครู่',
       showConfirmButton: false,
-      timer: 1200
     });
-    return true;
   }
 
   private scanFailPopup() {

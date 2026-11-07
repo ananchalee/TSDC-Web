@@ -12,7 +12,7 @@
             <a class="m-0">
               <ol class="breadcrumb">
                 <li class="breadcrumb-item">Audit&Check</li>
-                <li class="breadcrumb-item active" type="button" (click)="scanBusyWarn() || scanCon();">
+                <li class="breadcrumb-item active" type="button" (click)="whenScanIdle('scanCon');">
                   {{pageactive && pageactive[0]?.menubar || 'Check Order'}}
                   <small *ngIf="pageactive && pageactive[0]?.version" style="font-size:0.7rem; opacity:0.75;">v{{pageactive[0].version}} | {{pageactive[0].lastupdate}}</small>
                 </li>
@@ -27,7 +27,7 @@
               <div class="col-sm-7">
                 <button #Btn_printTrack type="button" class="btn btn-success btn-sm " (click)="printTracking();">พิมพ์ 
                   &nbsp;<i class="fas fa-print"></i></button>
-                  <button type="button" class="btn btn-danger btn-sm float-right" (click)="scanBusyWarn() || scanCon();">กลับหน้าแรก
+                  <button type="button" class="btn btn-danger btn-sm float-right" (click)="whenScanIdle('scanCon');">กลับหน้าแรก
                     &nbsp;<i class="fas fa-backward"></i></button>
                 <button type="button" class="btn btn-warning btn-sm float-right" (click)="backScanitem();">กลับหน้าเช็คสินค้า
                   &nbsp;<i class="fas fa-backward"></i></button>
@@ -118,13 +118,13 @@
                   <div class="row justify-content-between ">
                     <div class="col-4">
                       
-                        <a class="btn btn-app bg-danger" (click)="scanBusyWarn() || scanCon();"  >
+                        <a class="btn btn-app bg-danger" (click)="whenScanIdle('scanCon');"  >
                           <i class="fas fa-shopping-cart"></i> Scan Order ใหม่
                         </a>
-                        <a class="btn btn-app bg-warning color-palette" (click)="scanBusyWarn() || Rescan();"  [hidden]="input.ORDER_TYPE == 'SORTER' || input.SUMCHECK == 0  " [hidden]="btn.Re">
+                        <a class="btn btn-app bg-warning color-palette" (click)="whenScanIdle('Rescan');"  [hidden]="input.ORDER_TYPE == 'SORTER' || input.SUMCHECK == 0  " [hidden]="btn.Re">
                           <i class="fas fa-retweet"></i>Rescan Item
                         </a>
-                        <a class="btn btn-app bg-warning color-palette" (click)="scanBusyWarn() || RescanAll();" [hidden]="input.ORDER_TYPE != 'SORTER' || input.SUMCHECK == 0  ">
+                        <a class="btn btn-app bg-warning color-palette" (click)="whenScanIdle('RescanAll');" [hidden]="input.ORDER_TYPE != 'SORTER' || input.SUMCHECK == 0  ">
                           <i class="fas fa-retweet"></i>RescanAll Item 
                         </a>
                      
@@ -144,11 +144,11 @@
                     <div class="col-1"></div>
                     <div class="col-3 ">
                       <div class="row justify-content-center">
-                        <a class="btn btn-app bg-success" (click)="scanBusyWarn() || closeBox();" [hidden]="btn.Box">
+                        <a class="btn btn-app bg-success" (click)="whenScanIdle('closeBox');" [hidden]="btn.Box">
                           <i class="fas fa-box"></i> ปิดกล่อง
                         </a>
 
-                        <a class="btn btn-app bg-orange color-palette " (click)="scanBusyWarn() || CFOrder();" [hidden]="btn.CFOrder">
+                        <a class="btn btn-app bg-orange color-palette " (click)="whenScanIdle('CFOrder');" [hidden]="btn.CFOrder">
                           <i class="fas fa-check-square"></i> ยืนยันเพื่อตัดบิล
                         </a>
                         <a class="btn btn-app bg-teal color-palette"  (click)="coverSheet();" [hidden]="btn.CoverSheet">
