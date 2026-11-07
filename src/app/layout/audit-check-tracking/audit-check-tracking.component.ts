@@ -2398,6 +2398,16 @@ ngOnDestroy(): void {
   private async Check_itembytrack(): Promise<boolean> {
     console.log('Check_itembytrack',this.res_matchItemInCon);
 
+    // หน้าเว็บยังจำ tracking ว่าง แต่ระบบภายนอกอาจเพิ่ง UPDATE tracking ลงมาระหว่างยิง
+    // ไม่เช็คก่อน → checktracking_Inshipment มองว่า tracking ของตัวเองเป็น "tracking อื่นค้าง" แล้วบล็อก
+    // (เคส 2610205QX0TQSV)
+    if (!this.input.TRACKING) {
+      const ok = await this.syncTrackingBeforeScan();
+      if (!ok) { return false; }
+    }
+
+    // ล้างทุกครั้ง ไม่ให้ค่าจาก tracking ก่อนหน้าค้าง
+    this.input.condition_nontracking = '';
     if(this.input.TRACKING != null && this.input.TRACKING != ''){
       this.input.condition_nontracking ="and TRACKING !='"+ this.input.TRACKING +"'"
     }
@@ -2429,6 +2439,36 @@ ngOnDestroy(): void {
     }
 
     return this.updateConQtyCheck();
+  }
+
+  // tracking ลงมาแล้วตัวเดียว → ใช้ต่อทันที (API เติม tracking ให้แถว detail ที่ยิงไปก่อนแล้ว)
+  // หลายตัว → ให้กลับไปเลือก tracking / ยังไม่มี → ยิงต่อแบบเดิม
+  private async syncTrackingBeforeScan(): Promise<boolean> {
+    const data: any = await this.call(this.dataService.syncBlankTracking(this.input));
+    if (data.status === 'none') {
+      return true;
+    }
+    if (data.status === 'success') {
+      this.input.TRACKING = data.TRACKING;
+      this.input.conditiontracking = "and a.TRACKING ='" + data.TRACKING + "'";
+      return true;
+    }
+    if (data.status === 'multi') {
+      this.playAudioError();
+      Swal.fire({
+        icon: 'warning',
+        title: 'Tracking เพิ่งเข้ามาหลายตัว',
+        html: 'กด <b>Scan Order ใหม่</b> แล้วเลือก Tracking ก่อนสแกนต่อ',
+        showConfirmButton: true,
+        confirmButtonText: 'ตกลง',
+        backdrop: false,
+        allowEnterKey: false,
+      });
+      return false;
+    }
+    console.log(data);
+    this.scanFailPopup();
+    return false;
   }
 
   private async updateConQtyCheck(): Promise<boolean> {

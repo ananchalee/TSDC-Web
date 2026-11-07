@@ -702,6 +702,10 @@ Rescan_checkitem_Track(data:any){
   return this.http.post('http://10.26.1.21:1661/api/Rescan_checkitem_track',data)
 }
 
+syncBlankTracking(data:any){
+  return this.http.post('http://10.26.1.21:1661/api/syncBlankTracking',data)
+}
+
 Get_OrderCountConfirmMan_PICK_PAPER(data:any){
   return this.http.post('http://10.26.1.21:1661/api/Get_OrderCountConfirmMan_PICK_PAPER',data)
 }
