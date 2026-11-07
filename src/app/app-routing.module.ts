@@ -40,11 +40,11 @@ const routes: Routes = [
   },
   {
     path: 'audit-check', component: AuditCheckComponent,
-    data: { menubar: 'Audit Check Online A', version: '2.0.1', lastupdate: '2026-10-17' }
+    data: { menubar: 'Audit Check Online A', version: '2.0.2', lastupdate: '2026-11-07' }
   },
   {
     path: 'audit-check-tracking', component: AuditCheckTrackingComponent,
-    data: { menubar: 'Audit Check Online B', version: '2.0.2', lastupdate: '2026-10-17' }
+    data: { menubar: 'Audit Check Online B', version: '2.0.3', lastupdate: '2026-11-07' }
   },
   {
     path: 'audit-check-tracking-confirm', component: AuditCheckTrackingConfirmComponent,
