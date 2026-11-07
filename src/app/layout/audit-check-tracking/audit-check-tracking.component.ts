@@ -1,7 +1,8 @@
 import { Component, OnInit, ElementRef, ViewChild ,OnDestroy, NgZone } from '@angular/core';
 import { DataService,TimeService } from '../../services/index'
 import Swal from 'sweetalert2';
-import { Subscription } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
+import { timeout } from 'rxjs/operators';
 import { Router, ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { NgSelectComponent } from '@ng-select/ng-select';
@@ -2145,9 +2146,82 @@ ngOnDestroy(): void {
     })
   }
 
-  CheckItemInCon() {
+  // ---- คิวสแกนสินค้า ----
+  // ช่องสแกนผูกกับ scanText แยกจาก input.ITEM_ID_BARCODE ที่ส่งให้ API
+  // ยิงชิ้นถัดไประหว่างที่ชิ้นก่อนยังบันทึกไม่เสร็จ → เข้าคิว แล้วบันทึกทีละชิ้นตามลำดับ
+  // (เดิมช่องสแกนผูกกับ input.ITEM_ID_BARCODE ตรงๆ ยิงเร็วแล้วบาร์โค้ดสองตัวต่อกัน/รอบสแกนวิ่งซ้อน
+  //  ทำให้ QTY_CHECK ใน TSDC_PICK_CHECK_NEW(_TRACKING) ไม่ตรงกับ TSDC_PICK_CHECK_BOX_CONTROL_DETAIL_NEW)
+  scanText = '';
+  scanDropped = 0;   // ชิ้นที่ยิงค้างในคิวแต่ไม่ถูกบันทึก เพราะชิ้นก่อนหน้าไม่ผ่าน ต้องยิงใหม่
+  private scanQueue: string[] = [];
+  private scanRunning = false;
 
-    if (!this.input.ITEM_ID_BARCODE) { return; }
+  get scanBusy(): boolean {
+    return this.scanRunning || this.scanQueue.length > 0;
+  }
+
+  CheckItemInCon() {
+    const barcode = (this.scanText || '').trim();
+    this.scanText = '';
+    if (!barcode) { return; }
+    this.scanDropped = 0;
+    this.scanQueue.push(barcode);
+    this.runScanQueue();
+  }
+
+  private async runScanQueue() {
+    if (this.scanRunning) { return; }
+    this.scanRunning = true;
+    try {
+      while (this.scanQueue.length) {
+        this.input.ITEM_ID_BARCODE = this.scanQueue.shift();
+        let counted = false;
+        try {
+          counted = await this.processScan();
+        } catch (err) {
+          console.log(err);
+          this.scanFailPopup();
+        }
+        if (!counted && this.scanQueue.length) {
+          // ชิ้นนี้ไม่ผ่าน (มี popup เตือนอยู่) ชิ้นที่ยิงค้างไว้ไม่บันทึกต่อ ให้ยิงใหม่
+          this.scanDropped += this.scanQueue.length;
+          this.scanQueue = [];
+        }
+      }
+    } finally {
+      this.scanRunning = false;
+    }
+  }
+
+  // ปุ่มที่อ่าน/แก้ยอดกล่อง ต้องรอให้คิวสแกนบันทึกหมดก่อน
+  scanBusyWarn(): boolean {
+    if (!this.scanBusy) { return false; }
+    Swal.fire({
+      icon: 'info',
+      title: 'กำลังบันทึกสินค้าที่ยิงไว้ รอสักครู่',
+      showConfirmButton: false,
+      timer: 1200
+    });
+    return true;
+  }
+
+  private scanFailPopup() {
+    this.playAudioError();
+    Swal.fire({
+      icon: 'error',
+      title: 'บันทึกสินค้าไม่สำเร็จ',
+      html: 'ITEM: ' + '<font color="red">' + this.input.ITEM_ID_BARCODE + '</font>' + ' กรุณายิงใหม่',
+      showConfirmButton: false,
+      timer: 2500
+    });
+  }
+
+  private call(obs: Observable<any>): Promise<any> {
+    return obs.pipe(timeout(15000)).toPromise();
+  }
+
+  // สแกน 1 ชิ้น (input.ITEM_ID_BARCODE) คืน true เมื่อนับเข้ากล่องสำเร็จ
+  private async processScan(): Promise<boolean> {
     this.view = false;
     if(this.alertcancel){
       this.playAudioError();
@@ -2157,109 +2231,103 @@ ngOnDestroy(): void {
         html : 'นำใบงานติดไปกับสินค้าเพื่อทำรับคืน',
         showConfirmButton: true,
       });
-      this.input.ITEM_ID_BARCODE = '';
-    }else{
+      return false;
+    }
+
     if ((this.input.ORDER_TYPE == 'ONLINE' || this.input.ORDER_TYPE == 'OFFLINE' || this.input.ORDER_TYPE == 'CF_ORDER')) {
-      this.dataService.matchItemInContrack(this.input).subscribe(res => {
-        //console.log(res);
-        var data: any = res
+      const data: any = await this.call(this.dataService.matchItemInContrack(this.input));
 
-        if (data.status === 'error') {
-          console.log(data)
-          this.playAudioError();
-          Swal.fire({
-            icon: 'error',
-            title: 'เกิดข้อผิดพลาด กรุณาติดต่อ ADMIN!',
-            showConfirmButton: false,
-            timer: 2500
-          });
-        } else if (data.status === 'notfound') {
-          this.playAudioError();
-          Swal.fire({
-            icon: 'warning',
-            title: 'ไม่พบข้อมูล',
-            html: 'ITEM_ID: ' + '<font color="blue">' + this.input.ITEM_ID_BARCODE + '</font>' +
-              ' ใน SHIPMENT_ID: ' + '<font color="blue">' + this.input.shipment_id + '</font>' + ' นี้',
-            showConfirmButton: true,
-            backdrop: false,
-            confirmButtonText: 'ตกลง',
-          });
-          this.input.ITEM_ID_BARCODE = ''
+      if (data.status === 'error') {
+        console.log(data)
+        this.playAudioError();
+        Swal.fire({
+          icon: 'error',
+          title: 'เกิดข้อผิดพลาด กรุณาติดต่อ ADMIN!',
+          showConfirmButton: false,
+          timer: 2500
+        });
+        return false;
+      }
+      if (data.status === 'notfound') {
+        this.playAudioError();
+        Swal.fire({
+          icon: 'warning',
+          title: 'ไม่พบข้อมูล',
+          html: 'ITEM_ID: ' + '<font color="blue">' + this.input.ITEM_ID_BARCODE + '</font>' +
+            ' ใน SHIPMENT_ID: ' + '<font color="blue">' + this.input.shipment_id + '</font>' + ' นี้',
+          showConfirmButton: true,
+          backdrop: false,
+          confirmButtonText: 'ตกลง',
+        });
+        return false;
+      }
+      if (data.status !== 'success') {
+        this.scanFailPopup();
+        return false;
+      }
 
-          // setTimeout(() => {
-          //   this.getRecordingStatus();
-          // }, 300);
+      this.res_matchItemInCon = data.data;
+      this.input.ITEM_ID = this.res_matchItemInCon.ITEM_ID;
+      if(this.res_matchItemInCon[0].ORDER_TYPE == "CANCEL"){
+        this.playAudioError();
+        Swal.fire({
+          icon: 'warning',
+          title: 'รายการนี้ถูกยกเลิก',
+          html : 'นำใบงานติดไปกับสินค้าเพื่อทำรับคืน',
+          showConfirmButton: false,
+          timer: 3500
+        });
+        return false;
+      }
 
-        } else if (data.status === 'success') {
-          this.res_matchItemInCon = data.data;
-          this.input.ITEM_ID = this.res_matchItemInCon.ITEM_ID;
-          if(this.res_matchItemInCon[0].ORDER_TYPE == "CANCEL"){
-            this.playAudioError();
-            Swal.fire({
-              icon: 'warning',
-              title: 'รายการนี้ถูกยกเลิก',
-              html : 'นำใบงานติดไปกับสินค้าเพื่อทำรับคืน',
-              showConfirmButton: false,
-              timer: 3500
-            });
-            this.input.ITEM_ID_BARCODE = ''
-          }else{
+      //track
+      return this.Check_itembytrack();
 
-            //track
-            this.Check_itembytrack()
-          }
-
-        }
-
-      })
     } else if (this.input.ORDER_TYPE == 'SORTER') {
 
-      this.dataService.matchItemInConSorter(this.input).subscribe(res => {
-        //console.log(res);
-        var data: any = res
+      const data: any = await this.call(this.dataService.matchItemInConSorter(this.input));
 
-        if (data.status === 'error') {
-          console.log(data)
-          Swal.fire({
-            icon: 'error',
-            title: 'เกิดข้อผิดพลาด กรุณาติดต่อ ADMIN!',
-            showConfirmButton: false,
-            timer: 2500
-          });
-        } else if (data.status === 'notfound') {
-          this.playAudioError();
-          Swal.fire({
-            icon: 'warning',
-            title: 'ไม่พบข้อมูล',
-            html: 'ITEM_ID: ' + '<font color="blue">' + this.input.ITEM_ID_BARCODE + '</font>' +
-              ' ใน CONTAINER_ID: ' + '<font color="blue">' + this.input.CONTAINER_ID + '</font>' + ' นี้',
-            showConfirmButton: true,
-            backdrop: false,
-            confirmButtonText: 'ตกลง',
-          });
-          this.input.ITEM_ID_BARCODE = ''
-        } else if (data.status === 'success') {
-          this.res_matchItemInCon = data.data[0];
+      if (data.status === 'error') {
+        console.log(data)
+        Swal.fire({
+          icon: 'error',
+          title: 'เกิดข้อผิดพลาด กรุณาติดต่อ ADMIN!',
+          showConfirmButton: false,
+          timer: 2500
+        });
+        return false;
+      }
+      if (data.status === 'notfound') {
+        this.playAudioError();
+        Swal.fire({
+          icon: 'warning',
+          title: 'ไม่พบข้อมูล',
+          html: 'ITEM_ID: ' + '<font color="blue">' + this.input.ITEM_ID_BARCODE + '</font>' +
+            ' ใน CONTAINER_ID: ' + '<font color="blue">' + this.input.CONTAINER_ID + '</font>' + ' นี้',
+          showConfirmButton: true,
+          backdrop: false,
+          confirmButtonText: 'ตกลง',
+        });
+        return false;
+      }
+      if (data.status !== 'success') {
+        this.scanFailPopup();
+        return false;
+      }
 
-          this.input.ITEM_ID = this.res_matchItemInCon.ITEM_ID;
-          this.input.QTY_REQUESTED = this.res_matchItemInCon.QTY_REQUESTED;
-          this.input.QTY_PICK = this.res_matchItemInCon.QTY_PICK;
-          this.updateConQtyCheck();
-        }
+      this.res_matchItemInCon = data.data[0];
 
-        //  //console.log(this.qtyFall);
-      })
+      this.input.ITEM_ID = this.res_matchItemInCon.ITEM_ID;
+      this.input.QTY_REQUESTED = this.res_matchItemInCon.QTY_REQUESTED;
+      this.input.QTY_PICK = this.res_matchItemInCon.QTY_PICK;
+      return this.updateConQtyCheck();
     }
+    return false;
   }
 
-  }
 
-
-  Check_itembytrack(){
+  private async Check_itembytrack(): Promise<boolean> {
     console.log('Check_itembytrack',this.res_matchItemInCon);
-    //this.input.conditiontracking = '';
-
-    console.log(this.input,this.res_matchItemInCon.length);
 
     if(this.input.TRACKING != null && this.input.TRACKING != ''){
       this.input.condition_nontracking ="and TRACKING !='"+ this.input.TRACKING +"'"
@@ -2267,183 +2335,154 @@ ngOnDestroy(): void {
 
     console.log('conditiontracking' ,this.input.condition_nontracking );
 
+    //check  มีการ scan track อื่นๆ ค้างไว้หรือไม่ ให้ scan item ใน track นั้นก่อน
+    const data: any = await this.call(this.dataService.checktracking_Inshipment(this.input));
+    console.log(data);
+    if (data.status === 'error') {
+      Swal.fire({
+        icon: 'error',
+        title: 'Can not check tracking in shipment!',
+        showConfirmButton: false,
+        timer: 2500
+      });
+      this.playAudioError();
+      return false;
+    }
+    if (data.status === 'success') {
+      Swal.fire({
+        icon: 'warning',
+        title: 'กำลังดำเนินดาร Scan สินค้าภายใต้ Tracking: '+data.data[0].TRACKING + ' จำนวน: '+data.data[0].QTY_CHECK  +' ชิ้น' ,
+        showConfirmButton: false,
+        timer: 2500
+      });
+      this.playAudioError();
+      return false;
+    }
 
-      //check  มีการ scan track อื่นๆ ค้างไว้หรือไม่ ให้ scan item ใน track นั้นก่อน
-      this.dataService.checktracking_Inshipment(this.input).subscribe(res => {
-        var data: any = res
-        console.log(data);
-        if (data.status === 'error') {
-          //console.log(data);
-          Swal.fire({
-            icon: 'error',
-            title: 'Can not check tracking in shipment!',
-            showConfirmButton: false,
-            timer: 2500
-          });
-          this.input.ITEM_ID_BARCODE = ''
-          this.playAudioError();
-        } else if (data.status === 'success') {
-          Swal.fire({
-            icon: 'warning',
-            title: 'กำลังดำเนินดาร Scan สินค้าภายใต้ Tracking: '+data.data[0].TRACKING + ' จำนวน: '+data.data[0].QTY_CHECK  +' ชิ้น' ,
-            showConfirmButton: false,
-            timer: 2500
-          });
-          this.input.ITEM_ID_BARCODE = ''
-          this.playAudioError();
-        }else{
-          console.log(this.res_matchItemInCon);
-
-          this.updateConQtyCheck();
-          
-        }
-      }); 
-
-   
+    return this.updateConQtyCheck();
   }
 
-  updateConQtyCheck() {
-    //console.log("UPDATE");
-    //const user = JSON.parse(localStorage.getItem('currentUser')||'');
-    //this.input.USER_CHECK = user.WORKER_ID;
-    // this.input.TABLE_CHECK = this.input.USER_CHECK
-    // //console.log(this.input.USER_CHECK,this.input.TABLE_CHECK)
+  private async updateConQtyCheck(): Promise<boolean> {
     // ตรวจ ว่า barcode_item นี้ qty_check มันถูกหรือยัง
     // ถ้าสแกนอันที่ถูกอยู่แล้ว ถามเขาว่า ต้องการเพิ่มข้อมูล item... อีก ....ชิ้น ใช่หรือไม่
     // ถ้าสแกนอันที่ผิด ซึ่งตรงกับที่เขากดปุ่มมา ก็ทำงาน อัพเดทเพิ่มตามปกติ
 
     if (this.input.ORDER_TYPE == 'ONLINE' || this.input.ORDER_TYPE == 'OFFLINE' || this.input.ORDER_TYPE == 'CF_ORDER') {
-      this.dataService.checkEqualContrack(this.input).subscribe(res => {
-        var data: any = res
-        if (data.status === 'error') {
-          //console.log(data);
-          Swal.fire({
-            icon: 'error',
-            title: 'เกิดข้อผิดพลาด กรุณาติดต่อ ADMIN!',
-            showConfirmButton: false,
-            timer: 2500
-          });
-          this.input.ITEM_ID_BARCODE = ''
-        } else if (data.status === 'success') {
-          this.res_QTY_equal = data.data[0];
-          this.input.ITEM_ID = data.data[0].ITEM_ID
-          this.input.check_QTY_PICK = data.data[0].QTY_PICK
-          console.log(this.input.check_QTY_PICK,this.res_QTY_equal,this.Status_Print_Track)
-          if (this.res_QTY_equal.QTY_equal == "equal") {
-            this.playAudioError();
-            Swal.fire({
-              icon: 'warning',
-              title: 'ITEM เกินจำนวน',
-              html: 'ITEM_ID: ' + '<font color="red">' + this.res_QTY_equal.ITEM_ID + '</font>' +
-                ' ใน CONTAINER_ID: ' + '<font color="red">' + this.input.CONTAINER_ID + '</font>',
-              showConfirmButton: true,
-              backdrop: false,
-              confirmButtonText: 'ตกลง',
-            });
-            this.input.ITEM_ID_BARCODE = ''
-          } else if (this.res_QTY_equal.QTY_equal == 'not_equal') {
-           
-            //this.btn.Box = false
-            this.btn.CFOrder = true;
-            this.dataService.BOX_CONTROL_DETAIL(this.input).subscribe(res => {
-              var data: any = res
+      const data: any = await this.call(this.dataService.checkEqualContrack(this.input));
+      if (data.status === 'error') {
+        Swal.fire({
+          icon: 'error',
+          title: 'เกิดข้อผิดพลาด กรุณาติดต่อ ADMIN!',
+          showConfirmButton: false,
+          timer: 2500
+        });
+        return false;
+      }
+      if (data.status !== 'success') {
+        this.scanFailPopup();
+        return false;
+      }
 
-              if (data.status === 'error') {
-                console.log(data);
-                Swal.fire({
-                  icon: 'error',
-                  title: 'เกิดข้อผิดพลาด กรุณาติดต่อ ADMIN!',
-                  showConfirmButton: false,
-                  timer: 2500
-                });
-              } else if (data.status === 'success') {
-                this.dataService.updateConQtyChecktrack(this.input).subscribe(res => {
-                  var data: any = res
+      this.res_QTY_equal = data.data[0];
+      this.input.ITEM_ID = data.data[0].ITEM_ID
+      this.input.check_QTY_PICK = data.data[0].QTY_PICK
+      console.log(this.input.check_QTY_PICK,this.res_QTY_equal,this.Status_Print_Track)
+      if (this.res_QTY_equal.QTY_equal == "equal") {
+        this.playAudioError();
+        Swal.fire({
+          icon: 'warning',
+          title: 'ITEM เกินจำนวน',
+          html: 'ITEM_ID: ' + '<font color="red">' + this.res_QTY_equal.ITEM_ID + '</font>' +
+            ' ใน CONTAINER_ID: ' + '<font color="red">' + this.input.CONTAINER_ID + '</font>',
+          showConfirmButton: true,
+          backdrop: false,
+          confirmButtonText: 'ตกลง',
+        });
+        return false;
+      }
+      if (this.res_QTY_equal.QTY_equal != 'not_equal') { return false; }
 
-                  if (data.status === 'error') {
-                    console.log(data);
-                    Swal.fire({
-                      icon: 'error',
-                      title: 'เกิดข้อผิดพลาด กรุณาติดต่อ ADMIN!',
-                      showConfirmButton: false,
-                      timer: 2500
-                    });
-                  } else if (data.status === 'success') {
-                    //console.log('OK')
-                    this.playAudioOK();
-                    this.summaryConCheck()
+      this.btn.CFOrder = true;
 
-                    this.input.ITEM_ID_BARCODE = ''
-                  }
-                })
-              }
-            })
-          }
-        }
-      })
+      const box: any = await this.call(this.dataService.BOX_CONTROL_DETAIL(this.input));
+      if (box.status !== 'success') {
+        console.log(box);
+        Swal.fire({
+          icon: 'error',
+          title: 'เกิดข้อผิดพลาด กรุณาติดต่อ ADMIN!',
+          showConfirmButton: false,
+          timer: 2500
+        });
+        return false;
+      }
+
+      const upd: any = await this.call(this.dataService.updateConQtyChecktrack(this.input));
+      if (upd.status !== 'success') {
+        console.log(upd);
+        Swal.fire({
+          icon: 'error',
+          title: 'เกิดข้อผิดพลาด กรุณาติดต่อ ADMIN!',
+          showConfirmButton: false,
+          timer: 2500
+        });
+        return false;
+      }
+      this.playAudioOK();
+      this.summaryConCheck()
+      return true;
 
     } else {
-      this.dataService.checkEqualConSorter(this.input).subscribe(res => {
-        var data: any = res
-        //console.log(res)
-        if (data.status === 'error') {
-          //console.log(data);
-          Swal.fire({
-            icon: 'error',
-            title: 'เกิดข้อผิดพลาด กรุณาติดต่อ ADMIN!',
-            showConfirmButton: false,
-            timer: 2500
-          });
-          this.input.ITEM_ID_BARCODE = ''
-        } else if (data.status === 'success') {
-          this.res_QTY_equal = data.data[0];
+      const data: any = await this.call(this.dataService.checkEqualConSorter(this.input));
+      if (data.status === 'error') {
+        Swal.fire({
+          icon: 'error',
+          title: 'เกิดข้อผิดพลาด กรุณาติดต่อ ADMIN!',
+          showConfirmButton: false,
+          timer: 2500
+        });
+        return false;
+      }
+      if (data.status !== 'success') {
+        this.scanFailPopup();
+        return false;
+      }
 
-          if (this.res_QTY_equal.QTY_equal == "equal") {
-            this.playAudioError();
+      this.res_QTY_equal = data.data[0];
 
-            Swal.fire({
-              icon: 'warning',
-              title: 'ITEM เกินจำนวน',
-              html: 'ITEM_ID: ' + '<font color="red">' + this.input.ITEM_ID + '</font>' +
-                ' ใน CONTAINER_ID: ' + '<font color="red">' + this.input.CONTAINER_ID + '</font>',
-              showConfirmButton: true,
-              backdrop: false,
-              confirmButtonText: 'ตกลง',
-            });
-            this.input.ITEM_ID_BARCODE = ''
-          } else if (this.res_QTY_equal.QTY_equal == 'not_equal') {
-            this.btn.Box = true;
-              this.btn.Re = true;
-         
-           
+      if (this.res_QTY_equal.QTY_equal == "equal") {
+        this.playAudioError();
 
-            this.dataService.updateConQtyCheck_SORTER(this.input).subscribe(res => {
-              var data: any = res
+        Swal.fire({
+          icon: 'warning',
+          title: 'ITEM เกินจำนวน',
+          html: 'ITEM_ID: ' + '<font color="red">' + this.input.ITEM_ID + '</font>' +
+            ' ใน CONTAINER_ID: ' + '<font color="red">' + this.input.CONTAINER_ID + '</font>',
+          showConfirmButton: true,
+          backdrop: false,
+          confirmButtonText: 'ตกลง',
+        });
+        return false;
+      }
+      if (this.res_QTY_equal.QTY_equal != 'not_equal') { return false; }
 
-              if (data.status === 'error') {
-                console.log(data);
-                Swal.fire({
-                  icon: 'error',
-                  title: 'เกิดข้อผิดพลาด กรุณาติดต่อ ADMIN!',
-                  showConfirmButton: false,
-                  timer: 2500
-                });
-              } else if (data.status === 'success') {
-                //console.log('OK')
-                this.playAudioOK();
-                this.summaryConCheck()
+      this.btn.Box = true;
+      this.btn.Re = true;
 
-                this.input.ITEM_ID_BARCODE = ''
-              }
-            })
-          }
-        }
-      })
-
+      const upd: any = await this.call(this.dataService.updateConQtyCheck_SORTER(this.input));
+      if (upd.status !== 'success') {
+        console.log(upd);
+        Swal.fire({
+          icon: 'error',
+          title: 'เกิดข้อผิดพลาด กรุณาติดต่อ ADMIN!',
+          showConfirmButton: false,
+          timer: 2500
+        });
+        return false;
+      }
+      this.playAudioOK();
+      this.summaryConCheck()
+      return true;
     }
-
-
-
   }
   check_size() {
 
