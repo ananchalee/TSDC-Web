@@ -2155,7 +2155,7 @@ ngOnDestroy(): void {
   // (เดิมช่องสแกนผูกกับ input.ITEM_ID_BARCODE ตรงๆ ยิงเร็วแล้วบาร์โค้ดสองตัวต่อกัน/รอบสแกนวิ่งซ้อน
   //  ทำให้ QTY_CHECK ใน TSDC_PICK_CHECK_NEW(_TRACKING) ไม่ตรงกับ TSDC_PICK_CHECK_BOX_CONTROL_DETAIL_NEW)
   scanText = '';
-  scanDropped = 0;   // ชิ้นที่ยิงค้างในคิวแต่ไม่ถูกบันทึก เพราะชิ้นก่อนหน้าไม่ผ่าน ต้องยิงใหม่
+  scanLocked = false;   // มี popup แจ้งเตือนจากการสแกนเปิดอยู่ → ปิดช่องสแกนจนกว่าจะปิด popup
   private scanQueue: string[] = [];
   private scanRunning = false;
 
@@ -2166,8 +2166,7 @@ ngOnDestroy(): void {
   CheckItemInCon() {
     const barcode = (this.scanText || '').trim();
     this.scanText = '';
-    if (!barcode) { return; }
-    this.scanDropped = 0;
+    if (!barcode || this.scanLocked) { return; }
     this.scanQueue.push(barcode);
     this.runScanQueue();
   }
@@ -2186,13 +2185,10 @@ ngOnDestroy(): void {
           this.scanFailPopup();
         }
         if (!counted) {
-          // ชิ้นนี้ไม่ผ่าน (มี popup เตือนอยู่) — ชิ้นที่ยิงค้างไว้ไม่บันทึกต่อ ให้ยิงใหม่
-          // และไม่ทำปุ่มที่กดรอไว้ (เช่นปิดกล่อง) ให้คนเห็น popup แล้วจัดการก่อน
+          // ชิ้นนี้ไม่ผ่าน (มี popup เตือนอยู่) — ไม่ทำปุ่มที่กดรอไว้ (เช่นปิดกล่อง)
+          // ชิ้นที่เข้าคิวก่อน popup ขึ้นไม่บันทึกต่อ บอกไว้ใน popup ให้ยิงใหม่ แล้วล็อกช่องสแกนจนกว่าจะปิด popup
           this.pendingAction = null;
-          if (this.scanQueue.length) {
-            this.scanDropped += this.scanQueue.length;
-            this.scanQueue = [];
-          }
+          this.lockScanUntilPopupClosed(this.scanQueue.splice(0));
         }
       }
     } finally {
@@ -2225,6 +2221,31 @@ ngOnDestroy(): void {
       title: 'กำลังบันทึกสินค้าที่ยิงไว้ รอสักครู่',
       showConfirmButton: false,
     });
+  }
+
+  private lockScanUntilPopupClosed(dropped: string[]) {
+    this.scanLocked = true;
+    const popup = Swal.isVisible() ? Swal.getPopup() : null;
+    if (popup && popup.classList.contains('swal2-toast')) {
+      // เหลือแค่ toast "กำลังบันทึก" (ไม่มี popup เตือน) ปิดทิ้ง ไม่งั้นล็อกค้าง
+      Swal.close();
+    } else if (popup && dropped.length) {
+      const counts: { [bc: string]: number } = {};
+      dropped.forEach(bc => counts[bc] = (counts[bc] || 0) + 1);
+      Swal.stopTimer();
+      Swal.update({
+        showConfirmButton: true,
+        confirmButtonText: 'ตกลง',
+        footer: '<div style="text-align:center">สินค้าที่ยิงตามมาอีก <b>' + dropped.length + '</b> ชิ้น ยังไม่ถูกนับ ให้ยิงใหม่:<br>' +
+          Object.keys(counts).map(bc => '<font color="red">' + bc + '</font> × ' + counts[bc]).join('<br>') + '</div>'
+      });
+    }
+    const wait = setInterval(() => {
+      if (Swal.isVisible()) { return; }
+      clearInterval(wait);
+      this.scanLocked = false;
+      setTimeout(() => this.inputItem?.nativeElement?.focus(), 0);
+    }, 200);
   }
 
   private scanFailPopup() {

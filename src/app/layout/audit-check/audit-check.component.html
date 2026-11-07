@@ -135,11 +135,10 @@
                     <div class="col-4">
                       <div class="input-group">
                         <div class="input-group-text">BARCODE</div>
-                        <input type="text" class="form-control" placeholder="SCAN ITEM_BARCODE" #inputItem
+                        <input type="text" class="form-control" [placeholder]="scanLocked ? 'กด ตกลง ที่ popup ก่อนสแกนต่อ' : 'SCAN ITEM_BARCODE'" #inputItem [disabled]="scanLocked"
                           (change)="CheckItemInCon();" name="ITEM_ID_BARCODE" minlength="10" maxlength="50"
                           [(ngModel)]="scanText" required autofocus>
                       </div>
-                      <div *ngIf="scanDropped > 0" class="text-danger small mt-1">ยิงค้างไว้ {{scanDropped}} ชิ้น ยังไม่ถูกนับ กรุณายิงใหม่</div>
                     </div>
                     <div class="col-1"></div>
                     <div class="col-3 ">
