@@ -2174,9 +2174,13 @@ ngOnDestroy(): void {
   private async runScanQueue() {
     if (this.scanRunning) { return; }
     this.scanRunning = true;
+    // ชิ้นที่ไม่ผ่านในรอบนี้ — ชิ้นอื่นที่เข้าคิวไว้แล้วยังบันทึกต่อตามปกติ
+    // (หน้างานแยกชิ้นที่มีปัญหาออก แล้วยิงตัวอื่นต่อ ไม่ค่อยปล่อยมือมาจับเมาส์)
+    const failed: { barcode: string, title: string, detail: string }[] = [];
     try {
       while (this.scanQueue.length) {
-        this.input.ITEM_ID_BARCODE = this.scanQueue.shift();
+        const barcode = this.scanQueue.shift();
+        this.input.ITEM_ID_BARCODE = barcode;
         let counted = false;
         try {
           counted = await this.processScan();
@@ -2185,17 +2189,21 @@ ngOnDestroy(): void {
           this.scanFailPopup();
         }
         if (!counted) {
-          // ชิ้นนี้ไม่ผ่าน (มี popup เตือนอยู่) — ไม่ทำปุ่มที่กดรอไว้ (เช่นปิดกล่อง)
-          // ชิ้นที่เข้าคิวก่อน popup ขึ้นไม่บันทึกต่อ บอกไว้ใน popup ให้ยิงใหม่ แล้วล็อกช่องสแกนจนกว่าจะปิด popup
+          // ไม่ทำปุ่มที่กดรอไว้ (เช่นปิดกล่อง) และปิดช่องสแกนไม่รับชิ้นใหม่จนกว่าจะปิด popup
           this.pendingAction = null;
-          this.lockScanUntilPopupClosed(this.scanQueue.splice(0));
+          this.scanLocked = true;
+          const p = this.openScanPopup();
+          failed.push({ barcode, title: p ? p.title : 'บันทึกไม่สำเร็จ', detail: p ? p.detail : '' });
         }
       }
     } finally {
       this.scanRunning = false;
     }
 
-    if (this.pendingAction) {
+    if (failed.length) {
+      this.showScanFailures(failed);
+      this.unlockScanWhenPopupClosed();
+    } else if (this.pendingAction) {
       const action = this.pendingAction;
       this.pendingAction = null;
       Swal.close();
@@ -2223,23 +2231,38 @@ ngOnDestroy(): void {
     });
   }
 
-  private lockScanUntilPopupClosed(dropped: string[]) {
-    this.scanLocked = true;
+  // popup เตือนที่เปิดอยู่ตอนนี้ (ไม่นับ toast "กำลังบันทึก")
+  private openScanPopup(): { title: string, detail: string } | null {
     const popup = Swal.isVisible() ? Swal.getPopup() : null;
-    if (popup && popup.classList.contains('swal2-toast')) {
-      // เหลือแค่ toast "กำลังบันทึก" (ไม่มี popup เตือน) ปิดทิ้ง ไม่งั้นล็อกค้าง
-      Swal.close();
-    } else if (popup && dropped.length) {
-      const counts: { [bc: string]: number } = {};
-      dropped.forEach(bc => counts[bc] = (counts[bc] || 0) + 1);
+    if (!popup || popup.classList.contains('swal2-toast')) { return null; }
+    return {
+      title: Swal.getTitle()?.textContent || '',
+      detail: Swal.getHtmlContainer()?.textContent || ''
+    };
+  }
+
+  // ไม่ผ่านชิ้นเดียว → ใช้ popup ของมันเอง (หยุดนับเวลา + ปุ่มตกลง ไม่ให้หายก่อนอ่าน)
+  // หลายชิ้น → popup ทับกันจนเห็นแค่อันสุดท้าย รวมเป็น popup สรุปอันเดียว
+  private showScanFailures(failed: { barcode: string, title: string, detail: string }[]) {
+    if (failed.length === 1 && this.openScanPopup()) {
       Swal.stopTimer();
-      Swal.update({
-        showConfirmButton: true,
-        confirmButtonText: 'ตกลง',
-        footer: '<div style="text-align:center">สินค้าที่ยิงตามมาอีก <b>' + dropped.length + '</b> ชิ้น ยังไม่ถูกนับ ให้ยิงใหม่:<br>' +
-          Object.keys(counts).map(bc => '<font color="red">' + bc + '</font> × ' + counts[bc]).join('<br>') + '</div>'
-      });
+      Swal.update({ showConfirmButton: true, confirmButtonText: 'ตกลง' });
+      return;
     }
+    const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    Swal.fire({
+      icon: 'warning',
+      title: 'สินค้า ' + failed.length + ' ชิ้น ไม่ถูกนับ',
+      html: failed.map(f => '<font color="red">' + esc(f.barcode) + '</font> : <b>' + esc(f.title) + '</b>' +
+        (f.detail ? '<br><small>' + esc(f.detail) + '</small>' : '')).join('<hr style="margin:6px 0">'),
+      showConfirmButton: true,
+      confirmButtonText: 'ตกลง',
+      backdrop: false,
+      allowEnterKey: false,
+    });
+  }
+
+  private unlockScanWhenPopupClosed() {
     const wait = setInterval(() => {
       if (Swal.isVisible()) { return; }
       clearInterval(wait);
