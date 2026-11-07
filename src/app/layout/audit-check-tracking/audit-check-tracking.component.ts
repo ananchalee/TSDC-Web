@@ -2179,7 +2179,7 @@ ngOnDestroy(): void {
     const failed: { barcode: string, title: string, detail: string }[] = [];
     try {
       while (this.scanQueue.length) {
-        const barcode = this.scanQueue.shift();
+        const barcode = this.scanQueue.shift() as string;
         this.input.ITEM_ID_BARCODE = barcode;
         let counted = false;
         try {
