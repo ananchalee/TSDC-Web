@@ -330,7 +330,7 @@
                     <ul>
                       <div class="form-group">
                         <div class="custom-control custom-checkbox" *ngFor="let data of VAS; trackBy: trackByIndex">
-                          <input class="custom-control-input" (change)="checkBoxVas(data.VAS_NAME,$event)"
+                          <input class="custom-control-input" (change)="checkBoxVas(data.VAS_NAME,$event)" [checked]="vasFormArray.indexOf(data.VAS_NAME) > -1"
                                  name="{{data.VAS_NAME}}" type="checkbox" id="{{data.VAS_NAME}}">
                           <label class="custom-control-label" for="{{data.VAS_NAME}}"> {{data.VAS_NAME}}</label>
                         </div>

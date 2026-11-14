@@ -762,15 +762,29 @@ ngOnDestroy(): void {
   }
 
 
+  // VAS ที่ติ๊กไว้ให้อัตโนมัติทุกออเดอร์ (เทียบชื่อแบบไม่สนตัวพิมพ์เล็ก/ใหญ่)
+  readonly DEFAULT_VAS_KEYWORD = 'bubble';
+
   loadVas() {
     this.vasFormArray = [];
     this.dataService.tsdc_pick_vas().subscribe(res => {
       var data: any = res
       if (data.status === 'success') {
         this.VAS = data.data
+        this.resetVasDefault();
         //console.log(this.VAS)
       }
     })
+  }
+
+  // ตั้ง VAS กลับเป็นค่า default (ติ๊ก Bubble ไว้) เรียกตอนโหลดหน้าและตอนเริ่มออเดอร์ใหม่
+  resetVasDefault() {
+    this.vasFormArray = (this.VAS || [])
+      .map((v: any) => v.VAS_NAME)
+      .filter((name: string) => (name || '').toLowerCase().indexOf(this.DEFAULT_VAS_KEYWORD) > -1);
+    // clone object เพื่อให้ *ngFor วาด checkbox ใหม่ ไม่งั้น [checked] ที่ค่าเดิมเป็น true
+    // จะไม่ถูก set ซ้ำ ถ้าออเดอร์ก่อนหน้าผู้ใช้เอาติ๊ก Bubble ออก
+    this.VAS = (this.VAS || []).map((v: any) => ({ ...v }));
   }
 
 
@@ -790,6 +804,7 @@ ngOnDestroy(): void {
     this.btn.CoverSheet = true;
     this.btn.Printbill = true;
     this.input = {};
+    this.resetVasDefault();
     this.trackall = [];
     this.pagePrintTrack = true;
     this.pagePrintTrackAll = true;
@@ -2648,7 +2663,7 @@ ngOnDestroy(): void {
     this.boxSubmitting = true;
     this.isLoading = true;
     this.box.btn = false
-    let array = this.vasFormArray;
+    let array = [...this.vasFormArray]; // copy กันเติม '' ลง vasFormArray ตัวจริง
     for (let i = 0; i < 9; i++) {
       array[array.length] = ''
       this.input.VAS_NAME_01 = array[0]
