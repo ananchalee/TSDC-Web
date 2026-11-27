@@ -140,10 +140,10 @@
 
                     <button type="button"
                             class="btn btn-success btn-sm"
-                            [disabled]="!activeType || filteredList.length === 0 || !hasPending"
+                            [disabled]="isPrinting || !activeType || filteredList.length === 0 || !hasPending"
                             (click)="openModal()">
-                      <i class="fas fa-print mr-1"></i>
-                      พิมพ์ทั้งหมด
+                      <i class="fas mr-1" [ngClass]="isPrinting ? 'fa-spinner fa-spin' : 'fa-print'"></i>
+                      {{ isPrinting ? 'กำลังบันทึกสถานะ...' : 'พิมพ์ทั้งหมด' }}
                       <span class="badge badge-light ml-1"
                             *ngIf="activeType && hasPending">
                         {{ filteredList.length }}
@@ -300,6 +300,7 @@
         <!-- ปุ่มพิมพ์ใบ Pick (ใบปะหน้าถูกแทรกมาจาก SSRS ในชุดเดียวกันแล้ว) -->
         <button type="button"
                 class="btn btn-success"
+                [disabled]="isPrinting"
                 (click)="confirmPrint()">
           <i class="fas fa-print mr-1"></i> พิมพ์ใบ Pick
         </button>
