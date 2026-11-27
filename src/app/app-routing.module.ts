@@ -120,7 +120,7 @@ const routes: Routes = [
   },
   {
     path: 'report-printWaveOrder', component: ReportPrintWaveOrderComponent,
-    data: { menubar: 'Report Print Wave Order', version: '1.1.0', lastupdate: '2026-08-08' }
+    data: { menubar: 'Report Print Wave Order', version: '1.1.1', lastupdate: '2026-11-27' }
   },
   {
     path: 'audit-check-group-pick', component: ReportPrintTrackingGroupSkuComponent,

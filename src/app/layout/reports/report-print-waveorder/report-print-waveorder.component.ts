@@ -37,6 +37,7 @@ export class ReportPrintWaveOrderComponent implements OnInit {
   pageactive:   any;
   interval:     any;
   isLoading   = false;
+  isPrinting  = false;   // รอ API บันทึกสถานะพิมพ์ — กันกดซ้ำระหว่างรอ
   //isSearched  = false;
   activeType  = '';
   selectedPaper = 'A4';
@@ -218,6 +219,7 @@ export class ReportPrintWaveOrderComponent implements OnInit {
   }
   // ── Modal ───────────────────────────────────────────────────
   openModal(): void {
+    if (this.isPrinting) return;
     if (!this.hasPending) {
       Swal.fire({
         icon: 'warning',
@@ -239,6 +241,7 @@ export class ReportPrintWaveOrderComponent implements OnInit {
 
   // ── พิมพ์ทั้งหมดตาม activeType ─────────────────────────────
  confirmPrint(): void {
+  if (this.isPrinting) return;
 
   $('#printModal').modal('hide');
 
@@ -279,11 +282,47 @@ export class ReportPrintWaveOrderComponent implements OnInit {
     ? { waveno: this.input.waveno }
     : { waveno: this.input.waveno, typeDesc: this.activeType };
 
-  this.dataService.Update_MANHT_PICK_PAPER(payload).subscribe((res: any) => {
-    this.res = res;
-    this.getdata();
-  });
+  this.savePrintStatus(payload);
 
+}
+
+// ── บันทึก STATUS_PRINT = 'Y' ─────────────────────────────────
+// เดิมไม่เช็คผลลัพธ์เลย ถ้า update ล้มเหลว (เช่น timeout เพราะ job บน .11
+// ล็อกตารางอยู่) หน้าจอจะยังเป็น "รอพิมพ์" และผู้ใช้ต้องกดพิมพ์ซ้ำ
+// ตอนนี้ถ้าล้มเหลวให้ลองบันทึกซ้ำได้เลย โดยไม่ต้องเปิดใบ pick ใหม่
+savePrintStatus(payload: any): void {
+  this.isPrinting = true;
+
+  const fail = (message?: string) => {
+    this.isPrinting = false;
+    Swal.fire({
+      icon: 'error',
+      title: 'บันทึกสถานะพิมพ์ไม่สำเร็จ',
+      text: message || 'ใบ pick เปิดแล้ว แต่สถานะยังไม่เปลี่ยน',
+      showCancelButton: true,
+      confirmButtonText: 'บันทึกอีกครั้ง',
+      cancelButtonText: 'ปิด'
+    }).then((r: any) => {
+      if (r.isConfirmed || r.value) {
+        this.savePrintStatus(payload);
+      } else {
+        this.getdata();
+      }
+    });
+  };
+
+  this.dataService.Update_MANHT_PICK_PAPER(payload).subscribe(
+    (res: any) => {
+      this.res = res;
+      if (!res || res.status !== 'success') {
+        fail(res && res.message);
+        return;
+      }
+      this.isPrinting = false;
+      this.getdata();
+    },
+    () => fail('เชื่อมต่อ API ไม่ได้')
+  );
 }
 
 // ── Sum QTY ทั้งหมดใน filteredList ──────────────────────────
